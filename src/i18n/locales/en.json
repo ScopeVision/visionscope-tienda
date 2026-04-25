@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Lillo Rentals",
-    "tagline": "Cinema and audiovisual production rental",
+    "appName": "VisionScope",
+    "tagline": "Cinematic rental house. Professional gear for directors and DOPs.",
     "loading": "Loading…",
     "error": "Something went wrong",
     "save": "Save",
@@ -46,10 +46,10 @@
     "logout": "Sign out"
   },
   "home": {
-    "heroTitle": "Cinema gear for your next shoot",
-    "heroSubtitle": "Cameras, lenses, lighting and sound. Professional catalog, online booking and real-time availability.",
-    "ctaCatalog": "Browse catalog",
-    "ctaContact": "Contact us",
+    "heroTitle": "Capture Stories. Craft Vision.",
+    "heroSubtitle": "Cameras, lenses, lighting and sound for high-end productions. Curated cinema gear, real-time availability.",
+    "ctaCatalog": "Explore Rental House",
+    "ctaContact": "Get in touch",
     "categoriesTitle": "Categories",
     "featuredTitle": "Featured gear",
     "featuredSubtitle": "Hand-picked equipment for professional productions."

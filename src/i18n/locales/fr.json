@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Lillo Rentals",
-    "tagline": "Location de matériel cinéma et production audiovisuelle",
+    "appName": "VisionScope",
+    "tagline": "Rental house cinéma. Matériel professionnel pour réalisateurs et DOPs.",
     "loading": "Chargement…",
     "error": "Une erreur est survenue",
     "save": "Enregistrer",
@@ -46,10 +46,10 @@
     "logout": "Déconnexion"
   },
   "home": {
-    "heroTitle": "Du matériel cinéma pour votre prochain tournage",
-    "heroSubtitle": "Caméras, optiques, éclairage et son. Catalogue professionnel, réservation en ligne et disponibilité en temps réel.",
-    "ctaCatalog": "Voir le catalogue",
-    "ctaContact": "Nous contacter",
+    "heroTitle": "Capture Stories. Craft Vision.",
+    "heroSubtitle": "Caméras, optiques, éclairage et son pour productions haut de gamme. Matériel cinéma sélectionné, disponibilité en temps réel.",
+    "ctaCatalog": "Explorer Rental House",
+    "ctaContact": "Discutons",
     "categoriesTitle": "Catégories",
     "featuredTitle": "Matériel à la une",
     "featuredSubtitle": "Sélection pour productions professionnelles."
