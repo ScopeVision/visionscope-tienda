@@ -16,11 +16,12 @@ export const Footer = () => {
         </div>
         <div>
           <h4 className="text-[11px] uppercase tracking-[0.28em] text-accent mb-4">
-            {t("nav.catalog")}
+            VisionScope
           </h4>
           <ul className="space-y-2.5 text-sm">
-            <li><Link to="/catalog" className="text-foreground/80 hover:text-accent">{t("nav.catalog")}</Link></li>
-            <li><Link to="/blog" className="text-foreground/80 hover:text-accent">{t("nav.blog")}</Link></li>
+            <li><Link to="/rental" className="text-foreground/80 hover:text-accent">{t("nav.rental")}</Link></li>
+            <li><Link to="/store" className="text-foreground/80 hover:text-accent">{t("nav.store")}</Link></li>
+            <li><Link to="/projects" className="text-foreground/80 hover:text-accent">{t("nav.projects")}</Link></li>
             <li><Link to="/contact" className="text-foreground/80 hover:text-accent">{t("nav.contact")}</Link></li>
           </ul>
         </div>

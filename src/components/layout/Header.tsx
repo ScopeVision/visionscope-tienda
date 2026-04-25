@@ -25,8 +25,10 @@ export const Header = () => {
   }, []);
 
   const links = [
-    { to: "/catalog", label: t("nav.catalog") },
-    { to: "/blog", label: t("nav.blog") },
+    { to: "/", label: t("nav.home"), end: true },
+    { to: "/rental", label: t("nav.rental") },
+    { to: "/store", label: t("nav.store") },
+    { to: "/projects", label: t("nav.projects") },
     { to: "/contact", label: t("nav.contact") },
   ];
 
@@ -57,11 +59,12 @@ export const Header = () => {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-9">
+        <nav className="hidden md:flex items-center gap-8">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
+              end={l.end}
               className={({ isActive }) =>
                 cn(
                   "text-xs uppercase tracking-[0.22em] font-medium transition-colors hover:text-accent",
@@ -105,6 +108,7 @@ export const Header = () => {
               <NavLink
                 key={l.to}
                 to={l.to}
+                end={l.end}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   cn(

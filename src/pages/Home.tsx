@@ -80,7 +80,7 @@ const Home = () => {
             {t("home.heroSubtitle")}
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link to="/catalog">
+            <Link to="/rental">
               <Button
                 size="lg"
                 className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 uppercase tracking-[0.2em] text-xs h-12 px-7 rounded-sm"
@@ -118,17 +118,17 @@ const Home = () => {
             </h2>
           </div>
           <Link
-            to="/catalog"
+            to="/rental"
             className="text-[11px] uppercase tracking-[0.22em] text-accent hover:text-accent/80 inline-flex items-center gap-2"
           >
-            {t("nav.catalog")} <ArrowRight className="h-3 w-3" />
+            {t("nav.rental")} <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {categories.map((c: any) => (
             <Link
               key={c.id}
-              to={`/catalog?category=${c.slug}`}
+              to={`/rental?category=${c.slug}`}
               className="group block relative rounded-sm overflow-hidden bg-surface aspect-[4/5] border border-border transition-smooth hover:border-accent/60"
             >
               <img

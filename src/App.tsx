@@ -8,6 +8,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
+import RentalHouse from "./pages/RentalHouse";
+import SuperStore from "./pages/SuperStore";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -38,6 +42,10 @@ const App = () => (
             <Routes>
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Home />} />
+                <Route path="/rental" element={<RentalHouse />} />
+                <Route path="/store" element={<SuperStore />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/projects/:slug" element={<ProjectDetail />} />
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
