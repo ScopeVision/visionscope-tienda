@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Lillo Rentals",
-    "tagline": "Lloguer d'equip de cinema i producció audiovisual",
+    "appName": "VisionScope",
+    "tagline": "Rental house cinematogràfica. Equip professional per a directors i DOPs.",
     "loading": "Carregant…",
     "error": "Hi ha hagut un error",
     "save": "Desar",
@@ -46,10 +46,10 @@
     "logout": "Sortir"
   },
   "home": {
-    "heroTitle": "Equip de cinema pel teu pròxim rodatge",
-    "heroSubtitle": "Càmeres, òptiques, il·luminació i so. Catàleg professional, reserva en línia i disponibilitat en temps real.",
-    "ctaCatalog": "Veure catàleg",
-    "ctaContact": "Contactar",
+    "heroTitle": "Capture Stories. Craft Vision.",
+    "heroSubtitle": "Càmeres, òptiques, il·luminació i so per a produccions d'alt nivell. Equip cinematogràfic curat, disponibilitat en temps real.",
+    "ctaCatalog": "Explorar Rental House",
+    "ctaContact": "Parlem",
     "categoriesTitle": "Categories",
     "featuredTitle": "Equips destacats",
     "featuredSubtitle": "Material seleccionat per a produccions professionals."

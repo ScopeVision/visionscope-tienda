@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShoppingBag, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -12,6 +12,17 @@ export const Header = () => {
   const { items } = useCart();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Transparent on top of hero (only on home), solid black on scroll
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const links = [
     { to: "/catalog", label: t("nav.catalog") },
@@ -21,23 +32,40 @@ export const Header = () => {
 
   const itemCount = items.reduce((acc, i) => acc + i.quantity, 0);
 
+  const transparent = isHome && !scrolled && !open;
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
+    <header
+      className={cn(
+        "sticky top-0 z-40 transition-colors duration-300",
+        transparent
+          ? "bg-transparent border-b border-transparent"
+          : "bg-background/95 backdrop-blur-md border-b border-border"
+      )}
+    >
       <div className="container-page flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-display" onClick={() => setOpen(false)}>
-          <span className="text-lg font-semibold tracking-tight">Lillo</span>
-          <span className="text-sm text-secondary uppercase tracking-[0.2em]">Rentals</span>
+        <Link
+          to="/"
+          className="flex items-baseline gap-1.5 font-display"
+          onClick={() => setOpen(false)}
+        >
+          <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">
+            Vision
+          </span>
+          <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
+            Scope
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-9">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
                 cn(
-                  "text-sm font-medium transition-colors hover:text-foreground",
-                  isActive ? "text-foreground" : "text-secondary"
+                  "text-xs uppercase tracking-[0.22em] font-medium transition-colors hover:text-accent",
+                  isActive ? "text-accent" : "text-foreground/80"
                 )
               }
             >
@@ -49,7 +77,7 @@ export const Header = () => {
         <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           <Link to="/cart">
-            <Button variant="outline" size="sm" className="relative gap-2">
+            <Button variant="outline" size="sm" className="relative gap-2 border-accent/40 text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent uppercase tracking-[0.18em] text-[11px]">
               <ShoppingBag className="h-4 w-4" />
               <span>{t("nav.cart")}</span>
               {itemCount > 0 && (
@@ -62,7 +90,7 @@ export const Header = () => {
         </div>
 
         <button
-          className="md:hidden p-2 -mr-2"
+          className="md:hidden p-2 -mr-2 text-foreground"
           onClick={() => setOpen((o) => !o)}
           aria-label="Menu"
         >
@@ -80,8 +108,8 @@ export const Header = () => {
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   cn(
-                    "text-base py-1.5",
-                    isActive ? "text-foreground font-medium" : "text-secondary"
+                    "text-sm uppercase tracking-[0.2em] py-1.5",
+                    isActive ? "text-accent font-medium" : "text-foreground/80"
                   )
                 }
               >
@@ -91,7 +119,7 @@ export const Header = () => {
             <div className="pt-2 flex items-center justify-between">
               <LanguageSwitcher />
               <Link to="/cart" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 border-accent/40 hover:bg-accent hover:text-accent-foreground uppercase tracking-[0.18em] text-[11px]">
                   <ShoppingBag className="h-4 w-4" />
                   {t("nav.cart")} {itemCount > 0 && `(${itemCount})`}
                 </Button>

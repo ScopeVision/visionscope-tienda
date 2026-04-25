@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Lillo Rentals",
-    "tagline": "Alquiler de equipo de cine y producción audiovisual",
+    "appName": "VisionScope",
+    "tagline": "Rental house cinematográfica. Equipo profesional para directores y DOPs.",
     "loading": "Cargando…",
     "error": "Ha ocurrido un error",
     "save": "Guardar",
@@ -46,10 +46,10 @@
     "logout": "Salir"
   },
   "home": {
-    "heroTitle": "Equipo de cine para tu próximo rodaje",
-    "heroSubtitle": "Cámaras, ópticas, iluminación y sonido. Catálogo profesional, reserva en línea y disponibilidad en tiempo real.",
-    "ctaCatalog": "Ver catálogo",
-    "ctaContact": "Contactar",
+    "heroTitle": "Capture Stories. Craft Vision.",
+    "heroSubtitle": "Cámaras, ópticas, iluminación y sonido para producciones de alto nivel. Equipo cinematográfico curado, disponibilidad en tiempo real.",
+    "ctaCatalog": "Explorar Rental House",
+    "ctaContact": "Hablemos",
     "categoriesTitle": "Categorías",
     "featuredTitle": "Equipos destacados",
     "featuredSubtitle": "Material seleccionado para producciones profesionales."

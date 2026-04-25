@@ -2,92 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Lillo Rentals — Clean & Chic design system. All colors HSL. */
+/* VisionScope — Cinematic dark + yellow design system. All colors HSL. */
 
 @layer base {
   :root {
-    /* Brand palette */
-    --background: 60 11% 97%;          /* #F8F8F8 broken white */
-    --foreground: 0 0% 12%;            /* near-black for body text */
+    /* Brand palette — deep black / carbon / cinematic yellow */
+    --background: 0 0% 4%;             /* #0B0B0B deep black */
+    --foreground: 0 0% 92%;            /* near-white text */
 
-    --surface: 0 0% 100%;
-    --surface-foreground: 0 0% 12%;
+    --surface: 0 0% 10%;               /* #1A1A1A carbon */
+    --surface-foreground: 0 0% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card: 0 0% 10%;                  /* #1A1A1A */
+    --card-foreground: 0 0% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
 
-    --primary: 0 0% 18%;               /* deep neutral for primary actions */
-    --primary-foreground: 60 11% 97%;
+    --primary: 46 86% 62%;             /* #F2C94C cinematic yellow */
+    --primary-foreground: 0 0% 6%;
 
-    --secondary: 0 0% 43%;             /* warm grey #6D6D6D */
-    --secondary-foreground: 60 11% 97%;
+    --secondary: 0 0% 74%;             /* #BDBDBD secondary text */
+    --secondary-foreground: 0 0% 6%;
 
-    --muted: 60 8% 93%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 0 36% 74%;               /* soft pale pink #D6A5A5 */
-    --accent-foreground: 0 0% 18%;
-    --accent-soft: 0 40% 94%;
+    --accent: 46 86% 62%;              /* yellow accent */
+    --accent-foreground: 0 0% 6%;
+    --accent-soft: 46 60% 18%;         /* dark yellow-tinted surface */
 
-    --destructive: 0 60% 50%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 0 36% 74%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 46 86% 62%;
 
-    --radius: 0.375rem;
+    --radius: 0.25rem;
 
-    --sidebar-background: 60 11% 97%;
-    --sidebar-foreground: 0 0% 18%;
-    --sidebar-primary: 0 0% 18%;
-    --sidebar-primary-foreground: 60 11% 97%;
-    --sidebar-accent: 60 8% 93%;
-    --sidebar-accent-foreground: 0 0% 18%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 36% 74%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 46 86% 62%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 46 86% 62%;
 
     /* Effects */
-    --shadow-soft: 0 1px 2px 0 hsl(0 0% 0% / 0.04), 0 1px 3px 0 hsl(0 0% 0% / 0.06);
-    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.08);
-    --shadow-elegant: 0 12px 40px -12px hsl(0 36% 50% / 0.18);
+    --shadow-soft: 0 1px 2px 0 hsl(0 0% 0% / 0.5), 0 1px 3px 0 hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 8px 24px -8px hsl(0 0% 0% / 0.6);
+    --shadow-elegant: 0 20px 60px -20px hsl(46 86% 50% / 0.25);
+    --glow-yellow: 0 0 24px hsl(46 86% 62% / 0.25);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 60 11% 95%;
-    --surface: 0 0% 12%;
-    --surface-foreground: 60 11% 95%;
-    --card: 0 0% 12%;
-    --card-foreground: 60 11% 95%;
-    --popover: 0 0% 12%;
-    --popover-foreground: 60 11% 95%;
-    --primary: 60 11% 95%;
-    --primary-foreground: 0 0% 12%;
-    --secondary: 0 0% 60%;
-    --secondary-foreground: 0 0% 12%;
-    --muted: 0 0% 18%;
+    /* keep identical — site is dark by default */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 92%;
+    --surface: 0 0% 10%;
+    --surface-foreground: 0 0% 92%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 92%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 46 86% 62%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 74%;
+    --secondary-foreground: 0 0% 6%;
+    --muted: 0 0% 14%;
     --muted-foreground: 0 0% 70%;
-    --accent: 0 36% 74%;
-    --accent-foreground: 0 0% 12%;
-    --accent-soft: 0 20% 22%;
-    --destructive: 0 60% 50%;
+    --accent: 46 86% 62%;
+    --accent-foreground: 0 0% 6%;
+    --accent-soft: 46 60% 18%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 22%;
-    --input: 0 0% 22%;
-    --ring: 0 36% 74%;
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 60 11% 95%;
-    --sidebar-primary: 60 11% 95%;
-    --sidebar-primary-foreground: 0 0% 12%;
-    --sidebar-accent: 0 0% 18%;
-    --sidebar-accent-foreground: 60 11% 95%;
-    --sidebar-border: 0 0% 22%;
-    --sidebar-ring: 0 36% 74%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 46 86% 62%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 46 86% 62%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 46 86% 62%;
   }
 }
 
@@ -98,12 +100,17 @@
 
   html {
     font-feature-settings: "ss01", "cv11";
+    color-scheme: dark;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /* Subtle cinematic grain */
+    background-image:
+      radial-gradient(hsl(0 0% 100% / 0.012) 1px, transparent 1px);
+    background-size: 3px 3px;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -113,7 +120,10 @@
     letter-spacing: -0.02em;
   }
 
-  h1 { letter-spacing: -0.035em; }
+  h1 { letter-spacing: -0.025em; }
+
+  /* Selection */
+  ::selection { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 
   /* Prose link defaults */
   a { @apply transition-colors; }
@@ -127,5 +137,36 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .glow-yellow { box-shadow: var(--glow-yellow); }
   .transition-smooth { transition: var(--transition-smooth); }
+
+  /* Cinematic uppercase title utility */
+  .cine-title {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .cine-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 0.7rem;
+    color: hsl(var(--accent));
+  }
+
+  /* Subtle film grain overlay (apply to hero) */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>");
+  }
+
+  /* Yellow hover glow for cards */
+  .hover-glow:hover {
+    border-color: hsl(var(--accent) / 0.55);
+    box-shadow: 0 0 0 1px hsl(var(--accent) / 0.2), 0 12px 32px -12px hsl(46 86% 50% / 0.25);
+  }
 }
