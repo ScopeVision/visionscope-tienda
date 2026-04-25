@@ -128,7 +128,7 @@ const Home = () => {
           {categories.map((c: any) => (
             <Link
               key={c.id}
-              to={`/catalog?category=${c.slug}`}
+              to={`/rental?category=${c.slug}`}
               className="group block relative rounded-sm overflow-hidden bg-surface aspect-[4/5] border border-border transition-smooth hover:border-accent/60"
             >
               <img
