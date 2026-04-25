@@ -36,6 +36,10 @@
     "language": "Idioma"
   },
   "nav": {
+    "home": "Inici",
+    "rental": "Rental House",
+    "store": "Super Store",
+    "projects": "Projectes",
     "catalog": "Catàleg",
     "blog": "Produccions",
     "about": "Sobre nosaltres",
@@ -44,6 +48,64 @@
     "admin": "Admin",
     "login": "Accedir",
     "logout": "Sortir"
+  },
+  "rental": {
+    "eyebrow": "Rental House",
+    "title": "Equip de cinema professional",
+    "subtitle": "{{count}} equips curats per a directors, DOPs i productores.",
+    "filters": {
+      "category": "Categoria",
+      "format": "Format",
+      "use": "Ús",
+      "clear": "Netejar"
+    },
+    "format": {
+      "fullframe": "Full Frame",
+      "super35": "Super 35",
+      "other": "Altres"
+    },
+    "use": {
+      "cinema": "Cinema",
+      "documentary": "Documental",
+      "advertising": "Publicitat"
+    },
+    "viewGear": "Veure equip",
+    "empty": "No hi ha equips que coincideixin amb els filtres."
+  },
+  "store": {
+    "eyebrow": "Super Store",
+    "title": "Accessoris, consumibles i merch",
+    "subtitle": "Imprescindibles per al teu set. Enviament ràpid.",
+    "buy": "Comprar",
+    "comingSoon": "Pròximament",
+    "comingSoonText": "Estem preparant la botiga. Torna aviat."
+  },
+  "projects": {
+    "eyebrow": "Portfolio",
+    "title": "Projectes",
+    "subtitle": "Una selecció de rodatges en què hem col·laborat.",
+    "watch": "Veure projecte",
+    "credits": "Crèdits",
+    "back": "Tornar a projectes",
+    "role": {
+      "director": "Director",
+      "dop": "DOP",
+      "production": "Producció",
+      "year": "Any",
+      "client": "Client"
+    }
+  },
+  "contact": {
+    "eyebrow": "Get in touch",
+    "title": "Contacte",
+    "intro": "Explica'ns el teu projecte. Et responem en menys de 24h.",
+    "name": "Nom",
+    "email": "Email",
+    "message": "Missatge",
+    "send": "Enviar missatge",
+    "whatsapp": "Parlar per WhatsApp",
+    "info": "Informació",
+    "phone": "Telèfon"
   },
   "home": {
     "heroTitle": "Capture Stories. Craft Vision.",

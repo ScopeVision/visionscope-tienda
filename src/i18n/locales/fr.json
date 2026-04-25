@@ -36,6 +36,10 @@
     "language": "Langue"
   },
   "nav": {
+    "home": "Accueil",
+    "rental": "Rental House",
+    "store": "Super Store",
+    "projects": "Projets",
     "catalog": "Catalogue",
     "blog": "Productions",
     "about": "À propos",
@@ -44,6 +48,64 @@
     "admin": "Admin",
     "login": "Connexion",
     "logout": "Déconnexion"
+  },
+  "rental": {
+    "eyebrow": "Rental House",
+    "title": "Matériel cinéma professionnel",
+    "subtitle": "{{count}} équipements sélectionnés pour réalisateurs, DOPs et productions.",
+    "filters": {
+      "category": "Catégorie",
+      "format": "Format",
+      "use": "Usage",
+      "clear": "Effacer"
+    },
+    "format": {
+      "fullframe": "Full Frame",
+      "super35": "Super 35",
+      "other": "Autres"
+    },
+    "use": {
+      "cinema": "Cinéma",
+      "documentary": "Documentaire",
+      "advertising": "Publicité"
+    },
+    "viewGear": "Voir l'équipement",
+    "empty": "Aucun équipement ne correspond aux filtres."
+  },
+  "store": {
+    "eyebrow": "Super Store",
+    "title": "Accessoires, consommables et merch",
+    "subtitle": "Indispensables pour votre tournage. Livraison rapide.",
+    "buy": "Acheter",
+    "comingSoon": "Bientôt disponible",
+    "comingSoonText": "Notre boutique arrive. Revenez bientôt."
+  },
+  "projects": {
+    "eyebrow": "Portfolio",
+    "title": "Projets",
+    "subtitle": "Une sélection de tournages auxquels nous avons participé.",
+    "watch": "Voir le projet",
+    "credits": "Crédits",
+    "back": "Retour aux projets",
+    "role": {
+      "director": "Réalisateur",
+      "dop": "DOP",
+      "production": "Production",
+      "year": "Année",
+      "client": "Client"
+    }
+  },
+  "contact": {
+    "eyebrow": "Get in touch",
+    "title": "Contact",
+    "intro": "Parlez-nous de votre projet. Nous répondons sous 24h.",
+    "name": "Nom",
+    "email": "Email",
+    "message": "Message",
+    "send": "Envoyer le message",
+    "whatsapp": "Discuter sur WhatsApp",
+    "info": "Informations",
+    "phone": "Téléphone"
   },
   "home": {
     "heroTitle": "Capture Stories. Craft Vision.",

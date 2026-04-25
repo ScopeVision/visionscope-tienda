@@ -36,6 +36,10 @@
     "language": "Language"
   },
   "nav": {
+    "home": "Home",
+    "rental": "Rental House",
+    "store": "Super Store",
+    "projects": "Projects",
     "catalog": "Catalog",
     "blog": "Productions",
     "about": "About",
@@ -44,6 +48,64 @@
     "admin": "Admin",
     "login": "Sign in",
     "logout": "Sign out"
+  },
+  "rental": {
+    "eyebrow": "Rental House",
+    "title": "Professional cinema gear",
+    "subtitle": "{{count}} curated items for directors, DOPs and production companies.",
+    "filters": {
+      "category": "Category",
+      "format": "Format",
+      "use": "Use",
+      "clear": "Clear"
+    },
+    "format": {
+      "fullframe": "Full Frame",
+      "super35": "Super 35",
+      "other": "Other"
+    },
+    "use": {
+      "cinema": "Cinema",
+      "documentary": "Documentary",
+      "advertising": "Advertising"
+    },
+    "viewGear": "View gear",
+    "empty": "No gear matches your filters."
+  },
+  "store": {
+    "eyebrow": "Super Store",
+    "title": "Accessories, consumables and merch",
+    "subtitle": "Set essentials. Fast shipping across Europe.",
+    "buy": "Buy",
+    "comingSoon": "Coming soon",
+    "comingSoonText": "We're crafting our store. Check back soon."
+  },
+  "projects": {
+    "eyebrow": "Portfolio",
+    "title": "Projects",
+    "subtitle": "A selection of shoots we've been part of.",
+    "watch": "View project",
+    "credits": "Credits",
+    "back": "Back to projects",
+    "role": {
+      "director": "Director",
+      "dop": "DOP",
+      "production": "Production",
+      "year": "Year",
+      "client": "Client"
+    }
+  },
+  "contact": {
+    "eyebrow": "Get in touch",
+    "title": "Contact",
+    "intro": "Tell us about your project. We reply within 24h.",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send message",
+    "whatsapp": "Chat on WhatsApp",
+    "info": "Information",
+    "phone": "Phone"
   },
   "home": {
     "heroTitle": "Capture Stories. Craft Vision.",
