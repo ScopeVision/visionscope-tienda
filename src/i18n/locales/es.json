@@ -1,0 +1,166 @@
+{
+  "common": {
+    "appName": "Lillo Rentals",
+    "tagline": "Alquiler de equipo de cine y producción audiovisual",
+    "loading": "Cargando…",
+    "error": "Ha ocurrido un error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Volver",
+    "search": "Buscar",
+    "filters": "Filtros",
+    "all": "Todos",
+    "from": "Desde",
+    "to": "Hasta",
+    "perDay": "/ día",
+    "perWeek": "/ semana",
+    "deposit": "Fianza",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "days": "días",
+    "day": "día",
+    "yes": "Sí",
+    "no": "No",
+    "actions": "Acciones",
+    "status": "Estado",
+    "date": "Fecha",
+    "name": "Nombre",
+    "email": "Email",
+    "phone": "Teléfono",
+    "company": "Empresa",
+    "address": "Dirección",
+    "notes": "Notas",
+    "language": "Idioma"
+  },
+  "nav": {
+    "catalog": "Catálogo",
+    "blog": "Producciones",
+    "about": "Sobre nosotros",
+    "contact": "Contacto",
+    "cart": "Reserva",
+    "admin": "Admin",
+    "login": "Acceder",
+    "logout": "Salir"
+  },
+  "home": {
+    "heroTitle": "Equipo de cine para tu próximo rodaje",
+    "heroSubtitle": "Cámaras, ópticas, iluminación y sonido. Catálogo profesional, reserva en línea y disponibilidad en tiempo real.",
+    "ctaCatalog": "Ver catálogo",
+    "ctaContact": "Contactar",
+    "categoriesTitle": "Categorías",
+    "featuredTitle": "Equipos destacados",
+    "featuredSubtitle": "Material seleccionado para producciones profesionales."
+  },
+  "catalog": {
+    "title": "Catálogo",
+    "subtitle": "{{count}} equipos disponibles para alquiler",
+    "filters": {
+      "category": "Categoría",
+      "tags": "Etiquetas",
+      "priceRange": "Rango de precio (€/día)",
+      "availability": "Disponibilidad",
+      "clear": "Limpiar filtros"
+    },
+    "view": {
+      "grid": "Cuadrícula",
+      "list": "Lista"
+    },
+    "empty": "No hay equipos que coincidan con tus filtros.",
+    "addToCart": "Añadir a la reserva",
+    "viewDetails": "Ver detalles",
+    "outOfStock": "Sin stock"
+  },
+  "product": {
+    "back": "Volver al catálogo",
+    "specs": "Características",
+    "selectDates": "Selecciona las fechas de alquiler",
+    "calculate": "Calcular precio",
+    "stock": "Stock disponible",
+    "deposit": "Fianza",
+    "depositInfo": "La fianza no se incluye en el precio final, se devuelve al finalizar el alquiler.",
+    "weeklyDiscount": "Tarifa semanal aplicada",
+    "addToCart": "Añadir a la reserva",
+    "added": "Añadido a la reserva"
+  },
+  "cart": {
+    "title": "Tu reserva",
+    "empty": "Tu reserva está vacía",
+    "emptyAction": "Explorar catálogo",
+    "items": "Equipos",
+    "summary": "Resumen",
+    "subtotal": "Subtotal",
+    "deposit": "Fianza total",
+    "total": "Total a pagar",
+    "depositNote": "+ fianza reembolsable",
+    "checkout": "Solicitar reserva",
+    "remove": "Quitar"
+  },
+  "checkout": {
+    "title": "Solicitar reserva",
+    "yourData": "Tus datos",
+    "submit": "Enviar solicitud",
+    "success": "¡Solicitud enviada! Te contactaremos para confirmar.",
+    "successRef": "Referencia",
+    "error": "No se ha podido enviar la solicitud. Inténtalo de nuevo."
+  },
+  "auth": {
+    "title": "Acceso al panel",
+    "subtitle": "Solo personal autorizado",
+    "email": "Email",
+    "password": "Contraseña",
+    "login": "Acceder",
+    "loginError": "Credenciales incorrectas",
+    "noAccess": "No tienes permisos de administrador"
+  },
+  "admin": {
+    "dashboard": "Panel",
+    "products": "Equipos",
+    "categories": "Categorías",
+    "tags": "Etiquetas",
+    "bookings": "Pedidos",
+    "customers": "Clientes",
+    "blog": "Blog",
+    "newProduct": "Nuevo equipo",
+    "newCategory": "Nueva categoría",
+    "newTag": "Nueva etiqueta",
+    "newPost": "Nuevo artículo",
+    "stock": "Stock",
+    "published": "Publicado",
+    "hidden": "Oculto",
+    "publish": "Publicar",
+    "unpublish": "Despublicar",
+    "uploadImage": "Subir imagen",
+    "export": "Exportar CSV"
+  },
+  "bookings": {
+    "tabs": {
+      "nuevo": "Nuevos",
+      "confirmado": "Confirmados",
+      "preparacion": "En preparación",
+      "alquiler": "En alquiler",
+      "finalizado": "Finalizados",
+      "cancelado": "Cancelados"
+    },
+    "actions": {
+      "confirm": "Confirmar reserva",
+      "prepare": "En preparación",
+      "deliver": "Entregado al cliente",
+      "return": "Devuelto",
+      "cancel": "Cancelar"
+    },
+    "reference": "Referencia",
+    "customer": "Cliente",
+    "dates": "Fechas",
+    "items": "Equipos"
+  },
+  "blog": {
+    "title": "Producciones y Cositas",
+    "subtitle": "Diario de rodajes, equipo y cultura audiovisual.",
+    "readMore": "Leer más",
+    "back": "Volver al blog",
+    "empty": "Aún no hay artículos publicados."
+  }
+}
