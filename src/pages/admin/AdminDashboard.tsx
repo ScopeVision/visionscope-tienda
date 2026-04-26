@@ -30,7 +30,7 @@ const AdminDashboard = () => {
     <div>
       <h1 className="text-2xl font-display font-medium mb-6">{t("admin.dashboard")}</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat label={t("admin.products")} value={data?.products ?? 0} icon={Package} />
+        <Stat label={t("admin.products.label")} value={data?.products ?? 0} icon={Package} />
         <Stat label={t("admin.bookings")} value={data?.bookings ?? 0} icon={ClipboardList} />
         <Stat label={t("bookings.tabs.nuevo")} value={data?.pending ?? 0} icon={ClipboardList} />
         <Stat label={t("admin.customers")} value={data?.customers ?? 0} icon={Users} />

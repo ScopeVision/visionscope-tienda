@@ -179,7 +179,6 @@
   },
   "admin": {
     "dashboard": "Panel",
-    "products": "Equipos",
     "categories": "Categorías",
     "tags": "Etiquetas",
     "bookings": "Pedidos",
@@ -195,7 +194,46 @@
     "publish": "Publicar",
     "unpublish": "Despublicar",
     "uploadImage": "Subir imagen",
-    "export": "Exportar CSV"
+    "export": "Exportar CSV",
+    "products": {
+      "label": "Equipos",
+      "createTitle": "Nuevo equipo",
+      "editTitle": "Editar equipo",
+      "deleteTitle": "Eliminar equipo",
+      "deleteConfirm": "¿Seguro que quieres eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+      "noTags": "No hay etiquetas. Crea la primera abajo.",
+      "newTagPlaceholder": "Nombre de la nueva etiqueta",
+      "tabs": {
+        "general": "General",
+        "content": "Contenido",
+        "images": "Imágenes"
+      },
+      "fields": {
+        "slug": "Slug",
+        "category": "Categoría",
+        "name": "Nombre",
+        "description": "Descripción",
+        "priceDay": "Precio / día (€)",
+        "priceWeek": "Precio / semana (€)",
+        "deposit": "Fianza (€)",
+        "stock": "Stock",
+        "tags": "Etiquetas"
+      },
+      "uploader": {
+        "title": "Arrastra imágenes o haz clic para subir",
+        "hint": "JPG, PNG, WebP — máx 5 MB por imagen",
+        "cover": "Portada",
+        "makeCover": "Hacer portada"
+      },
+      "errors": {
+        "fileType": "formato no soportado",
+        "fileSize": "supera 5 MB"
+      },
+      "toast": {
+        "saved": "Guardado correctamente",
+        "deleted": "Equipo eliminado"
+      }
+    }
   },
   "bookings": {
     "tabs": {

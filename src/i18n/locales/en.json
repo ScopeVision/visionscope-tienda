@@ -176,7 +176,6 @@
   },
   "admin": {
     "dashboard": "Dashboard",
-    "products": "Equipment",
     "categories": "Categories",
     "tags": "Tags",
     "bookings": "Orders",
@@ -192,7 +191,46 @@
     "publish": "Publish",
     "unpublish": "Unpublish",
     "uploadImage": "Upload image",
-    "export": "Export CSV"
+    "export": "Export CSV",
+    "products": {
+      "label": "Equipment",
+      "createTitle": "New item",
+      "editTitle": "Edit item",
+      "deleteTitle": "Delete item",
+      "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+      "noTags": "No tags yet. Create the first one below.",
+      "newTagPlaceholder": "New tag name",
+      "tabs": {
+        "general": "General",
+        "content": "Content",
+        "images": "Images"
+      },
+      "fields": {
+        "slug": "Slug",
+        "category": "Category",
+        "name": "Name",
+        "description": "Description",
+        "priceDay": "Price / day (€)",
+        "priceWeek": "Price / week (€)",
+        "deposit": "Deposit (€)",
+        "stock": "Stock",
+        "tags": "Tags"
+      },
+      "uploader": {
+        "title": "Drag images or click to upload",
+        "hint": "JPG, PNG, WebP — max 5 MB per image",
+        "cover": "Cover",
+        "makeCover": "Make cover"
+      },
+      "errors": {
+        "fileType": "unsupported format",
+        "fileSize": "exceeds 5 MB"
+      },
+      "toast": {
+        "saved": "Saved successfully",
+        "deleted": "Item deleted"
+      }
+    }
   },
   "bookings": {
     "tabs": {

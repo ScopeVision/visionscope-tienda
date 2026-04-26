@@ -16,7 +16,7 @@ const AdminLayout = () => {
   const items = [
     { to: "/admin", label: t("admin.dashboard"), icon: Home, end: true },
     { to: "/admin/bookings", label: t("admin.bookings"), icon: ClipboardList },
-    { to: "/admin/products", label: t("admin.products"), icon: Package },
+    { to: "/admin/products", label: t("admin.products.label"), icon: Package },
     { to: "/admin/categories", label: t("admin.categories"), icon: FolderTree },
     { to: "/admin/tags", label: t("admin.tags"), icon: Tag },
     { to: "/admin/customers", label: t("admin.customers"), icon: Users },
