@@ -108,7 +108,7 @@ const AdminProducts = () => {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-display font-medium uppercase tracking-tight">
-          {t("admin.products")}
+          {t("admin.products.label")}
         </h1>
         <Button
           onClick={() => setCreating(true)}
