@@ -176,7 +176,6 @@
   },
   "admin": {
     "dashboard": "Panell",
-    "products": "Equips",
     "categories": "Categories",
     "tags": "Etiquetes",
     "bookings": "Comandes",
@@ -192,7 +191,46 @@
     "publish": "Publicar",
     "unpublish": "Despublicar",
     "uploadImage": "Pujar imatge",
-    "export": "Exportar CSV"
+    "export": "Exportar CSV",
+    "products": {
+      "label": "Equips",
+      "createTitle": "Nou equip",
+      "editTitle": "Editar equip",
+      "deleteTitle": "Eliminar equip",
+      "deleteConfirm": "Segur que vols eliminar \"{{name}}\"? Aquesta acció no es pot desfer.",
+      "noTags": "Encara no hi ha etiquetes. Crea'n una a sota.",
+      "newTagPlaceholder": "Nom de la nova etiqueta",
+      "tabs": {
+        "general": "General",
+        "content": "Contingut",
+        "images": "Imatges"
+      },
+      "fields": {
+        "slug": "Slug",
+        "category": "Categoria",
+        "name": "Nom",
+        "description": "Descripció",
+        "priceDay": "Preu / dia (€)",
+        "priceWeek": "Preu / setmana (€)",
+        "deposit": "Fiança (€)",
+        "stock": "Estoc",
+        "tags": "Etiquetes"
+      },
+      "uploader": {
+        "title": "Arrossega imatges o fes clic per pujar",
+        "hint": "JPG, PNG, WebP — màx 5 MB per imatge",
+        "cover": "Portada",
+        "makeCover": "Fer portada"
+      },
+      "errors": {
+        "fileType": "format no suportat",
+        "fileSize": "supera 5 MB"
+      },
+      "toast": {
+        "saved": "Desat correctament",
+        "deleted": "Equip eliminat"
+      }
+    }
   },
   "bookings": {
     "tabs": {

@@ -176,7 +176,6 @@
   },
   "admin": {
     "dashboard": "Tableau de bord",
-    "products": "Équipements",
     "categories": "Catégories",
     "tags": "Étiquettes",
     "bookings": "Commandes",
@@ -192,7 +191,46 @@
     "publish": "Publier",
     "unpublish": "Dépublier",
     "uploadImage": "Téléverser une image",
-    "export": "Exporter en CSV"
+    "export": "Exporter en CSV",
+    "products": {
+      "label": "Équipements",
+      "createTitle": "Nouvel équipement",
+      "editTitle": "Modifier l'équipement",
+      "deleteTitle": "Supprimer l'équipement",
+      "deleteConfirm": "Supprimer \"{{name}}\" ? Cette action est irréversible.",
+      "noTags": "Aucune étiquette. Créez la première ci-dessous.",
+      "newTagPlaceholder": "Nom de la nouvelle étiquette",
+      "tabs": {
+        "general": "Général",
+        "content": "Contenu",
+        "images": "Images"
+      },
+      "fields": {
+        "slug": "Slug",
+        "category": "Catégorie",
+        "name": "Nom",
+        "description": "Description",
+        "priceDay": "Prix / jour (€)",
+        "priceWeek": "Prix / semaine (€)",
+        "deposit": "Caution (€)",
+        "stock": "Stock",
+        "tags": "Étiquettes"
+      },
+      "uploader": {
+        "title": "Glissez des images ou cliquez pour téléverser",
+        "hint": "JPG, PNG, WebP — max 5 Mo par image",
+        "cover": "Couverture",
+        "makeCover": "Définir comme couverture"
+      },
+      "errors": {
+        "fileType": "format non pris en charge",
+        "fileSize": "dépasse 5 Mo"
+      },
+      "toast": {
+        "saved": "Enregistré",
+        "deleted": "Équipement supprimé"
+      }
+    }
   },
   "bookings": {
     "tabs": {
