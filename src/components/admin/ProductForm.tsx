@@ -238,6 +238,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
         <TabsList className="bg-muted shrink-0">
           <TabsTrigger value="general">{t("admin.products.tabs.general")}</TabsTrigger>
+          <TabsTrigger value="specs">{t("admin.products.tabs.specs")}</TabsTrigger>
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
         </TabsList>
