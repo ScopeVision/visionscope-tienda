@@ -53,21 +53,28 @@
     "eyebrow": "Rental House",
     "title": "Equip de cinema professional",
     "subtitle": "{{count}} equips curats per a directors, DOPs i productores.",
+    "searchPlaceholder": "Cerca per nom, marca, model o etiqueta…",
+    "activeFilters": "{{count}} filtres actius",
     "filters": {
       "category": "Categoria",
+      "clear": "Netejar filtres"
+    },
+    "dyn": {
+      "brand": "Marca",
+      "sensorType": "Tipus de sensor",
+      "mountType": "Muntura",
+      "lensType": "Tipus d'òptica",
       "format": "Format",
-      "use": "Ús",
-      "clear": "Netejar"
-    },
-    "format": {
-      "fullframe": "Full Frame",
-      "super35": "Super 35",
-      "other": "Altres"
-    },
-    "use": {
-      "cinema": "Cinema",
-      "documentary": "Documental",
-      "advertising": "Publicitat"
+      "lightingType": "Tipus d'il·luminació",
+      "gripType": "Tipus de grip",
+      "accessoryType": "Tipus d'accessori",
+      "kitType": "Tipus de kit",
+      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
+      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamòrfic", "vintage": "Vintage" },
+      "light": { "tungsten": "Tungstè", "tubes": "Tubs", "panels": "Panells" },
+      "grip": { "tripods": "Trípodes", "rigging": "Rigging" },
+      "acc": { "monitor": "Monitor", "wirelessVideo": "Vídeo Wireless", "batteries": "Bateries", "media": "Media / Emmagatzematge" },
+      "kit": { "camera": "Kits de Càmera", "lens": "Kits d'Òptiques", "lighting": "Kits d'Il·luminació", "production": "Production Bundles" }
     },
     "viewGear": "Veure equip",
     "empty": "No hi ha equips que coincideixin amb els filtres."

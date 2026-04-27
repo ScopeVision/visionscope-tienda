@@ -53,21 +53,28 @@
     "eyebrow": "Rental House",
     "title": "Equipo de cine profesional",
     "subtitle": "{{count}} equipos curados para directores, DOPs y productoras.",
+    "searchPlaceholder": "Buscar por nombre, marca, modelo o etiqueta…",
+    "activeFilters": "{{count}} filtros activos",
     "filters": {
       "category": "Categoría",
+      "clear": "Limpiar filtros"
+    },
+    "dyn": {
+      "brand": "Marca",
+      "sensorType": "Tipo de sensor",
+      "mountType": "Montura",
+      "lensType": "Tipo de óptica",
       "format": "Formato",
-      "use": "Uso",
-      "clear": "Limpiar"
-    },
-    "format": {
-      "fullframe": "Full Frame",
-      "super35": "Super 35",
-      "other": "Otros"
-    },
-    "use": {
-      "cinema": "Cine",
-      "documentary": "Documental",
-      "advertising": "Publicidad"
+      "lightingType": "Tipo de iluminación",
+      "gripType": "Tipo de grip",
+      "accessoryType": "Tipo de accesorio",
+      "kitType": "Tipo de kit",
+      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
+      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamórfico", "vintage": "Vintage" },
+      "light": { "tungsten": "Tungsteno", "tubes": "Tubos", "panels": "Paneles" },
+      "grip": { "tripods": "Trípodes", "rigging": "Rigging" },
+      "acc": { "monitor": "Monitor", "wirelessVideo": "Vídeo Wireless", "batteries": "Baterías", "media": "Media / Almacenamiento" },
+      "kit": { "camera": "Kits de Cámara", "lens": "Kits de Ópticas", "lighting": "Kits de Iluminación", "production": "Production Bundles" }
     },
     "viewGear": "Ver equipo",
     "empty": "No hay equipos que coincidan con tus filtros."
