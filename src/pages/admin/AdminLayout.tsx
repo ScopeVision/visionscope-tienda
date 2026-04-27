@@ -27,7 +27,7 @@ const AdminLayout = () => {
     <div className="min-h-screen flex bg-background">
       <aside className="w-60 shrink-0 border-r border-border bg-surface flex flex-col">
         <div className="p-5 border-b border-border">
-          <div className="font-display font-semibold tracking-tight">Lillo Admin</div>
+          <div className="font-display font-semibold tracking-tight">Admin Tienda</div>
           <div className="text-xs text-secondary mt-0.5">{user.email}</div>
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
