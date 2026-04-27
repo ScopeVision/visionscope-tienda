@@ -223,8 +223,11 @@
       "deleteConfirm": "Segur que vols eliminar \"{{name}}\"? Aquesta acció no es pot desfer.",
       "noTags": "Encara no hi ha etiquetes. Crea'n una a sota.",
       "newTagPlaceholder": "Nom de la nova etiqueta",
+      "specsHint": "Selecciona una categoria a la pestanya General per veure les specs específiques.",
+      "specsNone": "Aquesta categoria no té specs addicionals.",
       "tabs": {
         "general": "General",
+        "specs": "Specs",
         "content": "Contingut",
         "images": "Imatges"
       },
@@ -237,7 +240,9 @@
         "priceWeek": "Preu / setmana (€)",
         "deposit": "Fiança (€)",
         "stock": "Estoc",
-        "tags": "Etiquetes"
+        "tags": "Etiquetes",
+        "brand": "Marca",
+        "model": "Model"
       },
       "uploader": {
         "title": "Arrossega imatges o fes clic per pujar",

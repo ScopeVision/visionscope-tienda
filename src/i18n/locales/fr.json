@@ -223,8 +223,11 @@
       "deleteConfirm": "Supprimer \"{{name}}\" ? Cette action est irréversible.",
       "noTags": "Aucune étiquette. Créez la première ci-dessous.",
       "newTagPlaceholder": "Nom de la nouvelle étiquette",
+      "specsHint": "Sélectionnez une catégorie dans l'onglet Général pour voir ses specs.",
+      "specsNone": "Cette catégorie n'a pas de specs supplémentaires.",
       "tabs": {
         "general": "Général",
+        "specs": "Specs",
         "content": "Contenu",
         "images": "Images"
       },
@@ -237,7 +240,9 @@
         "priceWeek": "Prix / semaine (€)",
         "deposit": "Caution (€)",
         "stock": "Stock",
-        "tags": "Étiquettes"
+        "tags": "Étiquettes",
+        "brand": "Marque",
+        "model": "Modèle"
       },
       "uploader": {
         "title": "Glissez des images ou cliquez pour téléverser",

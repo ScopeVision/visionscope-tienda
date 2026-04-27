@@ -226,8 +226,11 @@
       "deleteConfirm": "¿Seguro que quieres eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
       "noTags": "No hay etiquetas. Crea la primera abajo.",
       "newTagPlaceholder": "Nombre de la nueva etiqueta",
+      "specsHint": "Selecciona una categoría en la pestaña General para ver sus specs específicas.",
+      "specsNone": "Esta categoría no tiene specs adicionales.",
       "tabs": {
         "general": "General",
+        "specs": "Specs",
         "content": "Contenido",
         "images": "Imágenes"
       },
@@ -240,7 +243,9 @@
         "priceWeek": "Precio / semana (€)",
         "deposit": "Fianza (€)",
         "stock": "Stock",
-        "tags": "Etiquetas"
+        "tags": "Etiquetas",
+        "brand": "Marca",
+        "model": "Modelo"
       },
       "uploader": {
         "title": "Arrastra imágenes o haz clic para subir",
