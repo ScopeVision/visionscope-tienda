@@ -183,6 +183,16 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         stock: Number(values.stock),
         published: values.published,
         images: values.images,
+        brand: values.brand || null,
+        model: values.model || null,
+        mount: values.mount || null,
+        sensor_type: values.sensor_type || null,
+        lens_type: values.lens_type || null,
+        format: values.format || null,
+        lighting_type: values.lighting_type || null,
+        grip_type: values.grip_type || null,
+        accessory_type: values.accessory_type || null,
+        kit_type: values.kit_type || null,
       };
 
       let productId: string;
