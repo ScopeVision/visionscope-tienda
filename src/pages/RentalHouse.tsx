@@ -9,18 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/rental";
 import { Search, X, ImageOff, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const FORMATS = [
-  { key: "fullframe", match: ["full frame", "fullframe", "full-frame"] },
-  { key: "super35", match: ["super 35", "super35", "s35"] },
-  { key: "other", match: [] },
-];
-
-const USES = [
-  { key: "cinema", match: ["cine", "cinema"] },
-  { key: "documentary", match: ["doc", "documental", "documentary"] },
-  { key: "advertising", match: ["ad", "publicidad", "advertising"] },
-];
+import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 
 const RentalHouse = () => {
   const { t, i18n } = useTranslation();
@@ -28,8 +17,6 @@ const RentalHouse = () => {
   const [search, setSearch] = useState("");
 
   const selectedCategory = params.get("category") ?? "";
-  const selectedFormat = params.get("format") ?? "";
-  const selectedUse = params.get("use") ?? "";
 
   const { data: categories = [] } = useQuery({
     queryKey: ["rental-categories"],
@@ -53,40 +40,68 @@ const RentalHouse = () => {
     },
   });
 
-  const matchesByTag = (p: any, keys: string[]) => {
-    const slugs = (p.product_tags ?? []).map((pt: any) => (pt.tag?.slug ?? "").toLowerCase());
-    const names = (p.product_tags ?? []).map((pt: any) =>
-      (pt.tag?.name_es ?? pt.tag?.name_en ?? "").toLowerCase()
-    );
-    const desc = (p.description_es ?? p.description_en ?? "").toLowerCase();
-    return keys.some((k) => slugs.includes(k) || names.some((n: string) => n.includes(k)) || desc.includes(k));
-  };
+  // Active dynamic filters as map { paramKey: string[] }
+  const dynFilters = useMemo(() => {
+    const out: Record<string, string[]> = {};
+    if (!selectedCategory) return out;
+    const specs = CATEGORY_FILTERS[selectedCategory] ?? [];
+    for (const spec of specs) {
+      const raw = params.get(spec.key);
+      out[spec.key] = raw ? raw.split(",").filter(Boolean) : [];
+    }
+    return out;
+  }, [params, selectedCategory]);
 
   const filtered = useMemo(() => {
     return products.filter((p: any) => {
+      // Category (single-select)
       if (selectedCategory && p.category?.slug !== selectedCategory) return false;
-      if (selectedFormat) {
-        const def = FORMATS.find((f) => f.key === selectedFormat);
-        if (def && def.match.length > 0 && !matchesByTag(p, def.match)) return false;
+
+      // Dynamic per-category filters (intersection)
+      const specs = CATEGORY_FILTERS[selectedCategory] ?? [];
+      for (const spec of specs) {
+        const active = dynFilters[spec.key] ?? [];
+        if (active.length === 0) continue;
+        const value = (p as any)[spec.column];
+        if (!value || !active.includes(value)) return false;
       }
-      if (selectedUse) {
-        const def = USES.find((u) => u.key === selectedUse);
-        if (def && !matchesByTag(p, def.match)) return false;
-      }
+
+      // Global search (name, description, brand, model, tags)
       if (search.trim()) {
         const q = search.toLowerCase();
-        const name = localized(p, "name", i18n.language).toLowerCase();
-        const desc = localized(p, "description", i18n.language).toLowerCase();
-        if (!name.includes(q) && !desc.includes(q)) return false;
+        const haystack = [
+          localized(p, "name", i18n.language),
+          localized(p, "description", i18n.language),
+          p.brand ?? "",
+          p.model ?? "",
+          p.slug ?? "",
+          ...(p.product_tags ?? []).map((pt: any) =>
+            localized(pt.tag ?? {}, "name", i18n.language)
+          ),
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [products, selectedCategory, selectedFormat, selectedUse, search, i18n.language]);
+  }, [products, selectedCategory, dynFilters, search, i18n.language]);
 
-  const setParam = (key: string, value: string) => {
-    if (value) params.set(key, value);
-    else params.delete(key);
-    setParams(params);
+  const setCategory = (slug: string) => {
+    const next = new URLSearchParams();
+    if (slug) next.set("category", slug);
+    setParams(next);
+  };
+
+  const toggleDynValue = (key: string, value: string) => {
+    const current = dynFilters[key] ?? [];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    const newParams = new URLSearchParams(params);
+    if (next.length === 0) newParams.delete(key);
+    else newParams.set(key, next.join(","));
+    setParams(newParams);
   };
 
   const clearFilters = () => {
@@ -94,9 +109,16 @@ const RentalHouse = () => {
     setSearch("");
   };
 
+  const activeCount =
+    Object.values(dynFilters).reduce((sum, arr) => sum + arr.length, 0) +
+    (selectedCategory ? 1 : 0) +
+    (search.trim() ? 1 : 0);
+
+  const dynamicSpecs = selectedCategory ? CATEGORY_FILTERS[selectedCategory] ?? [] : [];
+
   return (
     <div className="container-page py-20">
-      <div className="mb-12">
+      <header className="mb-10">
         <span className="cine-eyebrow">{t("rental.eyebrow")}</span>
         <h1 className="mt-3 text-4xl md:text-5xl font-display font-medium tracking-tight uppercase">
           {t("rental.title")}
@@ -104,59 +126,92 @@ const RentalHouse = () => {
         <p className="text-secondary mt-3 max-w-xl">
           {t("rental.subtitle", { count: filtered.length })}
         </p>
+      </header>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+        <Input
+          placeholder={t("rental.searchPlaceholder")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 bg-surface border-border focus-visible:ring-accent h-11"
+        />
       </div>
 
-      {/* Top filter bar */}
-      <div className="mb-10 p-5 rounded-sm bg-surface border border-border space-y-4">
-        <div className="grid lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-            <Input
-              placeholder={t("common.search")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-background border-border focus-visible:ring-accent"
-            />
-          </div>
+      {/* Category pills (always visible, single-select) */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <CategoryPill
+          active={!selectedCategory}
+          label={t("common.all")}
+          onClick={() => setCategory("")}
+        />
+        {categories.map((c: any) => (
+          <CategoryPill
+            key={c.id}
+            active={selectedCategory === c.slug}
+            label={localized(c, "name", i18n.language)}
+            onClick={() => setCategory(c.slug)}
+          />
+        ))}
+      </div>
 
-          <FilterSelect
-            label={t("rental.filters.category")}
-            value={selectedCategory}
-            onChange={(v) => setParam("category", v)}
-            options={[
-              { value: "", label: t("common.all") },
-              ...categories.map((c: any) => ({ value: c.slug, label: localized(c, "name", i18n.language) })),
-            ]}
-          />
-          <FilterSelect
-            label={t("rental.filters.format")}
-            value={selectedFormat}
-            onChange={(v) => setParam("format", v)}
-            options={[
-              { value: "", label: t("common.all") },
-              ...FORMATS.map((f) => ({ value: f.key, label: t(`rental.format.${f.key}`) })),
-            ]}
-          />
-          <FilterSelect
-            label={t("rental.filters.use")}
-            value={selectedUse}
-            onChange={(v) => setParam("use", v)}
-            options={[
-              { value: "", label: t("common.all") },
-              ...USES.map((u) => ({ value: u.key, label: t(`rental.use.${u.key}`) })),
-            ]}
-          />
+      {/* Dynamic subfilters */}
+      {dynamicSpecs.length > 0 && (
+        <div className="mb-6 p-5 rounded-sm bg-surface border border-border space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+          {dynamicSpecs.map((spec) => {
+            const active = dynFilters[spec.key] ?? [];
+            return (
+              <div key={spec.key}>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">
+                  {t(spec.labelKey)}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {spec.options.map((opt) => {
+                    const isActive = active.includes(opt.value);
+                    // labelKey may be a translation key or a literal label
+                    const label = opt.labelKey.includes(".")
+                      ? t(opt.labelKey)
+                      : opt.labelKey;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => toggleDynValue(spec.key, opt.value)}
+                        className={cn(
+                          "text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                          isActive
+                            ? "bg-accent text-accent-foreground border-accent"
+                            : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
+      {/* Active filter summary / clear */}
+      {activeCount > 0 && (
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <span className="text-xs text-secondary uppercase tracking-[0.18em]">
+            {t("rental.activeFilters", { count: activeCount })}
+          </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="self-end gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px]"
+            className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px]"
           >
             <X className="h-3 w-3" /> {t("rental.filters.clear")}
           </Button>
         </div>
-      </div>
+      )}
 
       {isLoading ? (
         <p className="text-secondary">{t("common.loading")}</p>
@@ -175,34 +230,27 @@ const RentalHouse = () => {
   );
 };
 
-const FilterSelect = ({
+const CategoryPill = ({
+  active,
   label,
-  value,
-  onChange,
-  options,
+  onClick,
 }: {
+  active: boolean;
   label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
+  onClick: () => void;
 }) => (
-  <div className="flex flex-col gap-1.5">
-    <span className="text-[10px] uppercase tracking-[0.22em] text-secondary">{label}</span>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "h-10 px-3 rounded-md bg-background border border-border text-sm text-foreground",
-        "focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
-      )}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-background">
-          {o.label}
-        </option>
-      ))}
-    </select>
-  </div>
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "text-[11px] px-4 py-2 rounded-sm border transition-colors uppercase tracking-[0.22em]",
+      active
+        ? "bg-accent text-accent-foreground border-accent"
+        : "bg-surface text-secondary border-border hover:border-accent hover:text-foreground"
+    )}
+  >
+    {label}
+  </button>
 );
 
 const RentalCard = ({ product }: { product: any }) => {
@@ -212,11 +260,17 @@ const RentalCard = ({ product }: { product: any }) => {
   const cat = product.category ? localized(product.category, "name", i18n.language) : "";
   const img: string | undefined = product.images?.[0];
 
-  // Build short specs from tags (first 3)
-  const specs: string[] = (product.product_tags ?? [])
-    .slice(0, 3)
-    .map((pt: any) => localized(pt.tag ?? {}, "name", i18n.language))
-    .filter(Boolean);
+  // Build short specs from structured fields first, then fallback to tags
+  const structured: string[] = [product.brand, product.mount, product.sensor_type, product.lens_type]
+    .filter(Boolean)
+    .slice(0, 3);
+  const specs: string[] =
+    structured.length > 0
+      ? structured
+      : (product.product_tags ?? [])
+          .slice(0, 3)
+          .map((pt: any) => localized(pt.tag ?? {}, "name", i18n.language))
+          .filter(Boolean);
 
   return (
     <Link
@@ -252,7 +306,10 @@ const RentalCard = ({ product }: { product: any }) => {
         {specs.length > 0 ? (
           <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] uppercase tracking-[0.18em] text-secondary">
             {specs.map((s, i) => (
-              <li key={i} className="relative pl-3 before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:bg-accent before:rounded-full">
+              <li
+                key={i}
+                className="relative pl-3 before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:bg-accent before:rounded-full"
+              >
                 {s}
               </li>
             ))}

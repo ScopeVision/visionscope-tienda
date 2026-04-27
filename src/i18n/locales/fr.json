@@ -53,21 +53,28 @@
     "eyebrow": "Rental House",
     "title": "Matériel cinéma professionnel",
     "subtitle": "{{count}} équipements sélectionnés pour réalisateurs, DOPs et productions.",
+    "searchPlaceholder": "Rechercher par nom, marque, modèle ou tag…",
+    "activeFilters": "{{count}} filtres actifs",
     "filters": {
       "category": "Catégorie",
+      "clear": "Effacer les filtres"
+    },
+    "dyn": {
+      "brand": "Marque",
+      "sensorType": "Type de capteur",
+      "mountType": "Monture",
+      "lensType": "Type d'optique",
       "format": "Format",
-      "use": "Usage",
-      "clear": "Effacer"
-    },
-    "format": {
-      "fullframe": "Full Frame",
-      "super35": "Super 35",
-      "other": "Autres"
-    },
-    "use": {
-      "cinema": "Cinéma",
-      "documentary": "Documentaire",
-      "advertising": "Publicité"
+      "lightingType": "Type d'éclairage",
+      "gripType": "Type de grip",
+      "accessoryType": "Type d'accessoire",
+      "kitType": "Type de kit",
+      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
+      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamorphique", "vintage": "Vintage" },
+      "light": { "tungsten": "Tungstène", "tubes": "Tubes", "panels": "Panneaux" },
+      "grip": { "tripods": "Trépieds", "rigging": "Rigging" },
+      "acc": { "monitor": "Moniteur", "wirelessVideo": "Vidéo Sans-fil", "batteries": "Batteries", "media": "Media / Stockage" },
+      "kit": { "camera": "Kits Caméra", "lens": "Kits Optiques", "lighting": "Kits Éclairage", "production": "Production Bundles" }
     },
     "viewGear": "Voir l'équipement",
     "empty": "Aucun équipement ne correspond aux filtres."
@@ -216,8 +223,11 @@
       "deleteConfirm": "Supprimer \"{{name}}\" ? Cette action est irréversible.",
       "noTags": "Aucune étiquette. Créez la première ci-dessous.",
       "newTagPlaceholder": "Nom de la nouvelle étiquette",
+      "specsHint": "Sélectionnez une catégorie dans l'onglet Général pour voir ses specs.",
+      "specsNone": "Cette catégorie n'a pas de specs supplémentaires.",
       "tabs": {
         "general": "Général",
+        "specs": "Specs",
         "content": "Contenu",
         "images": "Images"
       },
@@ -230,7 +240,9 @@
         "priceWeek": "Prix / semaine (€)",
         "deposit": "Caution (€)",
         "stock": "Stock",
-        "tags": "Étiquettes"
+        "tags": "Étiquettes",
+        "brand": "Marque",
+        "model": "Modèle"
       },
       "uploader": {
         "title": "Glissez des images ou cliquez pour téléverser",

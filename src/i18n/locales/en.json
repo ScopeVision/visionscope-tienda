@@ -53,21 +53,28 @@
     "eyebrow": "Rental House",
     "title": "Professional cinema gear",
     "subtitle": "{{count}} curated items for directors, DOPs and production companies.",
+    "searchPlaceholder": "Search by name, brand, model or tag…",
+    "activeFilters": "{{count}} active filters",
     "filters": {
       "category": "Category",
+      "clear": "Clear filters"
+    },
+    "dyn": {
+      "brand": "Brand",
+      "sensorType": "Sensor type",
+      "mountType": "Mount",
+      "lensType": "Lens type",
       "format": "Format",
-      "use": "Use",
-      "clear": "Clear"
-    },
-    "format": {
-      "fullframe": "Full Frame",
-      "super35": "Super 35",
-      "other": "Other"
-    },
-    "use": {
-      "cinema": "Cinema",
-      "documentary": "Documentary",
-      "advertising": "Advertising"
+      "lightingType": "Lighting type",
+      "gripType": "Grip type",
+      "accessoryType": "Accessory type",
+      "kitType": "Kit type",
+      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
+      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamorphic", "vintage": "Vintage" },
+      "light": { "tungsten": "Tungsten", "tubes": "Tubes", "panels": "Panels" },
+      "grip": { "tripods": "Tripods", "rigging": "Rigging" },
+      "acc": { "monitor": "Monitor", "wirelessVideo": "Wireless Video", "batteries": "Batteries", "media": "Media / Storage" },
+      "kit": { "camera": "Camera Kits", "lens": "Lens Kits", "lighting": "Lighting Kits", "production": "Production Bundles" }
     },
     "viewGear": "View gear",
     "empty": "No gear matches your filters."
@@ -216,8 +223,11 @@
       "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
       "noTags": "No tags yet. Create the first one below.",
       "newTagPlaceholder": "New tag name",
+      "specsHint": "Select a category in the General tab to see its specific specs.",
+      "specsNone": "This category has no extra specs.",
       "tabs": {
         "general": "General",
+        "specs": "Specs",
         "content": "Content",
         "images": "Images"
       },
@@ -230,7 +240,9 @@
         "priceWeek": "Price / week (€)",
         "deposit": "Deposit (€)",
         "stock": "Stock",
-        "tags": "Tags"
+        "tags": "Tags",
+        "brand": "Brand",
+        "model": "Model"
       },
       "uploader": {
         "title": "Drag images or click to upload",

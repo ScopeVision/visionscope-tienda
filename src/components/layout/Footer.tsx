@@ -20,7 +20,6 @@ export const Footer = () => {
           </h4>
           <ul className="space-y-2.5 text-sm">
             <li><Link to="/rental" className="text-foreground/80 hover:text-accent">{t("nav.rental")}</Link></li>
-            <li><Link to="/store" className="text-foreground/80 hover:text-accent">{t("nav.store")}</Link></li>
             <li><Link to="/projects" className="text-foreground/80 hover:text-accent">{t("nav.projects")}</Link></li>
             <li><Link to="/contact" className="text-foreground/80 hover:text-accent">{t("nav.contact")}</Link></li>
           </ul>

@@ -17,6 +17,10 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
+
+const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
+
 const schema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   category_id: z.string().uuid().nullable().optional(),
@@ -35,6 +39,17 @@ const schema = z.object({
   published: z.boolean(),
   images: z.array(z.string().url()),
   tag_ids: z.array(z.string().uuid()),
+  // structured fields
+  brand: optStr,
+  model: optStr,
+  mount: optStr,
+  sensor_type: optStr,
+  lens_type: optStr,
+  format: optStr,
+  lighting_type: optStr,
+  grip_type: optStr,
+  accessory_type: optStr,
+  kit_type: optStr,
 });
 
 export type ProductFormValues = z.infer<typeof schema>;
@@ -89,6 +104,16 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       published: product?.published ?? true,
       images: product?.images ?? [],
       tag_ids: (product?.product_tags ?? []).map((pt: any) => pt.tag_id),
+      brand: product?.brand ?? "",
+      model: product?.model ?? "",
+      mount: product?.mount ?? "",
+      sensor_type: product?.sensor_type ?? "",
+      lens_type: product?.lens_type ?? "",
+      format: product?.format ?? "",
+      lighting_type: product?.lighting_type ?? "",
+      grip_type: product?.grip_type ?? "",
+      accessory_type: product?.accessory_type ?? "",
+      kit_type: product?.kit_type ?? "",
     }),
     [product]
   );
@@ -113,6 +138,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
 
   const tagIds = form.watch("tag_ids");
   const images = form.watch("images");
+  const selectedCategoryId = form.watch("category_id");
+  const selectedCategorySlug = useMemo(
+    () => categories.find((c: any) => c.id === selectedCategoryId)?.slug ?? "",
+    [categories, selectedCategoryId]
+  );
+  const dynamicSpecs = CATEGORY_FILTERS[selectedCategorySlug] ?? [];
 
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
@@ -158,6 +189,16 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         stock: Number(values.stock),
         published: values.published,
         images: values.images,
+        brand: values.brand || null,
+        model: values.model || null,
+        mount: values.mount || null,
+        sensor_type: values.sensor_type || null,
+        lens_type: values.lens_type || null,
+        format: values.format || null,
+        lighting_type: values.lighting_type || null,
+        grip_type: values.grip_type || null,
+        accessory_type: values.accessory_type || null,
+        kit_type: values.kit_type || null,
       };
 
       let productId: string;
@@ -203,6 +244,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
         <TabsList className="bg-muted shrink-0">
           <TabsTrigger value="general">{t("admin.products.tabs.general")}</TabsTrigger>
+          <TabsTrigger value="specs">{t("admin.products.tabs.specs")}</TabsTrigger>
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
         </TabsList>
@@ -311,6 +353,46 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          {/* SPECS — structured fields based on category */}
+          <TabsContent value="specs" className="space-y-5 mt-0">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label={t("admin.products.fields.brand")}>
+                <Input {...form.register("brand")} placeholder="Sony, ARRI…" />
+              </Field>
+              <Field label={t("admin.products.fields.model")}>
+                <Input {...form.register("model")} placeholder="FX6, ALEXA Mini LF…" />
+              </Field>
+            </div>
+
+            {!selectedCategorySlug ? (
+              <p className="text-sm text-secondary border border-dashed border-border rounded-md p-4">
+                {t("admin.products.specsHint")}
+              </p>
+            ) : dynamicSpecs.length === 0 ? (
+              <p className="text-sm text-secondary border border-dashed border-border rounded-md p-4">
+                {t("admin.products.specsNone")}
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {dynamicSpecs.map((spec) => (
+                  <Field key={spec.key} label={t(spec.labelKey)}>
+                    <select
+                      {...form.register(spec.column as any)}
+                      className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="">—</option>
+                      {spec.options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* CONTENT */}
