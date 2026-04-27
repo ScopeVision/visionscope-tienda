@@ -62,6 +62,14 @@ const AdminLogin = () => {
           <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={loading}>
             {loading ? t("common.loading") : t("auth.login")}
           </Button>
+          {showSetupLink && (
+            <Link
+              to="/admin/setup"
+              className="block text-center text-xs text-secondary hover:text-foreground transition-colors mt-4"
+            >
+              {t("auth.setupLink")}
+            </Link>
+          )}
         </div>
       </form>
     </div>
