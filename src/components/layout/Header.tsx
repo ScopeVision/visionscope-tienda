@@ -27,7 +27,6 @@ export const Header = () => {
   const links = [
     { to: "/", label: t("nav.home"), end: true },
     { to: "/rental", label: t("nav.rental") },
-    { to: "/store", label: t("nav.store") },
     { to: "/projects", label: t("nav.projects") },
     { to: "/contact", label: t("nav.contact") },
   ];
