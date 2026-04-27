@@ -355,6 +355,46 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             </div>
           </TabsContent>
 
+          {/* SPECS — structured fields based on category */}
+          <TabsContent value="specs" className="space-y-5 mt-0">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label={t("admin.products.fields.brand")}>
+                <Input {...form.register("brand")} placeholder="Sony, ARRI…" />
+              </Field>
+              <Field label={t("admin.products.fields.model")}>
+                <Input {...form.register("model")} placeholder="FX6, ALEXA Mini LF…" />
+              </Field>
+            </div>
+
+            {!selectedCategorySlug ? (
+              <p className="text-sm text-secondary border border-dashed border-border rounded-md p-4">
+                {t("admin.products.specsHint")}
+              </p>
+            ) : dynamicSpecs.length === 0 ? (
+              <p className="text-sm text-secondary border border-dashed border-border rounded-md p-4">
+                {t("admin.products.specsNone")}
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {dynamicSpecs.map((spec) => (
+                  <Field key={spec.key} label={t(spec.labelKey)}>
+                    <select
+                      {...form.register(spec.column as any)}
+                      className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="">—</option>
+                      {spec.options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           {/* CONTENT */}
           <TabsContent value="content" className="space-y-6 mt-0">
             {(["es", "ca", "en", "fr"] as const).map((lang) => (
