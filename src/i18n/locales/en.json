@@ -223,8 +223,11 @@
       "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
       "noTags": "No tags yet. Create the first one below.",
       "newTagPlaceholder": "New tag name",
+      "specsHint": "Select a category in the General tab to see its specific specs.",
+      "specsNone": "This category has no extra specs.",
       "tabs": {
         "general": "General",
+        "specs": "Specs",
         "content": "Content",
         "images": "Images"
       },
@@ -237,7 +240,9 @@
         "priceWeek": "Price / week (€)",
         "deposit": "Deposit (€)",
         "stock": "Stock",
-        "tags": "Tags"
+        "tags": "Tags",
+        "brand": "Brand",
+        "model": "Model"
       },
       "uploader": {
         "title": "Drag images or click to upload",
