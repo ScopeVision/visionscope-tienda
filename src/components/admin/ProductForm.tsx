@@ -17,6 +17,10 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
+
+const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
+
 const schema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   category_id: z.string().uuid().nullable().optional(),
@@ -35,6 +39,17 @@ const schema = z.object({
   published: z.boolean(),
   images: z.array(z.string().url()),
   tag_ids: z.array(z.string().uuid()),
+  // structured fields
+  brand: optStr,
+  model: optStr,
+  mount: optStr,
+  sensor_type: optStr,
+  lens_type: optStr,
+  format: optStr,
+  lighting_type: optStr,
+  grip_type: optStr,
+  accessory_type: optStr,
+  kit_type: optStr,
 });
 
 export type ProductFormValues = z.infer<typeof schema>;
