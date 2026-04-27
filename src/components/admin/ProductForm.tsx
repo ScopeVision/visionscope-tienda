@@ -104,6 +104,16 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       published: product?.published ?? true,
       images: product?.images ?? [],
       tag_ids: (product?.product_tags ?? []).map((pt: any) => pt.tag_id),
+      brand: product?.brand ?? "",
+      model: product?.model ?? "",
+      mount: product?.mount ?? "",
+      sensor_type: product?.sensor_type ?? "",
+      lens_type: product?.lens_type ?? "",
+      format: product?.format ?? "",
+      lighting_type: product?.lighting_type ?? "",
+      grip_type: product?.grip_type ?? "",
+      accessory_type: product?.accessory_type ?? "",
+      kit_type: product?.kit_type ?? "",
     }),
     [product]
   );
