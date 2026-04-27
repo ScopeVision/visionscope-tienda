@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,13 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSetupLink, setShowSetupLink] = useState(false);
+
+  useEffect(() => {
+    supabase.rpc("has_any_admin").then(({ data }) => {
+      setShowSetupLink(!data);
+    });
+  }, []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +62,14 @@ const AdminLogin = () => {
           <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={loading}>
             {loading ? t("common.loading") : t("auth.login")}
           </Button>
+          {showSetupLink && (
+            <Link
+              to="/admin/setup"
+              className="block text-center text-xs text-secondary hover:text-foreground transition-colors mt-4"
+            >
+              {t("auth.setupLink")}
+            </Link>
+          )}
         </div>
       </form>
     </div>
