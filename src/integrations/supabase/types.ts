@@ -309,6 +309,8 @@ export type Database = {
       }
       products: {
         Row: {
+          accessory_type: string | null
+          brand: string | null
           category_id: string | null
           created_at: string
           deposit: number
@@ -316,8 +318,15 @@ export type Database = {
           description_en: string | null
           description_es: string | null
           description_fr: string | null
+          format: string | null
+          grip_type: string | null
           id: string
           images: string[]
+          kit_type: string | null
+          lens_type: string | null
+          lighting_type: string | null
+          model: string | null
+          mount: string | null
           name_ca: string | null
           name_en: string | null
           name_es: string
@@ -325,11 +334,14 @@ export type Database = {
           price_day: number
           price_week: number | null
           published: boolean
+          sensor_type: string | null
           slug: string
           stock: number
           updated_at: string
         }
         Insert: {
+          accessory_type?: string | null
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           deposit?: number
@@ -337,8 +349,15 @@ export type Database = {
           description_en?: string | null
           description_es?: string | null
           description_fr?: string | null
+          format?: string | null
+          grip_type?: string | null
           id?: string
           images?: string[]
+          kit_type?: string | null
+          lens_type?: string | null
+          lighting_type?: string | null
+          model?: string | null
+          mount?: string | null
           name_ca?: string | null
           name_en?: string | null
           name_es: string
@@ -346,11 +365,14 @@ export type Database = {
           price_day?: number
           price_week?: number | null
           published?: boolean
+          sensor_type?: string | null
           slug: string
           stock?: number
           updated_at?: string
         }
         Update: {
+          accessory_type?: string | null
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           deposit?: number
@@ -358,8 +380,15 @@ export type Database = {
           description_en?: string | null
           description_es?: string | null
           description_fr?: string | null
+          format?: string | null
+          grip_type?: string | null
           id?: string
           images?: string[]
+          kit_type?: string | null
+          lens_type?: string | null
+          lighting_type?: string | null
+          model?: string | null
+          mount?: string | null
           name_ca?: string | null
           name_en?: string | null
           name_es?: string
@@ -367,6 +396,7 @@ export type Database = {
           price_day?: number
           price_week?: number | null
           published?: boolean
+          sensor_type?: string | null
           slug?: string
           stock?: number
           updated_at?: string
