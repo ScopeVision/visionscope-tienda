@@ -172,7 +172,23 @@
     "password": "Password",
     "login": "Sign in",
     "loginError": "Invalid credentials",
-    "noAccess": "You don't have admin permissions"
+    "noAccess": "You don't have admin permissions",
+    "setupLink": "First time? Set up your admin account",
+    "setup": {
+      "title": "Set up the first administrator",
+      "subtitle": "Create the initial admin account. This page is only available once.",
+      "confirmPassword": "Confirm password",
+      "create": "Create administrator",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "alreadyConfigured": "System already configured",
+      "alreadyConfiguredHint": "An administrator already exists. Access the panel from the sign-in page.",
+      "goToLogin": "Go to sign in",
+      "creating": "Creating…",
+      "success": "Administrator created. Welcome!",
+      "checking": "Checking system state…",
+      "errorGeneric": "Could not complete setup. Please try again."
+    }
   },
   "admin": {
     "dashboard": "Dashboard",

@@ -172,7 +172,23 @@
     "password": "Contrasenya",
     "login": "Accedir",
     "loginError": "Credencials incorrectes",
-    "noAccess": "No tens permisos d'administrador"
+    "noAccess": "No tens permisos d'administrador",
+    "setupLink": "Primera vegada? Configura el teu compte d'administrador",
+    "setup": {
+      "title": "Configura el primer administrador",
+      "subtitle": "Crea el compte d'administrador inicial. Aquesta pàgina només està disponible una vegada.",
+      "confirmPassword": "Confirmar contrasenya",
+      "create": "Crear administrador",
+      "passwordMismatch": "Les contrasenyes no coincideixen",
+      "passwordTooShort": "La contrasenya ha de tenir almenys 8 caràcters",
+      "alreadyConfigured": "El sistema ja està configurat",
+      "alreadyConfiguredHint": "Ja existeix un administrador. Accedeix al panell des de la pàgina d'inici de sessió.",
+      "goToLogin": "Anar a l'inici de sessió",
+      "creating": "Creant…",
+      "success": "Administrador creat. Benvingut!",
+      "checking": "Comprovant estat del sistema…",
+      "errorGeneric": "No s'ha pogut completar la configuració. Torna-ho a provar."
+    }
   },
   "admin": {
     "dashboard": "Panell",

@@ -172,7 +172,23 @@
     "password": "Mot de passe",
     "login": "Connexion",
     "loginError": "Identifiants incorrects",
-    "noAccess": "Vous n'avez pas les droits d'administrateur"
+    "noAccess": "Vous n'avez pas les droits d'administrateur",
+    "setupLink": "Première fois ? Configurez votre compte administrateur",
+    "setup": {
+      "title": "Configurer le premier administrateur",
+      "subtitle": "Créez le compte administrateur initial. Cette page n'est disponible qu'une seule fois.",
+      "confirmPassword": "Confirmer le mot de passe",
+      "create": "Créer l'administrateur",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+      "alreadyConfigured": "Système déjà configuré",
+      "alreadyConfiguredHint": "Un administrateur existe déjà. Accédez au panneau depuis la page de connexion.",
+      "goToLogin": "Aller à la connexion",
+      "creating": "Création…",
+      "success": "Administrateur créé. Bienvenue !",
+      "checking": "Vérification de l'état du système…",
+      "errorGeneric": "Impossible de terminer la configuration. Veuillez réessayer."
+    }
   },
   "admin": {
     "dashboard": "Tableau de bord",

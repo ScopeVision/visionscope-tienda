@@ -175,7 +175,23 @@
     "password": "Contraseña",
     "login": "Acceder",
     "loginError": "Credenciales incorrectas",
-    "noAccess": "No tienes permisos de administrador"
+    "noAccess": "No tienes permisos de administrador",
+    "setupLink": "¿Primera vez? Configura tu cuenta de administrador",
+    "setup": {
+      "title": "Configura el primer administrador",
+      "subtitle": "Crea la cuenta de administrador inicial. Esta página solo está disponible una vez.",
+      "confirmPassword": "Confirmar contraseña",
+      "create": "Crear administrador",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+      "alreadyConfigured": "El sistema ya está configurado",
+      "alreadyConfiguredHint": "Ya existe un administrador. Accede al panel desde la página de inicio de sesión.",
+      "goToLogin": "Ir al inicio de sesión",
+      "creating": "Creando…",
+      "success": "Administrador creado. ¡Bienvenido!",
+      "checking": "Comprobando estado del sistema…",
+      "errorGeneric": "No se pudo completar la configuración. Inténtalo de nuevo."
+    }
   },
   "admin": {
     "dashboard": "Panel",
