@@ -138,6 +138,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
 
   const tagIds = form.watch("tag_ids");
   const images = form.watch("images");
+  const selectedCategoryId = form.watch("category_id");
+  const selectedCategorySlug = useMemo(
+    () => categories.find((c: any) => c.id === selectedCategoryId)?.slug ?? "",
+    [categories, selectedCategoryId]
+  );
+  const dynamicSpecs = CATEGORY_FILTERS[selectedCategorySlug] ?? [];
 
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
