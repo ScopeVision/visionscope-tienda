@@ -186,7 +186,8 @@
       "selectAtLeastOne": "Sélectionne au moins un élément",
       "addSelection": "Ajouter la sélection",
       "costHintTitle": "Le kit complet est plus avantageux",
-      "costHintBody": "Tu économises {{diff}} en prenant le kit complet."
+      "costHintBody": "Tu économises {{diff}} en prenant le kit complet.",
+      "chooseVariant": "Choisir une variante"
     }
   },
   "cart": {
@@ -325,7 +326,13 @@
       "noResults": "Aucun résultat",
       "basePrice": "(prix de base)",
       "overridePlaceholder": "€ override",
-      "saveProductFirst": "Enregistre d'abord le produit."
+      "saveProductFirst": "Enregistre d'abord le produit.",
+      "componentsTitleVariant": "Composants · {{name}}",
+      "variants": "Variantes",
+      "addVariant": "Ajouter",
+      "newVariantPlaceholder": "Nom de variante",
+      "variantExists": "Cette variante existe déjà",
+      "confirmDeleteVariant": "Supprimer la variante \"{{name}}\" et tous ses composants ?"
     }
   },
   "bookings": {

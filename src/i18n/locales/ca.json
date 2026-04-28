@@ -186,7 +186,8 @@
       "selectAtLeastOne": "Selecciona com a mínim un element",
       "addSelection": "Afegeix la selecció a la reserva",
       "costHintTitle": "El kit complet és més econòmic",
-      "costHintBody": "Estalvies {{diff}} triant el kit complet."
+      "costHintBody": "Estalvies {{diff}} triant el kit complet.",
+      "chooseVariant": "Tria una variant"
     }
   },
   "cart": {
@@ -325,7 +326,13 @@
       "noResults": "Sense resultats",
       "basePrice": "(preu base)",
       "overridePlaceholder": "€ override",
-      "saveProductFirst": "Desa primer el producte per gestionar els components."
+      "saveProductFirst": "Desa primer el producte per gestionar els components.",
+      "componentsTitleVariant": "Components · {{name}}",
+      "variants": "Variants",
+      "addVariant": "Afegir",
+      "newVariantPlaceholder": "Nom variant",
+      "variantExists": "Aquesta variant ja existeix",
+      "confirmDeleteVariant": "Eliminar la variant \"{{name}}\" i tots els seus components?"
     }
   },
   "bookings": {
