@@ -28,6 +28,7 @@ const ProductDetail = () => {
 
   const [mode, setMode] = useState<"kit" | "individual">("kit");
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
+  const [activeVariant, setActiveVariant] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
