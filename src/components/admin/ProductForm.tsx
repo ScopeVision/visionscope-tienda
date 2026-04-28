@@ -18,10 +18,12 @@ import { Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
+import { KitComponentsManager } from "./KitComponentsManager";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
 const schema = z.object({
+  kit_mode: z.enum(["individual", "lens_kit", "camera_kit", "pack"]).default("individual"),
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   category_id: z.string().uuid().nullable().optional(),
   name_es: z.string().trim().min(1).max(200),
@@ -114,6 +116,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       grip_type: product?.grip_type ?? "",
       accessory_type: product?.accessory_type ?? "",
       kit_type: product?.kit_type ?? "",
+      kit_mode: (product?.kit_mode as any) ?? "individual",
     }),
     [product]
   );
@@ -144,6 +147,8 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
     [categories, selectedCategoryId]
   );
   const dynamicSpecs = CATEGORY_FILTERS[selectedCategorySlug] ?? [];
+  const kitMode = form.watch("kit_mode");
+  const isLensesCategory = selectedCategorySlug === "lenses";
 
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
@@ -199,6 +204,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         grip_type: values.grip_type || null,
         accessory_type: values.accessory_type || null,
         kit_type: values.kit_type || null,
+        kit_mode: values.kit_mode ?? "individual",
       };
 
       let productId: string;
