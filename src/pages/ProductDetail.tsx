@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarIcon, ArrowLeft, ImageOff, Check } from "lucide-react";
+import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const cart = useCart();
   const [start, setStart] = useState<Date | undefined>(
     cart.startDate ? new Date(cart.startDate) : undefined
@@ -26,6 +25,9 @@ const ProductDetail = () => {
   const [end, setEnd] = useState<Date | undefined>(
     cart.endDate ? new Date(cart.endDate) : undefined
   );
+
+  const [mode, setMode] = useState<"kit" | "individual">("kit");
+  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -41,8 +43,25 @@ const ProductDetail = () => {
     enabled: !!slug,
   });
 
+  const isKit = product && (product as any).kit_mode && (product as any).kit_mode !== "individual";
+
+  const { data: components = [] } = useQuery({
+    queryKey: ["product-components", product?.id],
+    enabled: !!product?.id && !!isKit,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_components")
+        .select("*, child:products!product_components_child_product_id_fkey(id, slug, name_es, name_ca, name_en, name_fr, images, price_day, price_week, deposit, stock)")
+        .eq("parent_product_id", product!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
-  const calc = useMemo(() => {
+
+  const kitCalc = useMemo(() => {
     if (!product) return { subtotal: 0, weeklyApplied: false };
     return calcItemPrice({
       priceDay: Number(product.price_day),
@@ -52,6 +71,40 @@ const ProductDetail = () => {
     });
   }, [product, days]);
 
+  const individualCalc = useMemo(() => {
+    let total = 0;
+    let any = false;
+    components.forEach((c: any) => {
+      if (!selectedComponents.has(c.child_product_id)) return;
+      const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
+      const r = calcItemPrice({
+        priceDay,
+        priceWeek: c.child?.price_week ? Number(c.child.price_week) : null,
+        days,
+        quantity: c.quantity ?? 1,
+      });
+      total += r.subtotal;
+      any = any || r.weeklyApplied;
+    });
+    return { subtotal: total, weeklyApplied: any };
+  }, [components, selectedComponents, days]);
+
+  const allSelected =
+    components.length > 0 &&
+    components.every((c: any) => selectedComponents.has(c.child_product_id));
+  const showCostHint =
+    mode === "individual" && allSelected && individualCalc.subtotal > kitCalc.subtotal;
+
+  const toggleComponent = (id: string, available: boolean) => {
+    if (!available) return;
+    setSelectedComponents((curr) => {
+      const next = new Set(curr);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   if (isLoading) {
     return <div className="container-page py-20 text-secondary">{t("common.loading")}</div>;
   }
@@ -59,7 +112,7 @@ const ProductDetail = () => {
     return (
       <div className="container-page py-20">
         <p className="text-secondary">404</p>
-        <Link to="/catalog" className="text-accent hover:underline">
+        <Link to="/rental" className="text-accent hover:underline">
           {t("product.back")}
         </Link>
       </div>
@@ -75,6 +128,56 @@ const ProductDetail = () => {
     if (start && end) {
       cart.setDates(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
     }
+    if (isKit && mode === "individual") {
+      const picked = components.filter((c: any) => selectedComponents.has(c.child_product_id));
+      if (picked.length === 0) {
+        toast.error(t("product.kit.selectAtLeastOne"));
+        return;
+      }
+      picked.forEach((c: any) => {
+        const child = c.child;
+        if (!child) return;
+        const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
+        cart.add({
+          productId: child.id,
+          slug: child.slug,
+          name: localized(child, "name", i18n.language),
+          image: child.images?.[0],
+          priceDay,
+          priceWeek: child.price_week ? Number(child.price_week) : null,
+          deposit: Number(child.deposit ?? 0),
+          quantity: c.quantity ?? 1,
+        });
+      });
+      toast.success(t("product.added"));
+      return;
+    }
+
+    // Full kit OR individual product
+    if (isKit) {
+      // Expand kit into its components for shared inventory
+      components.forEach((c: any) => {
+        const child = c.child;
+        if (!child) return;
+        const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
+        cart.add({
+          productId: child.id,
+          slug: child.slug,
+          name: `${localized(child, "name", i18n.language)} · ${name}`,
+          image: child.images?.[0],
+          // Distribute kit price across components proportionally if components exist;
+          // simplest approach: charge each at its (override or base) price but cap total at kit price.
+          // For correctness we keep base prices here — kit pricing override applies via parent only when added as full kit.
+          priceDay,
+          priceWeek: child.price_week ? Number(child.price_week) : null,
+          deposit: Number(child.deposit ?? 0),
+          quantity: c.quantity ?? 1,
+        });
+      });
+      toast.success(t("product.added"));
+      return;
+    }
+
     cart.add({
       productId: product.id,
       slug: product.slug,
@@ -88,10 +191,18 @@ const ProductDetail = () => {
     toast.success(t("product.added"));
   };
 
+  const currentCalc = mode === "individual" ? individualCalc : kitCalc;
+  const canAdd =
+    mode === "individual"
+      ? selectedComponents.size > 0
+      : isKit
+        ? components.length > 0
+        : product.stock > 0;
+
   return (
     <div className="container-page py-10">
       <Link
-        to="/catalog"
+        to="/rental"
         className="inline-flex items-center gap-2 text-sm text-secondary hover:text-foreground mb-6"
       >
         <ArrowLeft className="h-4 w-4" /> {t("product.back")}
@@ -116,7 +227,11 @@ const ProductDetail = () => {
           {product.product_tags?.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">
               {product.product_tags.map((pt: any) => (
-                <Badge key={pt.tag.id} variant="secondary" className="bg-muted text-foreground font-normal">
+                <Badge
+                  key={pt.tag.id}
+                  variant="secondary"
+                  className="bg-muted text-foreground font-normal"
+                >
                   {localized(pt.tag, "name", i18n.language)}
                 </Badge>
               ))}
@@ -124,33 +239,143 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
-            <div className="flex items-baseline justify-between">
-              <div>
-                <span className="text-3xl font-medium">
-                  {formatCurrency(Number(product.price_day), i18n.language)}
-                </span>
-                <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
-              </div>
-              {product.price_week && (
-                <div className="text-right">
-                  <div className="text-sm text-secondary">{t("common.perWeek")}</div>
-                  <div className="font-medium">
-                    {formatCurrency(Number(product.price_week), i18n.language)}
-                  </div>
+            {/* Mode selector for kits */}
+            {isKit && components.length > 0 && (
+              <div className="mb-5">
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-md">
+                  <button
+                    type="button"
+                    onClick={() => setMode("kit")}
+                    className={cn(
+                      "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                      mode === "kit"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-secondary hover:text-foreground"
+                    )}
+                  >
+                    {t("product.kit.fullKit")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("individual")}
+                    className={cn(
+                      "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                      mode === "individual"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-secondary hover:text-foreground"
+                    )}
+                  >
+                    {t("product.kit.individualSelection")}
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="mt-4 text-sm text-secondary flex items-center justify-between">
-              <span>{t("product.deposit")}</span>
-              <span className="text-foreground font-medium">
-                {formatCurrency(Number(product.deposit), i18n.language)}
-              </span>
-            </div>
-            <div className="mt-1 text-sm text-secondary flex items-center justify-between">
-              <span>{t("product.stock")}</span>
-              <span className="text-foreground">{product.stock}</span>
-            </div>
+            {/* Pricing block */}
+            {mode === "kit" && (
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-3xl font-medium">
+                    {formatCurrency(Number(product.price_day), i18n.language)}
+                  </span>
+                  <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
+                </div>
+                {product.price_week && (
+                  <div className="text-right">
+                    <div className="text-sm text-secondary">{t("common.perWeek")}</div>
+                    <div className="font-medium">
+                      {formatCurrency(Number(product.price_week), i18n.language)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Individual components list */}
+            {mode === "individual" && (
+              <div className="space-y-2">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.pickItems")}
+                </div>
+                {components.map((c: any) => {
+                  const child = c.child;
+                  if (!child) return null;
+                  const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
+                  const available = (child.stock ?? 0) > 0;
+                  const checked = selectedComponents.has(c.child_product_id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleComponent(c.child_product_id, available)}
+                      disabled={!available}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-md border text-left transition-colors",
+                        checked
+                          ? "border-accent bg-accent-soft"
+                          : "border-border bg-background hover:border-accent/60",
+                        !available && "opacity-40 cursor-not-allowed"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "h-5 w-5 rounded border flex items-center justify-center shrink-0",
+                          checked ? "bg-accent border-accent" : "border-border"
+                        )}
+                      >
+                        {checked && <Check className="h-3 w-3 text-accent-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {localized(child, "name", i18n.language)}
+                        </div>
+                        {!available && (
+                          <div className="text-[10px] text-destructive uppercase tracking-wider">
+                            {t("catalog.outOfStock")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium shrink-0">
+                        {formatCurrency(priceDay, i18n.language)}
+                        <span className="text-xs text-secondary ml-1">{t("common.perDay")}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {showCostHint && (
+                  <div className="mt-3 p-3 rounded-md border border-accent bg-accent-soft flex items-start gap-2">
+                    <Sparkles className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <div className="font-medium">{t("product.kit.costHintTitle")}</div>
+                      <div className="text-secondary mt-0.5">
+                        {t("product.kit.costHintBody", {
+                          diff: formatCurrency(
+                            individualCalc.subtotal - kitCalc.subtotal,
+                            i18n.language
+                          ),
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isKit && (
+              <>
+                <div className="mt-4 text-sm text-secondary flex items-center justify-between">
+                  <span>{t("product.deposit")}</span>
+                  <span className="text-foreground font-medium">
+                    {formatCurrency(Number(product.deposit), i18n.language)}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-secondary flex items-center justify-between">
+                  <span>{t("product.stock")}</span>
+                  <span className="text-foreground">{product.stock}</span>
+                </div>
+              </>
+            )}
 
             <div className="mt-6">
               <div className="text-xs uppercase tracking-wider text-secondary mb-3">
@@ -162,17 +387,17 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {start && end && (
+            {start && end && currentCalc.subtotal > 0 && (
               <div className="mt-5 p-4 rounded-lg bg-accent-soft">
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">
                     {days} {days === 1 ? t("common.day") : t("common.days")}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(calc.subtotal, i18n.language)}
+                    {formatCurrency(currentCalc.subtotal, i18n.language)}
                   </span>
                 </div>
-                {calc.weeklyApplied && (
+                {currentCalc.weeklyApplied && (
                   <div className="mt-1 flex items-center gap-1 text-xs text-accent-foreground/70">
                     <Check className="h-3 w-3" /> {t("product.weeklyDiscount")}
                   </div>
@@ -185,9 +410,13 @@ const ProductDetail = () => {
               size="lg"
               className="w-full mt-6 bg-foreground text-background hover:bg-foreground/90"
               onClick={handleAdd}
-              disabled={product.stock <= 0}
+              disabled={!canAdd}
             >
-              {product.stock <= 0 ? t("catalog.outOfStock") : t("product.addToCart")}
+              {!canAdd && !isKit
+                ? t("catalog.outOfStock")
+                : mode === "individual"
+                  ? t("product.kit.addSelection")
+                  : t("product.addToCart")}
             </Button>
           </div>
         </div>
@@ -226,7 +455,9 @@ const DatePopover = ({
           mode="single"
           selected={date}
           onSelect={onChange}
-          disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0)) || (fromDate ? d < fromDate : false)}
+          disabled={(d) =>
+            d < new Date(new Date().setHours(0, 0, 0, 0)) || (fromDate ? d < fromDate : false)
+          }
           initialFocus
           className={cn("p-3 pointer-events-auto")}
         />

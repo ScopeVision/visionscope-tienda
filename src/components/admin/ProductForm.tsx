@@ -18,10 +18,12 @@ import { Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
+import { KitComponentsManager } from "./KitComponentsManager";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
 const schema = z.object({
+  kit_mode: z.enum(["individual", "lens_kit", "camera_kit", "pack"]).default("individual"),
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   category_id: z.string().uuid().nullable().optional(),
   name_es: z.string().trim().min(1).max(200),
@@ -114,6 +116,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       grip_type: product?.grip_type ?? "",
       accessory_type: product?.accessory_type ?? "",
       kit_type: product?.kit_type ?? "",
+      kit_mode: (product?.kit_mode as any) ?? "individual",
     }),
     [product]
   );
@@ -144,6 +147,8 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
     [categories, selectedCategoryId]
   );
   const dynamicSpecs = CATEGORY_FILTERS[selectedCategorySlug] ?? [];
+  const kitMode = form.watch("kit_mode");
+  const isLensesCategory = selectedCategorySlug === "lenses";
 
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
@@ -199,6 +204,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         grip_type: values.grip_type || null,
         accessory_type: values.accessory_type || null,
         kit_type: values.kit_type || null,
+        kit_mode: values.kit_mode ?? "individual",
       };
 
       let productId: string;
@@ -245,6 +251,9 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         <TabsList className="bg-muted shrink-0">
           <TabsTrigger value="general">{t("admin.products.tabs.general")}</TabsTrigger>
           <TabsTrigger value="specs">{t("admin.products.tabs.specs")}</TabsTrigger>
+          {kitMode !== "individual" && (
+            <TabsTrigger value="kit">{t("admin.products.tabs.kit")}</TabsTrigger>
+          )}
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
         </TabsList>
@@ -300,7 +309,39 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </div>
             </div>
 
-            {/* Tags multi-select */}
+            {/* Kit mode selector */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-secondary mb-2 block">
+                {t("admin.products.fields.kitMode")}
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(["individual", "lens_kit", "camera_kit", "pack"] as const).map((m) => {
+                  const active = kitMode === m;
+                  const disabled = m === "lens_kit" && selectedCategorySlug && !isLensesCategory;
+                  return (
+                    <button
+                      type="button"
+                      key={m}
+                      disabled={!!disabled}
+                      onClick={() => form.setValue("kit_mode", m, { shouldDirty: true })}
+                      className={cn(
+                        "px-3 py-2 rounded-md border text-xs uppercase tracking-wider transition-colors",
+                        active
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-background text-secondary border-border hover:border-accent hover:text-foreground",
+                        disabled && "opacity-40 cursor-not-allowed"
+                      )}
+                    >
+                      {t(`admin.products.kitMode.${m}`)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-secondary mt-2">
+                {t(`admin.products.kitMode.${kitMode}Hint`)}
+              </p>
+            </div>
+
             <div>
               <Label className="text-xs uppercase tracking-wider text-secondary mb-2 block">
                 {t("admin.products.fields.tags")}
@@ -395,7 +436,17 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             )}
           </TabsContent>
 
-          {/* CONTENT */}
+          {/* KIT — components for kits/packs */}
+          {kitMode !== "individual" && (
+            <TabsContent value="kit" className="space-y-5 mt-0">
+              <KitComponentsManager
+                parentProductId={product?.id ?? null}
+                pickerCategorySlug={kitMode === "lens_kit" ? "lenses" : undefined}
+              />
+            </TabsContent>
+          )}
+
+
           <TabsContent value="content" className="space-y-6 mt-0">
             {(["es", "ca", "en", "fr"] as const).map((lang) => (
               <div key={lang} className="border border-border rounded-md p-4">

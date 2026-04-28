@@ -277,6 +277,57 @@ export type Database = {
         }
         Relationships: []
       }
+      product_components: {
+        Row: {
+          child_product_id: string
+          created_at: string
+          id: string
+          parent_product_id: string
+          price_day_override: number | null
+          quantity: number
+          sort_order: number
+          updated_at: string
+          variant_name: string | null
+        }
+        Insert: {
+          child_product_id: string
+          created_at?: string
+          id?: string
+          parent_product_id: string
+          price_day_override?: number | null
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+          variant_name?: string | null
+        }
+        Update: {
+          child_product_id?: string
+          created_at?: string
+          id?: string
+          parent_product_id?: string
+          price_day_override?: number | null
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+          variant_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_components_child_product_id_fkey"
+            columns: ["child_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_components_parent_product_id_fkey"
+            columns: ["parent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_tags: {
         Row: {
           product_id: string
@@ -322,6 +373,7 @@ export type Database = {
           grip_type: string | null
           id: string
           images: string[]
+          kit_mode: string
           kit_type: string | null
           lens_type: string | null
           lighting_type: string | null
@@ -353,6 +405,7 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          kit_mode?: string
           kit_type?: string | null
           lens_type?: string | null
           lighting_type?: string | null
@@ -384,6 +437,7 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          kit_mode?: string
           kit_type?: string | null
           lens_type?: string | null
           lighting_type?: string | null
