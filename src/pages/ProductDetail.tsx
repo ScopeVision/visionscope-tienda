@@ -292,8 +292,37 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
+            {/* Variant selector (camera kits, packs with variants) */}
+            {hasVariants && (
+              <div className="mb-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.chooseVariant")}
+                </div>
+                <div
+                  className="grid gap-2 p-1 bg-muted rounded-md"
+                  style={{ gridTemplateColumns: `repeat(${variantNames.length}, minmax(0,1fr))` }}
+                >
+                  {variantNames.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setActiveVariant(v)}
+                      className={cn(
+                        "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                        activeVariant === v
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-secondary hover:text-foreground"
+                      )}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Mode selector for kits */}
-            {isKit && components.length > 0 && (
+            {isKit && visibleComponents.length > 0 && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-md">
                   <button
