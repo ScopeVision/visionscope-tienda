@@ -69,12 +69,38 @@
       "gripType": "Type de grip",
       "accessoryType": "Type d'accessoire",
       "kitType": "Type de kit",
-      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
-      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamorphique", "vintage": "Vintage" },
-      "light": { "tungsten": "Tungstène", "tubes": "Tubes", "panels": "Panneaux" },
-      "grip": { "tripods": "Trépieds", "rigging": "Rigging" },
-      "acc": { "monitor": "Moniteur", "wirelessVideo": "Vidéo Sans-fil", "batteries": "Batteries", "media": "Media / Stockage" },
-      "kit": { "camera": "Kits Caméra", "lens": "Kits Optiques", "lighting": "Kits Éclairage", "production": "Production Bundles" }
+      "sensor": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format"
+      },
+      "lens": {
+        "zoom": "Zoom",
+        "prime": "Prime",
+        "anamorphic": "Anamorphique",
+        "vintage": "Vintage"
+      },
+      "light": {
+        "tungsten": "Tungstène",
+        "tubes": "Tubes",
+        "panels": "Panneaux"
+      },
+      "grip": {
+        "tripods": "Trépieds",
+        "rigging": "Rigging"
+      },
+      "acc": {
+        "monitor": "Moniteur",
+        "wirelessVideo": "Vidéo Sans-fil",
+        "batteries": "Batteries",
+        "media": "Media / Stockage"
+      },
+      "kit": {
+        "camera": "Kits Caméra",
+        "lens": "Kits Optiques",
+        "lighting": "Kits Éclairage",
+        "production": "Production Bundles"
+      }
     },
     "viewGear": "Voir l'équipement",
     "empty": "Aucun équipement ne correspond aux filtres."
@@ -133,7 +159,10 @@
       "availability": "Disponibilité",
       "clear": "Effacer les filtres"
     },
-    "view": { "grid": "Grille", "list": "Liste" },
+    "view": {
+      "grid": "Grille",
+      "list": "Liste"
+    },
     "empty": "Aucun équipement ne correspond à vos filtres.",
     "addToCart": "Ajouter à la réservation",
     "viewDetails": "Voir détails",
@@ -149,7 +178,16 @@
     "depositInfo": "La caution n'est pas incluse dans le prix final ; elle est remboursée à la fin de la location.",
     "weeklyDiscount": "Tarif hebdomadaire appliqué",
     "addToCart": "Ajouter à la réservation",
-    "added": "Ajouté à la réservation"
+    "added": "Ajouté à la réservation",
+    "kit": {
+      "fullKit": "Kit complet",
+      "individualSelection": "Sélection individuelle",
+      "pickItems": "Choisis les éléments",
+      "selectAtLeastOne": "Sélectionne au moins un élément",
+      "addSelection": "Ajouter la sélection",
+      "costHintTitle": "Le kit complet est plus avantageux",
+      "costHintBody": "Tu économises {{diff}} en prenant le kit complet."
+    }
   },
   "cart": {
     "title": "Votre réservation",
@@ -229,7 +267,8 @@
         "general": "Général",
         "specs": "Specs",
         "content": "Contenu",
-        "images": "Images"
+        "images": "Images",
+        "kit": "Composants"
       },
       "fields": {
         "slug": "Slug",
@@ -242,7 +281,8 @@
         "stock": "Stock",
         "tags": "Étiquettes",
         "brand": "Marque",
-        "model": "Modèle"
+        "model": "Modèle",
+        "kitMode": "Type de produit"
       },
       "uploader": {
         "title": "Glissez des images ou cliquez pour téléverser",
@@ -257,7 +297,35 @@
       "toast": {
         "saved": "Enregistré",
         "deleted": "Équipement supprimé"
+      },
+      "kitMode": {
+        "individual": "Individuel",
+        "lens_kit": "Lens Kit",
+        "camera_kit": "Camera Kit",
+        "pack": "Pack",
+        "individualHint": "Produit individuel avec son propre stock.",
+        "lens_kitHint": "Kit d'optiques. Ajoute des optiques dans l'onglet Composants.",
+        "camera_kitHint": "Kit caméra avec accessoires.",
+        "packHint": "Pack manuel avec son propre prix."
       }
+    },
+    "order": "Ordre",
+    "editCategory": "Modifier la catégorie",
+    "deleteCategoryTitle": "Supprimer la catégorie",
+    "deleteCategoryConfirm": "Supprimer la catégorie \"{{name}}\" ?",
+    "categorySaved": "Catégorie enregistrée",
+    "categoryDeleted": "Catégorie supprimée",
+    "categoryRequired": "Nom et slug requis",
+    "categorySlugTaken": "Une catégorie avec ce slug existe déjà",
+    "kit": {
+      "componentsTitle": "Composants du kit",
+      "componentsHint": "Ajoute des produits réels du catalogue. L'inventaire est partagé.",
+      "addItem": "Ajouter un produit",
+      "empty": "Aucun composant pour l'instant.",
+      "noResults": "Aucun résultat",
+      "basePrice": "(prix de base)",
+      "overridePlaceholder": "€ override",
+      "saveProductFirst": "Enregistre d'abord le produit."
     }
   },
   "bookings": {

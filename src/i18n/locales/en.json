@@ -69,12 +69,38 @@
       "gripType": "Grip type",
       "accessoryType": "Accessory type",
       "kitType": "Kit type",
-      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
-      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamorphic", "vintage": "Vintage" },
-      "light": { "tungsten": "Tungsten", "tubes": "Tubes", "panels": "Panels" },
-      "grip": { "tripods": "Tripods", "rigging": "Rigging" },
-      "acc": { "monitor": "Monitor", "wirelessVideo": "Wireless Video", "batteries": "Batteries", "media": "Media / Storage" },
-      "kit": { "camera": "Camera Kits", "lens": "Lens Kits", "lighting": "Lighting Kits", "production": "Production Bundles" }
+      "sensor": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format"
+      },
+      "lens": {
+        "zoom": "Zoom",
+        "prime": "Prime",
+        "anamorphic": "Anamorphic",
+        "vintage": "Vintage"
+      },
+      "light": {
+        "tungsten": "Tungsten",
+        "tubes": "Tubes",
+        "panels": "Panels"
+      },
+      "grip": {
+        "tripods": "Tripods",
+        "rigging": "Rigging"
+      },
+      "acc": {
+        "monitor": "Monitor",
+        "wirelessVideo": "Wireless Video",
+        "batteries": "Batteries",
+        "media": "Media / Storage"
+      },
+      "kit": {
+        "camera": "Camera Kits",
+        "lens": "Lens Kits",
+        "lighting": "Lighting Kits",
+        "production": "Production Bundles"
+      }
     },
     "viewGear": "View gear",
     "empty": "No gear matches your filters."
@@ -133,7 +159,10 @@
       "availability": "Availability",
       "clear": "Clear filters"
     },
-    "view": { "grid": "Grid", "list": "List" },
+    "view": {
+      "grid": "Grid",
+      "list": "List"
+    },
     "empty": "No items match your filters.",
     "addToCart": "Add to booking",
     "viewDetails": "View details",
@@ -149,7 +178,16 @@
     "depositInfo": "The deposit is not included in the final price; it is refunded at the end of the rental.",
     "weeklyDiscount": "Weekly rate applied",
     "addToCart": "Add to booking",
-    "added": "Added to booking"
+    "added": "Added to booking",
+    "kit": {
+      "fullKit": "Full Kit",
+      "individualSelection": "Individual Selection",
+      "pickItems": "Pick the items",
+      "selectAtLeastOne": "Select at least one item",
+      "addSelection": "Add selection to booking",
+      "costHintTitle": "Full kit is more cost efficient",
+      "costHintBody": "You save {{diff}} by choosing the full kit."
+    }
   },
   "cart": {
     "title": "Your booking",
@@ -229,7 +267,8 @@
         "general": "General",
         "specs": "Specs",
         "content": "Content",
-        "images": "Images"
+        "images": "Images",
+        "kit": "Components"
       },
       "fields": {
         "slug": "Slug",
@@ -242,7 +281,8 @@
         "stock": "Stock",
         "tags": "Tags",
         "brand": "Brand",
-        "model": "Model"
+        "model": "Model",
+        "kitMode": "Product type"
       },
       "uploader": {
         "title": "Drag images or click to upload",
@@ -257,7 +297,35 @@
       "toast": {
         "saved": "Saved successfully",
         "deleted": "Item deleted"
+      },
+      "kitMode": {
+        "individual": "Individual",
+        "lens_kit": "Lens Kit",
+        "camera_kit": "Camera Kit",
+        "pack": "Pack",
+        "individualHint": "Individual product with its own stock.",
+        "lens_kitHint": "Lens kit. Add existing lenses in the Components tab.",
+        "camera_kitHint": "Camera kit with accessories.",
+        "packHint": "Manual pack with its own price."
       }
+    },
+    "order": "Order",
+    "editCategory": "Edit category",
+    "deleteCategoryTitle": "Delete category",
+    "deleteCategoryConfirm": "Delete category \"{{name}}\"? Products assigned to it will become uncategorised.",
+    "categorySaved": "Category saved",
+    "categoryDeleted": "Category deleted",
+    "categoryRequired": "Name and slug are required",
+    "categorySlugTaken": "A category with that slug already exists",
+    "kit": {
+      "componentsTitle": "Kit components",
+      "componentsHint": "Add real catalog products. Inventory is shared: when a unit is booked it is no longer available here or as an individual product.",
+      "addItem": "Add product",
+      "empty": "No components yet.",
+      "noResults": "No results",
+      "basePrice": "(base price)",
+      "overridePlaceholder": "€ override",
+      "saveProductFirst": "Save the product first to manage its components."
     }
   },
   "bookings": {

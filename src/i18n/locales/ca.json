@@ -69,12 +69,38 @@
       "gripType": "Tipus de grip",
       "accessoryType": "Tipus d'accessori",
       "kitType": "Tipus de kit",
-      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
-      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamòrfic", "vintage": "Vintage" },
-      "light": { "tungsten": "Tungstè", "tubes": "Tubs", "panels": "Panells" },
-      "grip": { "tripods": "Trípodes", "rigging": "Rigging" },
-      "acc": { "monitor": "Monitor", "wirelessVideo": "Vídeo Wireless", "batteries": "Bateries", "media": "Media / Emmagatzematge" },
-      "kit": { "camera": "Kits de Càmera", "lens": "Kits d'Òptiques", "lighting": "Kits d'Il·luminació", "production": "Production Bundles" }
+      "sensor": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format"
+      },
+      "lens": {
+        "zoom": "Zoom",
+        "prime": "Prime",
+        "anamorphic": "Anamòrfic",
+        "vintage": "Vintage"
+      },
+      "light": {
+        "tungsten": "Tungstè",
+        "tubes": "Tubs",
+        "panels": "Panells"
+      },
+      "grip": {
+        "tripods": "Trípodes",
+        "rigging": "Rigging"
+      },
+      "acc": {
+        "monitor": "Monitor",
+        "wirelessVideo": "Vídeo Wireless",
+        "batteries": "Bateries",
+        "media": "Media / Emmagatzematge"
+      },
+      "kit": {
+        "camera": "Kits de Càmera",
+        "lens": "Kits d'Òptiques",
+        "lighting": "Kits d'Il·luminació",
+        "production": "Production Bundles"
+      }
     },
     "viewGear": "Veure equip",
     "empty": "No hi ha equips que coincideixin amb els filtres."
@@ -133,7 +159,10 @@
       "availability": "Disponibilitat",
       "clear": "Netejar filtres"
     },
-    "view": { "grid": "Quadrícula", "list": "Llista" },
+    "view": {
+      "grid": "Quadrícula",
+      "list": "Llista"
+    },
     "empty": "No hi ha equips que coincideixin amb els teus filtres.",
     "addToCart": "Afegir a la reserva",
     "viewDetails": "Veure detalls",
@@ -149,7 +178,16 @@
     "depositInfo": "La fiança no s'inclou en el preu final, es retorna en finalitzar el lloguer.",
     "weeklyDiscount": "Tarifa setmanal aplicada",
     "addToCart": "Afegir a la reserva",
-    "added": "Afegit a la reserva"
+    "added": "Afegit a la reserva",
+    "kit": {
+      "fullKit": "Kit complet",
+      "individualSelection": "Selecció individual",
+      "pickItems": "Selecciona els elements",
+      "selectAtLeastOne": "Selecciona com a mínim un element",
+      "addSelection": "Afegeix la selecció a la reserva",
+      "costHintTitle": "El kit complet és més econòmic",
+      "costHintBody": "Estalvies {{diff}} triant el kit complet."
+    }
   },
   "cart": {
     "title": "La teva reserva",
@@ -229,7 +267,8 @@
         "general": "General",
         "specs": "Specs",
         "content": "Contingut",
-        "images": "Imatges"
+        "images": "Imatges",
+        "kit": "Components"
       },
       "fields": {
         "slug": "Slug",
@@ -242,7 +281,8 @@
         "stock": "Estoc",
         "tags": "Etiquetes",
         "brand": "Marca",
-        "model": "Model"
+        "model": "Model",
+        "kitMode": "Tipus de producte"
       },
       "uploader": {
         "title": "Arrossega imatges o fes clic per pujar",
@@ -257,7 +297,35 @@
       "toast": {
         "saved": "Desat correctament",
         "deleted": "Equip eliminat"
+      },
+      "kitMode": {
+        "individual": "Individual",
+        "lens_kit": "Lens Kit",
+        "camera_kit": "Camera Kit",
+        "pack": "Pack",
+        "individualHint": "Producte individual amb estoc propi.",
+        "lens_kitHint": "Kit d'òptiques. Afegeix òptiques existents a la pestanya Components.",
+        "camera_kitHint": "Kit de càmera amb accessoris.",
+        "packHint": "Pack manual amb preu propi."
       }
+    },
+    "order": "Ordre",
+    "editCategory": "Edita categoria",
+    "deleteCategoryTitle": "Elimina categoria",
+    "deleteCategoryConfirm": "Eliminar la categoria \"{{name}}\"? Els productes assignats quedaran sense categoria.",
+    "categorySaved": "Categoria desada",
+    "categoryDeleted": "Categoria eliminada",
+    "categoryRequired": "Nom i slug són obligatoris",
+    "categorySlugTaken": "Ja existeix una categoria amb aquest slug",
+    "kit": {
+      "componentsTitle": "Components del kit",
+      "componentsHint": "Afegeix productes reals del catàleg. L'inventari es comparteix.",
+      "addItem": "Afegeix producte",
+      "empty": "Encara no hi ha components.",
+      "noResults": "Sense resultats",
+      "basePrice": "(preu base)",
+      "overridePlaceholder": "€ override",
+      "saveProductFirst": "Desa primer el producte per gestionar els components."
     }
   },
   "bookings": {

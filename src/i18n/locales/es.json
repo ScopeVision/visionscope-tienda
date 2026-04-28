@@ -69,12 +69,38 @@
       "gripType": "Tipo de grip",
       "accessoryType": "Tipo de accesorio",
       "kitType": "Tipo de kit",
-      "sensor": { "fullframe": "Full Frame", "super35": "Super 35", "largeformat": "Large Format" },
-      "lens": { "zoom": "Zoom", "prime": "Prime", "anamorphic": "Anamórfico", "vintage": "Vintage" },
-      "light": { "tungsten": "Tungsteno", "tubes": "Tubos", "panels": "Paneles" },
-      "grip": { "tripods": "Trípodes", "rigging": "Rigging" },
-      "acc": { "monitor": "Monitor", "wirelessVideo": "Vídeo Wireless", "batteries": "Baterías", "media": "Media / Almacenamiento" },
-      "kit": { "camera": "Kits de Cámara", "lens": "Kits de Ópticas", "lighting": "Kits de Iluminación", "production": "Production Bundles" }
+      "sensor": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format"
+      },
+      "lens": {
+        "zoom": "Zoom",
+        "prime": "Prime",
+        "anamorphic": "Anamórfico",
+        "vintage": "Vintage"
+      },
+      "light": {
+        "tungsten": "Tungsteno",
+        "tubes": "Tubos",
+        "panels": "Paneles"
+      },
+      "grip": {
+        "tripods": "Trípodes",
+        "rigging": "Rigging"
+      },
+      "acc": {
+        "monitor": "Monitor",
+        "wirelessVideo": "Vídeo Wireless",
+        "batteries": "Baterías",
+        "media": "Media / Almacenamiento"
+      },
+      "kit": {
+        "camera": "Kits de Cámara",
+        "lens": "Kits de Ópticas",
+        "lighting": "Kits de Iluminación",
+        "production": "Production Bundles"
+      }
     },
     "viewGear": "Ver equipo",
     "empty": "No hay equipos que coincidan con tus filtros."
@@ -152,7 +178,16 @@
     "depositInfo": "La fianza no se incluye en el precio final, se devuelve al finalizar el alquiler.",
     "weeklyDiscount": "Tarifa semanal aplicada",
     "addToCart": "Añadir a la reserva",
-    "added": "Añadido a la reserva"
+    "added": "Añadido a la reserva",
+    "kit": {
+      "fullKit": "Kit completo",
+      "individualSelection": "Selección individual",
+      "pickItems": "Selecciona los elementos",
+      "selectAtLeastOne": "Selecciona al menos un elemento",
+      "addSelection": "Añadir selección a la reserva",
+      "costHintTitle": "El kit completo es más económico",
+      "costHintBody": "Ahorras {{diff}} eligiendo el kit completo."
+    }
   },
   "cart": {
     "title": "Tu reserva",
@@ -232,7 +267,8 @@
         "general": "General",
         "specs": "Specs",
         "content": "Contenido",
-        "images": "Imágenes"
+        "images": "Imágenes",
+        "kit": "Componentes"
       },
       "fields": {
         "slug": "Slug",
@@ -245,7 +281,8 @@
         "stock": "Stock",
         "tags": "Etiquetas",
         "brand": "Marca",
-        "model": "Modelo"
+        "model": "Modelo",
+        "kitMode": "Tipo de producto"
       },
       "uploader": {
         "title": "Arrastra imágenes o haz clic para subir",
@@ -260,7 +297,35 @@
       "toast": {
         "saved": "Guardado correctamente",
         "deleted": "Equipo eliminado"
+      },
+      "kitMode": {
+        "individual": "Individual",
+        "lens_kit": "Lens Kit",
+        "camera_kit": "Camera Kit",
+        "pack": "Pack",
+        "individualHint": "Producto individual con stock propio.",
+        "lens_kitHint": "Kit de ópticas. Añade ópticas existentes en la pestaña Componentes.",
+        "camera_kitHint": "Kit de cámara con accesorios. Próximamente: variantes.",
+        "packHint": "Pack manual: agrupa productos con un precio propio."
       }
+    },
+    "order": "Orden",
+    "editCategory": "Editar categoría",
+    "deleteCategoryTitle": "Eliminar categoría",
+    "deleteCategoryConfirm": "¿Eliminar la categoría \"{{name}}\"? Los productos asignados quedarán sin categoría.",
+    "categorySaved": "Categoría guardada",
+    "categoryDeleted": "Categoría eliminada",
+    "categoryRequired": "Nombre y slug son obligatorios",
+    "categorySlugTaken": "Ya existe una categoría con ese slug",
+    "kit": {
+      "componentsTitle": "Componentes del kit",
+      "componentsHint": "Añade productos reales del catálogo. El inventario se comparte: si una unidad se reserva, deja de estar disponible aquí y como producto individual.",
+      "addItem": "Añadir producto",
+      "empty": "Aún no hay componentes en este kit.",
+      "noResults": "Sin resultados",
+      "basePrice": "(precio base)",
+      "overridePlaceholder": "€ override",
+      "saveProductFirst": "Guarda primero el producto para gestionar sus componentes."
     }
   },
   "bookings": {
