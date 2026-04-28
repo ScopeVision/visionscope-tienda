@@ -122,7 +122,7 @@ const ProductDetail = () => {
   const individualCalc = useMemo(() => {
     let total = 0;
     let any = false;
-    components.forEach((c: any) => {
+    visibleComponents.forEach((c: any) => {
       if (!selectedComponents.has(c.child_product_id)) return;
       const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
       const r = calcItemPrice({
@@ -135,11 +135,11 @@ const ProductDetail = () => {
       any = any || r.weeklyApplied;
     });
     return { subtotal: total, weeklyApplied: any };
-  }, [components, selectedComponents, days]);
+  }, [visibleComponents, selectedComponents, days]);
 
   const allSelected =
-    components.length > 0 &&
-    components.every((c: any) => selectedComponents.has(c.child_product_id));
+    visibleComponents.length > 0 &&
+    visibleComponents.every((c: any) => selectedComponents.has(c.child_product_id));
   const showCostHint =
     mode === "individual" && allSelected && individualCalc.subtotal > kitCalc.subtotal;
 
