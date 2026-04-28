@@ -251,6 +251,9 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         <TabsList className="bg-muted shrink-0">
           <TabsTrigger value="general">{t("admin.products.tabs.general")}</TabsTrigger>
           <TabsTrigger value="specs">{t("admin.products.tabs.specs")}</TabsTrigger>
+          {kitMode !== "individual" && (
+            <TabsTrigger value="kit">{t("admin.products.tabs.kit")}</TabsTrigger>
+          )}
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
         </TabsList>
