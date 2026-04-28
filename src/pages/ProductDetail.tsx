@@ -75,6 +75,11 @@ const ProductDetail = () => {
     if (hasVariants && !activeVariant) setActiveVariant(variantNames[0]);
   }, [hasVariants, activeVariant, variantNames]);
 
+  // Reset selection when variant changes.
+  useEffect(() => {
+    setSelectedComponents(new Set());
+  }, [hasVariants, activeVariant, variantNames]);
+
   // Components shown for the currently active variant (or all if no variants).
   const visibleComponents = useMemo(() => {
     if (!hasVariants) return components;
