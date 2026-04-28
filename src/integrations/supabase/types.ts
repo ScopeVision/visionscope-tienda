@@ -521,6 +521,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      available_stock: {
+        Args: { _end: string; _product_id: string; _start: string }
+        Returns: number
+      }
       bootstrap_first_admin: { Args: { _user_id: string }; Returns: undefined }
       has_any_admin: { Args: never; Returns: boolean }
       has_role: {
