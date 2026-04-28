@@ -436,7 +436,17 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             )}
           </TabsContent>
 
-          {/* CONTENT */}
+          {/* KIT — components for kits/packs */}
+          {kitMode !== "individual" && (
+            <TabsContent value="kit" className="space-y-5 mt-0">
+              <KitComponentsManager
+                parentProductId={product?.id ?? null}
+                pickerCategorySlug={kitMode === "lens_kit" ? "lenses" : undefined}
+              />
+            </TabsContent>
+          )}
+
+
           <TabsContent value="content" className="space-y-6 mt-0">
             {(["es", "ca", "en", "fr"] as const).map((lang) => (
               <div key={lang} className="border border-border rounded-md p-4">
