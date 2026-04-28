@@ -78,7 +78,7 @@ const ProductDetail = () => {
   // Reset selection when variant changes.
   useEffect(() => {
     setSelectedComponents(new Set());
-  }, [hasVariants, activeVariant, variantNames]);
+  }, [activeVariant]);
 
   // Components shown for the currently active variant (or all if no variants).
   const visibleComponents = useMemo(() => {
