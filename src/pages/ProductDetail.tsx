@@ -379,11 +379,15 @@ const ProductDetail = () => {
                 <div className="text-xs uppercase tracking-wider text-secondary mb-2">
                   {t("product.kit.pickItems")}
                 </div>
-                {components.map((c: any) => {
+                {visibleComponents.map((c: any) => {
                   const child = c.child;
                   if (!child) return null;
                   const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
-                  const available = (child.stock ?? 0) > 0;
+                  const dateAware = start && end;
+                  const stockForRange = dateAware
+                    ? (availability[c.child_product_id] ?? child.stock ?? 0)
+                    : (child.stock ?? 0);
+                  const available = stockForRange > 0;
                   const checked = selectedComponents.has(c.child_product_id);
                   return (
                     <button
