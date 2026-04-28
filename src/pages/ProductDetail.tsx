@@ -60,6 +60,53 @@ const ProductDetail = () => {
     },
   });
 
+  // Detect variants (camera_kit) — group components by variant_name.
+  const variantNames = useMemo(() => {
+    const set = new Set<string>();
+    components.forEach((c: any) => {
+      if (c.variant_name) set.add(c.variant_name);
+    });
+    return Array.from(set);
+  }, [components]);
+
+  const hasVariants = variantNames.length > 0;
+
+  useEffect(() => {
+    if (hasVariants && !activeVariant) setActiveVariant(variantNames[0]);
+  }, [hasVariants, activeVariant, variantNames]);
+
+  // Components shown for the currently active variant (or all if no variants).
+  const visibleComponents = useMemo(() => {
+    if (!hasVariants) return components;
+    return components.filter((c: any) => c.variant_name === activeVariant);
+  }, [components, hasVariants, activeVariant]);
+
+  // Availability check per date range — fetches available_stock for visible items.
+  const availabilityKey = visibleComponents.map((c: any) => c.child_product_id).join(",");
+  const { data: availability = {} } = useQuery({
+    queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
+    enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
+    queryFn: async () => {
+      const ids: string[] = isKit
+        ? visibleComponents.map((c: any) => c.child_product_id)
+        : product
+          ? [product.id]
+          : [];
+      const result: Record<string, number> = {};
+      await Promise.all(
+        ids.map(async (id) => {
+          const { data, error } = await supabase.rpc("available_stock", {
+            _product_id: id,
+            _start: start!.toISOString().slice(0, 10),
+            _end: end!.toISOString().slice(0, 10),
+          });
+          if (!error) result[id] = (data as number) ?? 0;
+        })
+      );
+      return result;
+    },
+  });
+
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
   const kitCalc = useMemo(() => {
