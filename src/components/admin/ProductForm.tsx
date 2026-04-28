@@ -442,6 +442,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               <KitComponentsManager
                 parentProductId={product?.id ?? null}
                 pickerCategorySlug={kitMode === "lens_kit" ? "lenses" : undefined}
+                useVariants={kitMode === "camera_kit"}
               />
             </TabsContent>
           )}
