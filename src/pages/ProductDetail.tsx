@@ -182,7 +182,9 @@ const ProductDetail = () => {
       cart.setDates(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
     }
     if (isKit && mode === "individual") {
-      const picked = components.filter((c: any) => selectedComponents.has(c.child_product_id));
+      const picked = visibleComponents.filter((c: any) =>
+        selectedComponents.has(c.child_product_id)
+      );
       if (picked.length === 0) {
         toast.error(t("product.kit.selectAtLeastOne"));
         return;
@@ -208,19 +210,17 @@ const ProductDetail = () => {
 
     // Full kit OR individual product
     if (isKit) {
-      // Expand kit into its components for shared inventory
-      components.forEach((c: any) => {
+      // Expand active variant components into the cart for shared inventory
+      const variantSuffix = hasVariants && activeVariant ? ` · ${activeVariant}` : "";
+      visibleComponents.forEach((c: any) => {
         const child = c.child;
         if (!child) return;
         const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
         cart.add({
           productId: child.id,
           slug: child.slug,
-          name: `${localized(child, "name", i18n.language)} · ${name}`,
+          name: `${localized(child, "name", i18n.language)} · ${name}${variantSuffix}`,
           image: child.images?.[0],
-          // Distribute kit price across components proportionally if components exist;
-          // simplest approach: charge each at its (override or base) price but cap total at kit price.
-          // For correctness we keep base prices here — kit pricing override applies via parent only when added as full kit.
           priceDay,
           priceWeek: child.price_week ? Number(child.price_week) : null,
           deposit: Number(child.deposit ?? 0),
@@ -249,7 +249,7 @@ const ProductDetail = () => {
     mode === "individual"
       ? selectedComponents.size > 0
       : isKit
-        ? components.length > 0
+        ? visibleComponents.length > 0
         : product.stock > 0;
 
   return (
