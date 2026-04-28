@@ -28,6 +28,7 @@ const ProductDetail = () => {
 
   const [mode, setMode] = useState<"kit" | "individual">("kit");
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
+  const [activeVariant, setActiveVariant] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -59,6 +60,58 @@ const ProductDetail = () => {
     },
   });
 
+  // Detect variants (camera_kit) — group components by variant_name.
+  const variantNames = useMemo(() => {
+    const set = new Set<string>();
+    components.forEach((c: any) => {
+      if (c.variant_name) set.add(c.variant_name);
+    });
+    return Array.from(set);
+  }, [components]);
+
+  const hasVariants = variantNames.length > 0;
+
+  useEffect(() => {
+    if (hasVariants && !activeVariant) setActiveVariant(variantNames[0]);
+  }, [hasVariants, activeVariant, variantNames]);
+
+  // Reset selection when variant changes.
+  useEffect(() => {
+    setSelectedComponents(new Set());
+  }, [activeVariant]);
+
+  // Components shown for the currently active variant (or all if no variants).
+  const visibleComponents = useMemo(() => {
+    if (!hasVariants) return components;
+    return components.filter((c: any) => c.variant_name === activeVariant);
+  }, [components, hasVariants, activeVariant]);
+
+  // Availability check per date range — fetches available_stock for visible items.
+  const availabilityKey = visibleComponents.map((c: any) => c.child_product_id).join(",");
+  const { data: availability = {} } = useQuery({
+    queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
+    enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
+    queryFn: async () => {
+      const ids: string[] = isKit
+        ? visibleComponents.map((c: any) => c.child_product_id)
+        : product
+          ? [product.id]
+          : [];
+      const result: Record<string, number> = {};
+      await Promise.all(
+        ids.map(async (id) => {
+          const { data, error } = await supabase.rpc("available_stock", {
+            _product_id: id,
+            _start: start!.toISOString().slice(0, 10),
+            _end: end!.toISOString().slice(0, 10),
+          });
+          if (!error) result[id] = (data as number) ?? 0;
+        })
+      );
+      return result;
+    },
+  });
+
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
   const kitCalc = useMemo(() => {
@@ -74,7 +127,7 @@ const ProductDetail = () => {
   const individualCalc = useMemo(() => {
     let total = 0;
     let any = false;
-    components.forEach((c: any) => {
+    visibleComponents.forEach((c: any) => {
       if (!selectedComponents.has(c.child_product_id)) return;
       const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
       const r = calcItemPrice({
@@ -87,11 +140,11 @@ const ProductDetail = () => {
       any = any || r.weeklyApplied;
     });
     return { subtotal: total, weeklyApplied: any };
-  }, [components, selectedComponents, days]);
+  }, [visibleComponents, selectedComponents, days]);
 
   const allSelected =
-    components.length > 0 &&
-    components.every((c: any) => selectedComponents.has(c.child_product_id));
+    visibleComponents.length > 0 &&
+    visibleComponents.every((c: any) => selectedComponents.has(c.child_product_id));
   const showCostHint =
     mode === "individual" && allSelected && individualCalc.subtotal > kitCalc.subtotal;
 
@@ -129,7 +182,9 @@ const ProductDetail = () => {
       cart.setDates(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
     }
     if (isKit && mode === "individual") {
-      const picked = components.filter((c: any) => selectedComponents.has(c.child_product_id));
+      const picked = visibleComponents.filter((c: any) =>
+        selectedComponents.has(c.child_product_id)
+      );
       if (picked.length === 0) {
         toast.error(t("product.kit.selectAtLeastOne"));
         return;
@@ -155,19 +210,17 @@ const ProductDetail = () => {
 
     // Full kit OR individual product
     if (isKit) {
-      // Expand kit into its components for shared inventory
-      components.forEach((c: any) => {
+      // Expand active variant components into the cart for shared inventory
+      const variantSuffix = hasVariants && activeVariant ? ` · ${activeVariant}` : "";
+      visibleComponents.forEach((c: any) => {
         const child = c.child;
         if (!child) return;
         const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
         cart.add({
           productId: child.id,
           slug: child.slug,
-          name: `${localized(child, "name", i18n.language)} · ${name}`,
+          name: `${localized(child, "name", i18n.language)} · ${name}${variantSuffix}`,
           image: child.images?.[0],
-          // Distribute kit price across components proportionally if components exist;
-          // simplest approach: charge each at its (override or base) price but cap total at kit price.
-          // For correctness we keep base prices here — kit pricing override applies via parent only when added as full kit.
           priceDay,
           priceWeek: child.price_week ? Number(child.price_week) : null,
           deposit: Number(child.deposit ?? 0),
@@ -196,7 +249,7 @@ const ProductDetail = () => {
     mode === "individual"
       ? selectedComponents.size > 0
       : isKit
-        ? components.length > 0
+        ? visibleComponents.length > 0
         : product.stock > 0;
 
   return (
@@ -239,8 +292,37 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
+            {/* Variant selector (camera kits, packs with variants) */}
+            {hasVariants && (
+              <div className="mb-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.chooseVariant")}
+                </div>
+                <div
+                  className="grid gap-2 p-1 bg-muted rounded-md"
+                  style={{ gridTemplateColumns: `repeat(${variantNames.length}, minmax(0,1fr))` }}
+                >
+                  {variantNames.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setActiveVariant(v)}
+                      className={cn(
+                        "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                        activeVariant === v
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-secondary hover:text-foreground"
+                      )}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Mode selector for kits */}
-            {isKit && components.length > 0 && (
+            {isKit && visibleComponents.length > 0 && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-md">
                   <button
@@ -297,11 +379,15 @@ const ProductDetail = () => {
                 <div className="text-xs uppercase tracking-wider text-secondary mb-2">
                   {t("product.kit.pickItems")}
                 </div>
-                {components.map((c: any) => {
+                {visibleComponents.map((c: any) => {
                   const child = c.child;
                   if (!child) return null;
                   const priceDay = c.price_day_override ?? Number(child.price_day ?? 0);
-                  const available = (child.stock ?? 0) > 0;
+                  const dateAware = start && end;
+                  const stockForRange = dateAware
+                    ? (availability[c.child_product_id] ?? child.stock ?? 0)
+                    : (child.stock ?? 0);
+                  const available = stockForRange > 0;
                   const checked = selectedComponents.has(c.child_product_id);
                   return (
                     <button

@@ -186,7 +186,8 @@
       "selectAtLeastOne": "Select at least one item",
       "addSelection": "Add selection to booking",
       "costHintTitle": "Full kit is more cost efficient",
-      "costHintBody": "You save {{diff}} by choosing the full kit."
+      "costHintBody": "You save {{diff}} by choosing the full kit.",
+      "chooseVariant": "Choose a variant"
     }
   },
   "cart": {
@@ -325,7 +326,13 @@
       "noResults": "No results",
       "basePrice": "(base price)",
       "overridePlaceholder": "€ override",
-      "saveProductFirst": "Save the product first to manage its components."
+      "saveProductFirst": "Save the product first to manage its components.",
+      "componentsTitleVariant": "Components · {{name}}",
+      "variants": "Variants",
+      "addVariant": "Add",
+      "newVariantPlaceholder": "Variant name",
+      "variantExists": "Variant already exists",
+      "confirmDeleteVariant": "Delete variant \"{{name}}\" and all its components?"
     }
   },
   "bookings": {
