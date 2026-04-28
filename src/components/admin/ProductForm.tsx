@@ -309,7 +309,39 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </div>
             </div>
 
-            {/* Tags multi-select */}
+            {/* Kit mode selector */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-secondary mb-2 block">
+                {t("admin.products.fields.kitMode")}
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(["individual", "lens_kit", "camera_kit", "pack"] as const).map((m) => {
+                  const active = kitMode === m;
+                  const disabled = m === "lens_kit" && selectedCategorySlug && !isLensesCategory;
+                  return (
+                    <button
+                      type="button"
+                      key={m}
+                      disabled={!!disabled}
+                      onClick={() => form.setValue("kit_mode", m, { shouldDirty: true })}
+                      className={cn(
+                        "px-3 py-2 rounded-md border text-xs uppercase tracking-wider transition-colors",
+                        active
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-background text-secondary border-border hover:border-accent hover:text-foreground",
+                        disabled && "opacity-40 cursor-not-allowed"
+                      )}
+                    >
+                      {t(`admin.products.kitMode.${m}`)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-secondary mt-2">
+                {t(`admin.products.kitMode.${kitMode}Hint`)}
+              </p>
+            </div>
+
             <div>
               <Label className="text-xs uppercase tracking-wider text-secondary mb-2 block">
                 {t("admin.products.fields.tags")}
