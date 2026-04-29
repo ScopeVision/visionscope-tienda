@@ -176,12 +176,12 @@ const ProductDetail = () => {
   const kitCalc = useMemo(() => {
     if (!product) return { subtotal: 0, weeklyApplied: false };
     return calcItemPrice({
-      priceDay: Number(product.price_day),
-      priceWeek: product.price_week ? Number(product.price_week) : null,
+      priceDay: effectivePriceDay,
+      priceWeek: effectivePriceWeek,
       days,
       quantity: 1,
     });
-  }, [product, days]);
+  }, [product, days, effectivePriceDay, effectivePriceWeek]);
 
   const individualCalc = useMemo(() => {
     let total = 0;
@@ -293,11 +293,11 @@ const ProductDetail = () => {
     cart.add({
       productId: product.id,
       slug: product.slug,
-      name,
+      name: activePricedVariant ? `${name} · ${activePricedVariant.name}` : name,
       image: img,
-      priceDay: Number(product.price_day),
-      priceWeek: product.price_week ? Number(product.price_week) : null,
-      deposit: Number(product.deposit),
+      priceDay: effectivePriceDay,
+      priceWeek: effectivePriceWeek,
+      deposit: effectiveDeposit,
       quantity: 1,
     });
     toast.success(t("product.added"));
