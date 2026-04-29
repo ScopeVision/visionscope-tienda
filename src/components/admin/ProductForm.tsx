@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
+import { ProductVariantsManager } from "./ProductVariantsManager";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
@@ -251,6 +252,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         <TabsList className="bg-muted shrink-0">
           <TabsTrigger value="general">{t("admin.products.tabs.general")}</TabsTrigger>
           <TabsTrigger value="specs">{t("admin.products.tabs.specs")}</TabsTrigger>
+          <TabsTrigger value="variants">{t("admin.products.tabs.variants")}</TabsTrigger>
           {kitMode !== "individual" && (
             <TabsTrigger value="kit">{t("admin.products.tabs.kit")}</TabsTrigger>
           )}
@@ -436,7 +438,15 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             )}
           </TabsContent>
 
-          {/* KIT — components for kits/packs */}
+          {/* VARIANTS — variant-driven pricing (Basic / Pro …) */}
+          <TabsContent value="variants" className="space-y-5 mt-0">
+            <p className="text-xs text-secondary border border-dashed border-border rounded-md p-3">
+              {t("admin.variants.hint")}
+            </p>
+            <ProductVariantsManager parentProductId={product?.id ?? null} />
+          </TabsContent>
+
+          {/* KIT — components for kits/packs (legacy / lens kit picker) */}
           {kitMode !== "individual" && (
             <TabsContent value="kit" className="space-y-5 mt-0">
               <KitComponentsManager
