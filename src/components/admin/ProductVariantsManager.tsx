@@ -141,7 +141,7 @@ export const ProductVariantsManager = ({ parentProductId }: Props) => {
     setActiveId(data.id);
   };
 
-  const updateVariant = async (id: string, patch: Record<string, any>) => {
+  const updateVariant = async (id: string, patch: Partial<{ name: string; price_day: number; price_week: number | null; deposit: number; sort_order: number }>) => {
     const { error } = await supabase.from("product_variants").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else refreshVariants();
