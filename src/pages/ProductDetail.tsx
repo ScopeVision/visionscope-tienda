@@ -29,6 +29,7 @@ const ProductDetail = () => {
   const [mode, setMode] = useState<"kit" | "individual">("kit");
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [activeVariant, setActiveVariant] = useState<string | null>(null);
+  const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -46,6 +47,64 @@ const ProductDetail = () => {
 
   const isKit = product && (product as any).kit_mode && (product as any).kit_mode !== "individual";
 
+  // NEW: priced variants from product_variants table.
+  const { data: pricedVariants = [] } = useQuery({
+    queryKey: ["product-priced-variants", product?.id],
+    enabled: !!product?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", product!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const hasPricedVariants = pricedVariants.length > 0;
+
+  useEffect(() => {
+    if (hasPricedVariants && (!activeVariantId || !pricedVariants.find((v: any) => v.id === activeVariantId))) {
+      setActiveVariantId(pricedVariants[0].id);
+    }
+  }, [hasPricedVariants, pricedVariants, activeVariantId]);
+
+  const activePricedVariant = useMemo(
+    () => pricedVariants.find((v: any) => v.id === activeVariantId) ?? null,
+    [pricedVariants, activeVariantId]
+  );
+
+  // Effective pricing — variant overrides product when present.
+  const effectivePriceDay = activePricedVariant
+    ? Number(activePricedVariant.price_day)
+    : Number(product?.price_day ?? 0);
+  const effectivePriceWeek = activePricedVariant
+    ? activePricedVariant.price_week != null
+      ? Number(activePricedVariant.price_week)
+      : null
+    : product?.price_week
+      ? Number(product.price_week)
+      : null;
+  const effectiveDeposit = activePricedVariant
+    ? Number(activePricedVariant.deposit)
+    : Number(product?.deposit ?? 0);
+
+  // Includes for the active priced variant
+  const { data: variantIncludes = [] } = useQuery({
+    queryKey: ["variant-includes-public", activeVariantId],
+    enabled: !!activeVariantId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_components")
+        .select("*, child:products!product_components_child_product_id_fkey(id, slug, name_es, name_ca, name_en, name_fr, images, price_day, price_week, deposit, stock)")
+        .eq("variant_id", activeVariantId!)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: components = [] } = useQuery({
     queryKey: ["product-components", product?.id],
     enabled: !!product?.id && !!isKit,
@@ -60,7 +119,7 @@ const ProductDetail = () => {
     },
   });
 
-  // Detect variants (camera_kit) — group components by variant_name.
+  // Detect legacy variants (camera_kit) — group components by variant_name.
   const variantNames = useMemo(() => {
     const set = new Set<string>();
     components.forEach((c: any) => {
@@ -80,7 +139,7 @@ const ProductDetail = () => {
     setSelectedComponents(new Set());
   }, [activeVariant]);
 
-  // Components shown for the currently active variant (or all if no variants).
+  // Components shown for the currently active legacy variant (or all if no variants).
   const visibleComponents = useMemo(() => {
     if (!hasVariants) return components;
     return components.filter((c: any) => c.variant_name === activeVariant);
