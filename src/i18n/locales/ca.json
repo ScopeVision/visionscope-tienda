@@ -103,7 +103,8 @@
       }
     },
     "viewGear": "Veure equip",
-    "empty": "No hi ha equips que coincideixin amb els filtres."
+    "empty": "No hi ha equips que coincideixin amb els filtres.",
+    "from": "Des de"
   },
   "store": {
     "eyebrow": "Super Store",
@@ -187,7 +188,8 @@
       "addSelection": "Afegeix la selecció a la reserva",
       "costHintTitle": "El kit complet és més econòmic",
       "costHintBody": "Estalvies {{diff}} triant el kit complet.",
-      "chooseVariant": "Tria una variant"
+      "chooseVariant": "Tria una variant",
+      "includes": "Inclou"
     }
   },
   "cart": {
@@ -269,7 +271,8 @@
         "specs": "Specs",
         "content": "Contingut",
         "images": "Imatges",
-        "kit": "Components"
+        "kit": "Components",
+        "variants": "Variants"
       },
       "fields": {
         "slug": "Slug",
@@ -333,6 +336,18 @@
       "newVariantPlaceholder": "Nom variant",
       "variantExists": "Aquesta variant ja existeix",
       "confirmDeleteVariant": "Eliminar la variant \"{{name}}\" i tots els seus components?"
+    },
+    "variants": {
+      "title": "Variants",
+      "add": "Afegir variant",
+      "empty": "Encara no hi ha variants. Afegeix-ne una per definir preus i configuracions.",
+      "confirmDelete": "Eliminar aquesta variant i els seus components?",
+      "priceDay": "Preu / dia (€)",
+      "priceWeek": "Preu / setmana (€)",
+      "deposit": "Fiança (€)",
+      "includes": "Inclou en aquesta variant",
+      "noIncludes": "Aquesta variant encara no inclou productes.",
+      "hint": "Quan un producte té variants, el seu preu sempre prové de la variant seleccionada — no del preu base."
     }
   },
   "bookings": {

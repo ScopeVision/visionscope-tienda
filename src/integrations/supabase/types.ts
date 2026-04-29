@@ -287,6 +287,7 @@ export type Database = {
           quantity: number
           sort_order: number
           updated_at: string
+          variant_id: string | null
           variant_name: string | null
         }
         Insert: {
@@ -298,6 +299,7 @@ export type Database = {
           quantity?: number
           sort_order?: number
           updated_at?: string
+          variant_id?: string | null
           variant_name?: string | null
         }
         Update: {
@@ -309,6 +311,7 @@ export type Database = {
           quantity?: number
           sort_order?: number
           updated_at?: string
+          variant_id?: string | null
           variant_name?: string | null
         }
         Relationships: [
@@ -324,6 +327,13 @@ export type Database = {
             columns: ["parent_product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_components_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -354,6 +364,50 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          created_at: string
+          deposit: number
+          id: string
+          name: string
+          price_day: number
+          price_week: number | null
+          product_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit?: number
+          id?: string
+          name: string
+          price_day?: number
+          price_week?: number | null
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit?: number
+          id?: string
+          name?: string
+          price_day?: number
+          price_week?: number | null
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]

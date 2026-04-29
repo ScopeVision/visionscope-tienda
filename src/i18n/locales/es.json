@@ -103,7 +103,8 @@
       }
     },
     "viewGear": "Ver equipo",
-    "empty": "No hay equipos que coincidan con tus filtros."
+    "empty": "No hay equipos que coincidan con tus filtros.",
+    "from": "Desde"
   },
   "store": {
     "eyebrow": "Super Store",
@@ -187,7 +188,8 @@
       "addSelection": "Añadir selección a la reserva",
       "costHintTitle": "El kit completo es más económico",
       "costHintBody": "Ahorras {{diff}} eligiendo el kit completo.",
-      "chooseVariant": "Elige una variante"
+      "chooseVariant": "Elige una variante",
+      "includes": "Incluye"
     }
   },
   "cart": {
@@ -269,7 +271,8 @@
         "specs": "Specs",
         "content": "Contenido",
         "images": "Imágenes",
-        "kit": "Componentes"
+        "kit": "Componentes",
+        "variants": "Variantes"
       },
       "fields": {
         "slug": "Slug",
@@ -333,6 +336,18 @@
       "newVariantPlaceholder": "Nombre variante",
       "variantExists": "Esa variante ya existe",
       "confirmDeleteVariant": "¿Eliminar la variante \"{{name}}\" y todos sus componentes?"
+    },
+    "variants": {
+      "title": "Variantes",
+      "add": "Añadir variante",
+      "empty": "Aún no hay variantes. Añade una para definir precios y configuraciones.",
+      "confirmDelete": "¿Eliminar esta variante y sus componentes?",
+      "priceDay": "Precio / día (€)",
+      "priceWeek": "Precio / semana (€)",
+      "deposit": "Fianza (€)",
+      "includes": "Incluye en esta variante",
+      "noIncludes": "Esta variante aún no incluye productos.",
+      "hint": "Cuando un producto tiene variantes, su precio viene siempre de la variante seleccionada — no del precio base."
     }
   },
   "bookings": {

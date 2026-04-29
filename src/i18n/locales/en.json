@@ -103,7 +103,8 @@
       }
     },
     "viewGear": "View gear",
-    "empty": "No gear matches your filters."
+    "empty": "No gear matches your filters.",
+    "from": "From"
   },
   "store": {
     "eyebrow": "Super Store",
@@ -187,7 +188,8 @@
       "addSelection": "Add selection to booking",
       "costHintTitle": "Full kit is more cost efficient",
       "costHintBody": "You save {{diff}} by choosing the full kit.",
-      "chooseVariant": "Choose a variant"
+      "chooseVariant": "Choose a variant",
+      "includes": "Includes"
     }
   },
   "cart": {
@@ -269,7 +271,8 @@
         "specs": "Specs",
         "content": "Content",
         "images": "Images",
-        "kit": "Components"
+        "kit": "Components",
+        "variants": "Variants"
       },
       "fields": {
         "slug": "Slug",
@@ -333,6 +336,18 @@
       "newVariantPlaceholder": "Variant name",
       "variantExists": "Variant already exists",
       "confirmDeleteVariant": "Delete variant \"{{name}}\" and all its components?"
+    },
+    "variants": {
+      "title": "Variants",
+      "add": "Add variant",
+      "empty": "No variants yet. Add one to define pricing and configurations.",
+      "confirmDelete": "Delete this variant and its components?",
+      "priceDay": "Price / day (€)",
+      "priceWeek": "Price / week (€)",
+      "deposit": "Deposit (€)",
+      "includes": "Included in this variant",
+      "noIncludes": "This variant has no included items yet.",
+      "hint": "When a product has variants, its price always comes from the selected variant — not from the base price."
     }
   },
   "bookings": {

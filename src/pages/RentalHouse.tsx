@@ -32,7 +32,7 @@ const RentalHouse = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, category:categories(*), product_tags(tag:tags(*))")
+        .select("*, category:categories(*), product_tags(tag:tags(*)), variants:product_variants(id, price_day)")
         .eq("published", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -260,6 +260,12 @@ const RentalCard = ({ product }: { product: any }) => {
   const cat = product.category ? localized(product.category, "name", i18n.language) : "";
   const img: string | undefined = product.images?.[0];
 
+  const variants: any[] = product.variants ?? [];
+  const hasVariants = variants.length > 0;
+  const minVariantPrice = hasVariants
+    ? Math.min(...variants.map((v) => Number(v.price_day)))
+    : Number(product.price_day);
+
   // Build short specs from structured fields first, then fallback to tags
   const structured: string[] = [product.brand, product.mount, product.sensor_type, product.lens_type]
     .filter(Boolean)
@@ -320,8 +326,13 @@ const RentalCard = ({ product }: { product: any }) => {
 
         <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
           <div>
+            {hasVariants && (
+              <span className="text-[10px] uppercase tracking-[0.22em] text-secondary mr-1.5">
+                {t("rental.from")}
+              </span>
+            )}
             <span className="text-base font-medium text-foreground">
-              {formatCurrency(Number(product.price_day), i18n.language)}
+              {formatCurrency(minVariantPrice, i18n.language)}
             </span>
             <span className="text-[10px] uppercase tracking-[0.22em] text-secondary ml-1.5">
               {t("common.perDay")}

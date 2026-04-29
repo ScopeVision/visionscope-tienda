@@ -29,6 +29,7 @@ const ProductDetail = () => {
   const [mode, setMode] = useState<"kit" | "individual">("kit");
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [activeVariant, setActiveVariant] = useState<string | null>(null);
+  const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -46,6 +47,64 @@ const ProductDetail = () => {
 
   const isKit = product && (product as any).kit_mode && (product as any).kit_mode !== "individual";
 
+  // NEW: priced variants from product_variants table.
+  const { data: pricedVariants = [] } = useQuery({
+    queryKey: ["product-priced-variants", product?.id],
+    enabled: !!product?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", product!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const hasPricedVariants = pricedVariants.length > 0;
+
+  useEffect(() => {
+    if (hasPricedVariants && (!activeVariantId || !pricedVariants.find((v: any) => v.id === activeVariantId))) {
+      setActiveVariantId(pricedVariants[0].id);
+    }
+  }, [hasPricedVariants, pricedVariants, activeVariantId]);
+
+  const activePricedVariant = useMemo(
+    () => pricedVariants.find((v: any) => v.id === activeVariantId) ?? null,
+    [pricedVariants, activeVariantId]
+  );
+
+  // Effective pricing — variant overrides product when present.
+  const effectivePriceDay = activePricedVariant
+    ? Number(activePricedVariant.price_day)
+    : Number(product?.price_day ?? 0);
+  const effectivePriceWeek = activePricedVariant
+    ? activePricedVariant.price_week != null
+      ? Number(activePricedVariant.price_week)
+      : null
+    : product?.price_week
+      ? Number(product.price_week)
+      : null;
+  const effectiveDeposit = activePricedVariant
+    ? Number(activePricedVariant.deposit)
+    : Number(product?.deposit ?? 0);
+
+  // Includes for the active priced variant
+  const { data: variantIncludes = [] } = useQuery({
+    queryKey: ["variant-includes-public", activeVariantId],
+    enabled: !!activeVariantId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_components")
+        .select("*, child:products!product_components_child_product_id_fkey(id, slug, name_es, name_ca, name_en, name_fr, images, price_day, price_week, deposit, stock)")
+        .eq("variant_id", activeVariantId!)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: components = [] } = useQuery({
     queryKey: ["product-components", product?.id],
     enabled: !!product?.id && !!isKit,
@@ -60,7 +119,7 @@ const ProductDetail = () => {
     },
   });
 
-  // Detect variants (camera_kit) — group components by variant_name.
+  // Detect legacy variants (camera_kit) — group components by variant_name.
   const variantNames = useMemo(() => {
     const set = new Set<string>();
     components.forEach((c: any) => {
@@ -80,7 +139,7 @@ const ProductDetail = () => {
     setSelectedComponents(new Set());
   }, [activeVariant]);
 
-  // Components shown for the currently active variant (or all if no variants).
+  // Components shown for the currently active legacy variant (or all if no variants).
   const visibleComponents = useMemo(() => {
     if (!hasVariants) return components;
     return components.filter((c: any) => c.variant_name === activeVariant);
@@ -117,12 +176,12 @@ const ProductDetail = () => {
   const kitCalc = useMemo(() => {
     if (!product) return { subtotal: 0, weeklyApplied: false };
     return calcItemPrice({
-      priceDay: Number(product.price_day),
-      priceWeek: product.price_week ? Number(product.price_week) : null,
+      priceDay: effectivePriceDay,
+      priceWeek: effectivePriceWeek,
       days,
       quantity: 1,
     });
-  }, [product, days]);
+  }, [product, days, effectivePriceDay, effectivePriceWeek]);
 
   const individualCalc = useMemo(() => {
     let total = 0;
@@ -234,11 +293,11 @@ const ProductDetail = () => {
     cart.add({
       productId: product.id,
       slug: product.slug,
-      name,
+      name: activePricedVariant ? `${name} · ${activePricedVariant.name}` : name,
       image: img,
-      priceDay: Number(product.price_day),
-      priceWeek: product.price_week ? Number(product.price_week) : null,
-      deposit: Number(product.deposit),
+      priceDay: effectivePriceDay,
+      priceWeek: effectivePriceWeek,
+      deposit: effectiveDeposit,
       quantity: 1,
     });
     toast.success(t("product.added"));
@@ -292,8 +351,37 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
-            {/* Variant selector (camera kits, packs with variants) */}
-            {hasVariants && (
+            {/* Priced variants selector (Basic Kit / Pro Kit ...) */}
+            {hasPricedVariants && (
+              <div className="mb-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.chooseVariant")}
+                </div>
+                <div
+                  className="grid gap-2 p-1 bg-muted rounded-md"
+                  style={{ gridTemplateColumns: `repeat(${pricedVariants.length}, minmax(0,1fr))` }}
+                >
+                  {pricedVariants.map((v: any) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setActiveVariantId(v.id)}
+                      className={cn(
+                        "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                        activeVariantId === v.id
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-secondary hover:text-foreground"
+                      )}
+                    >
+                      {v.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Legacy variant selector (camera kits via product_components.variant_name) */}
+            {!hasPricedVariants && hasVariants && (
               <div className="mb-5">
                 <div className="text-xs uppercase tracking-wider text-secondary mb-2">
                   {t("product.kit.chooseVariant")}
@@ -321,8 +409,8 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Mode selector for kits */}
-            {isKit && visibleComponents.length > 0 && (
+            {/* Mode selector for kits (legacy path) */}
+            {!hasPricedVariants && isKit && visibleComponents.length > 0 && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-md">
                   <button
@@ -353,23 +441,45 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Pricing block */}
-            {mode === "kit" && (
+            {/* Pricing block — variant-driven when present */}
+            {(mode === "kit" || hasPricedVariants) && (
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="text-3xl font-medium">
-                    {formatCurrency(Number(product.price_day), i18n.language)}
+                    {formatCurrency(effectivePriceDay, i18n.language)}
                   </span>
                   <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
                 </div>
-                {product.price_week && (
+                {effectivePriceWeek && (
                   <div className="text-right">
                     <div className="text-sm text-secondary">{t("common.perWeek")}</div>
                     <div className="font-medium">
-                      {formatCurrency(Number(product.price_week), i18n.language)}
+                      {formatCurrency(effectivePriceWeek, i18n.language)}
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Includes list for the active priced variant */}
+            {hasPricedVariants && variantIncludes.length > 0 && (
+              <div className="mt-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.includes")}
+                </div>
+                <ul className="space-y-1.5">
+                  {variantIncludes.map((c: any) => (
+                    <li
+                      key={c.id}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <Check className="h-3.5 w-3.5 text-accent shrink-0" />
+                      <span className="truncate">
+                        {c.child ? localized(c.child, "name", i18n.language) : "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -453,7 +563,7 @@ const ProductDetail = () => {
                 <div className="mt-4 text-sm text-secondary flex items-center justify-between">
                   <span>{t("product.deposit")}</span>
                   <span className="text-foreground font-medium">
-                    {formatCurrency(Number(product.deposit), i18n.language)}
+                    {formatCurrency(effectiveDeposit, i18n.language)}
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-secondary flex items-center justify-between">
