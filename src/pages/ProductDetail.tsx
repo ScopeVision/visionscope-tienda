@@ -351,8 +351,37 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
-            {/* Variant selector (camera kits, packs with variants) */}
-            {hasVariants && (
+            {/* Priced variants selector (Basic Kit / Pro Kit ...) */}
+            {hasPricedVariants && (
+              <div className="mb-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.chooseVariant")}
+                </div>
+                <div
+                  className="grid gap-2 p-1 bg-muted rounded-md"
+                  style={{ gridTemplateColumns: `repeat(${pricedVariants.length}, minmax(0,1fr))` }}
+                >
+                  {pricedVariants.map((v: any) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setActiveVariantId(v.id)}
+                      className={cn(
+                        "py-2 px-3 rounded-md text-xs uppercase tracking-wider transition-colors",
+                        activeVariantId === v.id
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-secondary hover:text-foreground"
+                      )}
+                    >
+                      {v.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Legacy variant selector (camera kits via product_components.variant_name) */}
+            {!hasPricedVariants && hasVariants && (
               <div className="mb-5">
                 <div className="text-xs uppercase tracking-wider text-secondary mb-2">
                   {t("product.kit.chooseVariant")}
@@ -380,8 +409,8 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Mode selector for kits */}
-            {isKit && visibleComponents.length > 0 && (
+            {/* Mode selector for kits (legacy path) */}
+            {!hasPricedVariants && isKit && visibleComponents.length > 0 && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-md">
                   <button
@@ -412,23 +441,45 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Pricing block */}
-            {mode === "kit" && (
+            {/* Pricing block — variant-driven when present */}
+            {(mode === "kit" || hasPricedVariants) && (
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="text-3xl font-medium">
-                    {formatCurrency(Number(product.price_day), i18n.language)}
+                    {formatCurrency(effectivePriceDay, i18n.language)}
                   </span>
                   <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
                 </div>
-                {product.price_week && (
+                {effectivePriceWeek && (
                   <div className="text-right">
                     <div className="text-sm text-secondary">{t("common.perWeek")}</div>
                     <div className="font-medium">
-                      {formatCurrency(Number(product.price_week), i18n.language)}
+                      {formatCurrency(effectivePriceWeek, i18n.language)}
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Includes list for the active priced variant */}
+            {hasPricedVariants && variantIncludes.length > 0 && (
+              <div className="mt-5">
+                <div className="text-xs uppercase tracking-wider text-secondary mb-2">
+                  {t("product.kit.includes")}
+                </div>
+                <ul className="space-y-1.5">
+                  {variantIncludes.map((c: any) => (
+                    <li
+                      key={c.id}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <Check className="h-3.5 w-3.5 text-accent shrink-0" />
+                      <span className="truncate">
+                        {c.child ? localized(c.child, "name", i18n.language) : "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
