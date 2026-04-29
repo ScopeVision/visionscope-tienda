@@ -110,44 +110,48 @@ const Home = () => {
 
       {/* Categories — Rental House */}
       <section className="container-page py-24">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <span className="cine-eyebrow">Rental House</span>
-            <h2 className="mt-3 text-3xl md:text-4xl font-display font-medium tracking-tight uppercase">
-              {t("home.categoriesTitle")}
-            </h2>
-          </div>
+        <div className="flex flex-col items-center text-center mb-14">
+          <span className="cine-eyebrow">Rental House</span>
+          <h2 className="mt-3 text-3xl md:text-4xl font-display font-medium tracking-tight uppercase">
+            {t("home.categoriesTitle")}
+          </h2>
+          <div className="mt-5 h-px w-16 bg-accent/60" />
           <Link
             to="/rental"
-            className="text-[11px] uppercase tracking-[0.22em] text-accent hover:text-accent/80 inline-flex items-center gap-2"
+            className="mt-6 text-[11px] uppercase tracking-[0.22em] text-accent hover:text-accent/80 inline-flex items-center gap-2"
           >
             {t("nav.rental")} <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {categories.map((c: any) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
+          {categories.map((c: any, idx: number) => (
             <Link
               key={c.id}
               to={`/rental?category=${c.slug}`}
-              className="group block relative rounded-sm overflow-hidden bg-surface aspect-[4/5] border border-border transition-smooth hover:border-accent/60"
+              className="group block relative rounded-sm overflow-hidden bg-surface aspect-[4/3] border border-border transition-smooth hover:border-accent/60"
             >
               <img
                 src={CATEGORY_IMAGES[c.slug] ?? camImg}
                 alt={localized(c, "name", i18n.language)}
-                width={800}
-                height={1000}
+                width={900}
+                height={675}
                 loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover opacity-70 transition-all duration-500 group-hover:opacity-90 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:opacity-90 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-              <div className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.3em] text-accent opacity-0 group-hover:opacity-100 transition-opacity">
-                Explore
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/10" />
+              <div className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.3em] text-accent/80 font-medium tabular-nums">
+                {String(idx + 1).padStart(2, "0")}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <h3 className="text-foreground font-medium text-base uppercase tracking-[0.12em] group-hover:text-accent transition-colors">
-                  {localized(c, "name", i18n.language)}
-                </h3>
-                <div className="mt-2 h-px w-8 bg-accent transition-all duration-300 group-hover:w-16" />
+              <div className="absolute top-4 right-4 text-[10px] uppercase tracking-[0.3em] text-foreground/0 group-hover:text-accent transition-colors inline-flex items-center gap-1">
+                Explore <ArrowRight className="h-3 w-3" />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
+                <div>
+                  <h3 className="text-foreground font-medium text-base md:text-lg uppercase tracking-[0.14em] group-hover:text-accent transition-colors">
+                    {localized(c, "name", i18n.language)}
+                  </h3>
+                  <div className="mt-2 h-px w-8 bg-accent/70 transition-all duration-500 group-hover:w-20" />
+                </div>
               </div>
             </Link>
           ))}
