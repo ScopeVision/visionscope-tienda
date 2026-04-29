@@ -563,7 +563,7 @@ const ProductDetail = () => {
                 <div className="mt-4 text-sm text-secondary flex items-center justify-between">
                   <span>{t("product.deposit")}</span>
                   <span className="text-foreground font-medium">
-                    {formatCurrency(Number(product.deposit), i18n.language)}
+                    {formatCurrency(effectiveDeposit, i18n.language)}
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-secondary flex items-center justify-between">
