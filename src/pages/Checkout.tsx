@@ -66,19 +66,26 @@ const Checkout = () => {
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
     try {
+      // Normalize all string fields (trim + lowercase email)
+      const fullName = values.full_name.trim();
+      const email = values.email.trim().toLowerCase();
+
+      if (fullName.length < 1) throw new Error("El nombre es obligatorio");
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Email inválido");
+
       // 1. Create customer
       const { data: customer, error: cErr } = await supabase
         .from("customers")
         .insert({
-          full_name: values.full_name,
-          email: values.email,
-          phone: values.phone || null,
-          company: values.company || null,
-          tax_id: values.tax_id || null,
-          address_line1: values.address_line1 || null,
-          city: values.city || null,
-          postal_code: values.postal_code || null,
-          country: values.country || null,
+          full_name: fullName,
+          email,
+          phone: values.phone?.trim() || null,
+          company: values.company?.trim() || null,
+          tax_id: values.tax_id?.trim() || null,
+          address_line1: values.address_line1?.trim() || null,
+          city: values.city?.trim() || null,
+          postal_code: values.postal_code?.trim() || null,
+          country: values.country?.trim() || null,
         })
         .select()
         .single();
