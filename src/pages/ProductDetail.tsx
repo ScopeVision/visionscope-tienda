@@ -30,6 +30,7 @@ const ProductDetail = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [activeVariant, setActiveVariant] = useState<string | null>(null);
   const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
