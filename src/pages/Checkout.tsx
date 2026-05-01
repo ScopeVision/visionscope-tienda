@@ -127,8 +127,9 @@ const Checkout = () => {
       setSuccess(booking.reference);
       cart.clear();
     } catch (err: any) {
-      console.error(err);
-      toast.error(t("checkout.error"));
+      console.error("Checkout error:", err);
+      const msg = err?.message || err?.error_description || t("checkout.error");
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
