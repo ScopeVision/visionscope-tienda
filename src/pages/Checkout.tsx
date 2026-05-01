@@ -63,6 +63,40 @@ const Checkout = () => {
     }
   }
 
+  const explainCustomerError = (err: any, fullName: string, email: string): string => {
+    const raw = (err?.message || "").toLowerCase();
+    const code = err?.code;
+
+    // RLS violation on customers — diagnose which check failed
+    if (raw.includes("row-level security") || code === "42501") {
+      const reasons: string[] = [];
+      if (fullName.length < 1) {
+        reasons.push("• El nombre no puede estar vacío.");
+      } else if (fullName.length > 200) {
+        reasons.push("• El nombre supera los 200 caracteres permitidos.");
+      }
+      if (email.length < 3 || email.length > 255) {
+        reasons.push("• El email debe tener entre 3 y 255 caracteres.");
+      } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        reasons.push(
+          "• Formato de email no válido. Usa el formato nombre@dominio.com (sin espacios y con un punto en el dominio)."
+        );
+      }
+      if (reasons.length === 0) {
+        reasons.push(
+          "• Revisa que el nombre y el email estén bien escritos. El email debe ser válido (ej: nombre@dominio.com) y el nombre no puede ir vacío ni superar 200 caracteres."
+        );
+      }
+      return `No se pudo guardar el cliente:\n${reasons.join("\n")}`;
+    }
+
+    if (code === "23505") return "Ya existe un cliente con esos datos.";
+    if (raw.includes("violates check constraint")) {
+      return "Algún dato no cumple las reglas de validación. Revisa nombre y email.";
+    }
+    return err?.message || t("checkout.error");
+  };
+
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
     try {
@@ -70,8 +104,16 @@ const Checkout = () => {
       const fullName = values.full_name.trim();
       const email = values.email.trim().toLowerCase();
 
-      if (fullName.length < 1) throw new Error("El nombre es obligatorio");
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Email inválido");
+      if (fullName.length < 1) {
+        toast.error("El nombre es obligatorio.");
+        setSubmitting(false);
+        return;
+      }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        toast.error("Email no válido. Usa el formato nombre@dominio.com.");
+        setSubmitting(false);
+        return;
+      }
 
       // 1. Create customer
       const { data: customer, error: cErr } = await supabase
@@ -89,7 +131,12 @@ const Checkout = () => {
         })
         .select()
         .single();
-      if (cErr) throw cErr;
+      if (cErr) {
+        console.error("Customer insert error:", cErr);
+        toast.error(explainCustomerError(cErr, fullName, email), { duration: 8000 });
+        setSubmitting(false);
+        return;
+      }
 
       // 2. Create booking
       const { data: booking, error: bErr } = await supabase
@@ -136,11 +183,12 @@ const Checkout = () => {
     } catch (err: any) {
       console.error("Checkout error:", err);
       const msg = err?.message || err?.error_description || t("checkout.error");
-      toast.error(msg);
+      toast.error(msg, { duration: 8000 });
     } finally {
       setSubmitting(false);
     }
   };
+
 
   if (success) {
     return (
