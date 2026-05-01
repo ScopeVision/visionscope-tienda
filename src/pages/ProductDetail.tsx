@@ -30,6 +30,7 @@ const ProductDetail = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [activeVariant, setActiveVariant] = useState<string | null>(null);
   const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -234,7 +235,8 @@ const ProductDetail = () => {
   const name = localized(product, "name", i18n.language);
   const desc = localized(product, "description", i18n.language);
   const cat = product.category ? localized(product.category, "name", i18n.language) : "";
-  const img: string | undefined = product.images?.[0];
+  const images: string[] = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+  const img: string | undefined = images[0];
 
   const handleAdd = () => {
     if (start && end) {
@@ -321,15 +323,42 @@ const ProductDetail = () => {
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-12">
-        <div className="aspect-square rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden shadow-soft">
-          {img ? (
-            <img src={img} alt={name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full grid place-items-center text-secondary/40">
-              <ImageOff className="h-16 w-16" />
+        <div>
+          <div className="aspect-square rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden shadow-soft">
+            {images.length > 0 ? (
+              <img
+                src={images[Math.min(activeImageIdx, images.length - 1)]}
+                alt={name}
+                className="w-full h-full object-cover transition-opacity duration-300"
+              />
+            ) : (
+              <div className="w-full h-full grid place-items-center text-secondary/40">
+                <ImageOff className="h-16 w-16" />
+              </div>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {images.map((url, idx) => (
+                <button
+                  key={url + idx}
+                  type="button"
+                  onClick={() => setActiveImageIdx(idx)}
+                  className={cn(
+                    "aspect-square rounded-md overflow-hidden border-2 bg-muted transition-all",
+                    idx === activeImageIdx
+                      ? "border-accent opacity-100"
+                      : "border-transparent opacity-70 hover:opacity-100"
+                  )}
+                  aria-label={`${name} - ${idx + 1}`}
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
         </div>
+
 
         <div>
           <div className="text-xs uppercase tracking-[0.2em] text-accent mb-2">{cat}</div>
