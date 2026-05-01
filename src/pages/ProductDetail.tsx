@@ -234,7 +234,8 @@ const ProductDetail = () => {
   const name = localized(product, "name", i18n.language);
   const desc = localized(product, "description", i18n.language);
   const cat = product.category ? localized(product.category, "name", i18n.language) : "";
-  const img: string | undefined = product.images?.[0];
+  const images: string[] = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+  const img: string | undefined = images[0];
 
   const handleAdd = () => {
     if (start && end) {
