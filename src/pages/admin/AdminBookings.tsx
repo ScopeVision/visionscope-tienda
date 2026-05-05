@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/rental";
-import { Download, ChevronRight } from "lucide-react";
+import { Download, ChevronRight, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUSES = ["nuevo", "confirmado", "preparacion", "alquiler", "finalizado", "cancelado"] as const;
