@@ -15,9 +15,9 @@ import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
 const schema = z.object({
-  full_name: z.string().trim().min(2).max(200),
-  email: z.string().trim().email().max(255),
-  phone: z.string().trim().min(4).max(40).optional().or(z.literal("")),
+  full_name: z.string().trim().min(2, "Nombre obligatorio (mín. 2 caracteres)").max(200),
+  email: z.string().trim().email("Email no válido").max(255),
+  phone: z.string().trim().min(6, "Teléfono obligatorio").max(40),
   company: z.string().trim().max(200).optional().or(z.literal("")),
   tax_id: z.string().trim().max(40).optional().or(z.literal("")),
   address_line1: z.string().trim().max(200).optional().or(z.literal("")),
@@ -200,7 +200,7 @@ const Checkout = () => {
             <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
               <Input type="email" {...form.register("email")} />
             </Field>
-            <Field label={t("common.phone")}>
+            <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
               <Input {...form.register("phone")} />
             </Field>
             <Field label={t("common.company")}>
