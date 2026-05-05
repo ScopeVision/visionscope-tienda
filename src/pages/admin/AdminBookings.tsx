@@ -144,8 +144,20 @@ const AdminBookings = () => {
                     ))}
                   </ul>
                 )}
-                {action && (
-                  <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => {
+                      setOpenId(b.id);
+                      setNotesDraft(b.notes ?? "");
+                      setStatusDraft(b.status);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" /> Detalle
+                  </Button>
+                  {action && (
                     <Button
                       size="sm"
                       className="bg-foreground text-background hover:bg-foreground/90 gap-2"
@@ -153,13 +165,113 @@ const AdminBookings = () => {
                     >
                       {t(`bookings.${action.label}`)} <ChevronRight className="h-4 w-4" />
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })
         )}
       </div>
+
+      <Dialog open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {(() => {
+            const b: any = bookings.find((x: any) => x.id === openId);
+            if (!b) return null;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="font-mono">{b.reference}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-5 text-sm">
+                  <section>
+                    <h3 className="font-medium mb-2">Cliente</h3>
+                    <div>{b.customer?.full_name}</div>
+                    <div className="text-secondary">{b.customer?.email}</div>
+                    <div className="text-secondary">{b.customer?.phone ?? "—"}</div>
+                    {b.customer?.company && <div className="text-secondary">{b.customer.company}</div>}
+                    {(b.customer?.address_line1 || b.customer?.city) && (
+                      <div className="text-secondary mt-1">
+                        {[b.customer?.address_line1, b.customer?.postal_code, b.customer?.city, b.customer?.country]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </div>
+                    )}
+                  </section>
+                  <section>
+                    <h3 className="font-medium mb-2">Alquiler</h3>
+                    <div className="text-secondary">
+                      {b.start_date} → {b.end_date}
+                    </div>
+                  </section>
+                  <section>
+                    <h3 className="font-medium mb-2">Productos</h3>
+                    <ul className="space-y-1">
+                      {b.items?.map((it: any) => (
+                        <li key={it.id} className="flex justify-between border-b border-border py-1.5">
+                          <span>
+                            {it.product_name} ×{it.quantity} ({it.days}d)
+                          </span>
+                          <span>{formatCurrency(Number(it.subtotal), i18n.language)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                  <section className="flex justify-between font-medium">
+                    <span>Total estimado</span>
+                    <span>{formatCurrency(Number(b.total), i18n.language)}</span>
+                  </section>
+                  <section className="flex justify-between text-secondary">
+                    <span>Fianza</span>
+                    <span>{formatCurrency(Number(b.deposit_total), i18n.language)}</span>
+                  </section>
+                  <section>
+                    <h3 className="font-medium mb-2">Estado</h3>
+                    <Select value={statusDraft} onValueChange={(v) => setStatusDraft(v as Status)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>{t(`bookings.tabs.${s}`)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </section>
+                  <section>
+                    <h3 className="font-medium mb-2">Notas internas</h3>
+                    <Textarea
+                      rows={4}
+                      value={notesDraft}
+                      onChange={(e) => setNotesDraft(e.target.value)}
+                      placeholder="Notas visibles sólo para el equipo…"
+                    />
+                  </section>
+                  <div className="flex justify-end">
+                    <Button
+                      disabled={savingDetail}
+                      className="bg-foreground text-background hover:bg-foreground/90"
+                      onClick={async () => {
+                        setSavingDetail(true);
+                        const { error } = await supabase
+                          .from("bookings")
+                          .update({ status: statusDraft, notes: notesDraft || null })
+                          .eq("id", b.id);
+                        setSavingDetail(false);
+                        if (error) return toast.error(error.message);
+                        toast.success("Guardado");
+                        setOpenId(null);
+                        qc.invalidateQueries({ queryKey: ["admin-bookings"] });
+                        qc.invalidateQueries({ queryKey: ["admin-stats"] });
+                      }}
+                    >
+                      {savingDetail ? t("common.loading") : t("common.save")}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
