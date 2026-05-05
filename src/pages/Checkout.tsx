@@ -147,6 +147,11 @@ const Checkout = () => {
         setSubmitting(false);
         return;
       }
+      if (!checkoutData?.ok) {
+        toast.error(checkoutData?.error || t("checkout.error"), { duration: 8000 });
+        setSubmitting(false);
+        return;
+      }
       const ref = checkoutData?.reference;
 
       setSuccess(ref ?? "");
