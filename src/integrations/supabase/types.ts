@@ -580,6 +580,19 @@ export type Database = {
         Returns: number
       }
       bootstrap_first_admin: { Args: { _user_id: string }; Returns: undefined }
+      create_booking_with_items: {
+        Args: {
+          _customer_id: string
+          _end_date: string
+          _items: Json
+          _notes: string
+          _start_date: string
+        }
+        Returns: {
+          booking_id: string
+          reference: string
+        }[]
+      }
       has_any_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
