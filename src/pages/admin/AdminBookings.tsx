@@ -29,6 +29,10 @@ const AdminBookings = () => {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Status>("nuevo");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [notesDraft, setNotesDraft] = useState<string>("");
+  const [statusDraft, setStatusDraft] = useState<Status>("nuevo");
+  const [savingDetail, setSavingDetail] = useState(false);
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["admin-bookings", tab],
