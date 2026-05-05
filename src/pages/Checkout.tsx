@@ -138,47 +138,24 @@ const Checkout = () => {
         return;
       }
 
-      // 2. Create booking
-      const { data: booking, error: bErr } = await supabase
-        .from("bookings")
-        .insert({
-          customer_id: customer.id,
-          start_date: cart.startDate!,
-          end_date: cart.endDate!,
-          status: "nuevo",
-          subtotal: cart.subtotal,
-          deposit_total: cart.depositTotal,
-          total: cart.total,
-          notes: values.notes || null,
-        })
-        .select()
-        .single();
-      if (bErr) throw bErr;
+      // 2. Create booking + items server-side (prices recalculated on server)
+      const { data: rpcData, error: rpcErr } = await supabase.rpc(
+        "create_booking_with_items",
+        {
+          _customer_id: customer.id,
+          _start_date: cart.startDate!,
+          _end_date: cart.endDate!,
+          _notes: values.notes || null,
+          _items: cart.items.map((it) => ({
+            product_id: it.productId,
+            quantity: it.quantity,
+          })) as any,
+        }
+      );
+      if (rpcErr) throw rpcErr;
+      const ref = Array.isArray(rpcData) ? rpcData[0]?.reference : (rpcData as any)?.reference;
 
-      // 3. Create booking items
-      const items = cart.items.map((it) => {
-        const calc = calcItemPrice({
-          priceDay: it.priceDay,
-          priceWeek: it.priceWeek,
-          days: cart.days,
-          quantity: it.quantity,
-        });
-        return {
-          booking_id: booking.id,
-          product_id: it.productId,
-          product_name: it.name,
-          quantity: it.quantity,
-          days: cart.days,
-          price_day: it.priceDay,
-          price_week: it.priceWeek ?? null,
-          deposit: it.deposit,
-          subtotal: calc.subtotal,
-        };
-      });
-      const { error: iErr } = await supabase.from("booking_items").insert(items);
-      if (iErr) throw iErr;
-
-      setSuccess(booking.reference);
+      setSuccess(ref ?? "");
       cart.clear();
     } catch (err: any) {
       console.error("Checkout error:", err);
