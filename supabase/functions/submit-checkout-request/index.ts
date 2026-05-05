@@ -48,11 +48,11 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error("submit_checkout_request failed", error);
-      return json({ error: error.message || "No se pudo procesar la reserva" }, 400);
+      return json({ ok: false, error: error.message || "No se pudo procesar la reserva" });
     }
 
     const result = Array.isArray(data) ? data[0] : data;
-    return json({ reference: result?.reference ?? "", booking_id: result?.booking_id ?? null });
+    return json({ ok: true, reference: result?.reference ?? "", booking_id: result?.booking_id ?? null });
   } catch (error) {
     console.error("Checkout function error", error);
     return json({ error: "No se pudo procesar la reserva. Revisa los datos e inténtalo de nuevo." }, 500);
