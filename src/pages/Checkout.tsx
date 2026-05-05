@@ -118,34 +118,36 @@ const Checkout = () => {
       // Create customer + booking in one secure backend operation.
       // This avoids trying to read a customer row from the public checkout,
       // while prices are still recalculated on the backend.
-      const { data: rpcData, error: rpcErr } = await (supabase as any).rpc(
-        "submit_checkout_request",
+      const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke(
+        "submit-checkout-request",
         {
-          _full_name: fullName,
-          _email: email,
-          _phone: values.phone?.trim() || null,
-          _company: values.company?.trim() || null,
-          _tax_id: values.tax_id?.trim() || null,
-          _address_line1: values.address_line1?.trim() || null,
-          _city: values.city?.trim() || null,
-          _postal_code: values.postal_code?.trim() || null,
-          _country: values.country?.trim() || null,
-          _notes: values.notes?.trim() || null,
-          _start_date: cart.startDate!,
-          _end_date: cart.endDate!,
-          _items: cart.items.map((it) => ({
+          body: {
+            full_name: fullName,
+            email,
+            phone: values.phone?.trim() || null,
+            company: values.company?.trim() || null,
+            tax_id: values.tax_id?.trim() || null,
+            address_line1: values.address_line1?.trim() || null,
+            city: values.city?.trim() || null,
+            postal_code: values.postal_code?.trim() || null,
+            country: values.country?.trim() || null,
+            notes: values.notes?.trim() || null,
+            start_date: cart.startDate!,
+            end_date: cart.endDate!,
+            items: cart.items.map((it) => ({
             product_id: it.productId,
             quantity: it.quantity,
-          })),
+            })),
+          },
         }
       );
-      if (rpcErr) {
-        console.error("Checkout RPC error:", rpcErr);
-        toast.error(explainCustomerError(rpcErr, fullName, email), { duration: 8000 });
+      if (checkoutErr) {
+        console.error("Checkout function error:", checkoutErr);
+        toast.error(explainCustomerError(checkoutErr, fullName, email), { duration: 8000 });
         setSubmitting(false);
         return;
       }
-      const ref = Array.isArray(rpcData) ? rpcData[0]?.reference : (rpcData as any)?.reference;
+      const ref = checkoutData?.reference;
 
       setSuccess(ref ?? "");
       cart.clear();
