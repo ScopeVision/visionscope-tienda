@@ -200,7 +200,7 @@ const Checkout = () => {
             <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
               <Input type="email" {...form.register("email")} />
             </Field>
-            <Field label={t("common.phone")}>
+            <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
               <Input {...form.register("phone")} />
             </Field>
             <Field label={t("common.company")}>
