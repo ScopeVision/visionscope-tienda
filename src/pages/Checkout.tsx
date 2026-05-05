@@ -115,44 +115,36 @@ const Checkout = () => {
         return;
       }
 
-      // 1. Create customer
-      const { data: customer, error: cErr } = await supabase
-        .from("customers")
-        .insert({
-          full_name: fullName,
-          email,
-          phone: values.phone?.trim() || null,
-          company: values.company?.trim() || null,
-          tax_id: values.tax_id?.trim() || null,
-          address_line1: values.address_line1?.trim() || null,
-          city: values.city?.trim() || null,
-          postal_code: values.postal_code?.trim() || null,
-          country: values.country?.trim() || null,
-        })
-        .select()
-        .single();
-      if (cErr) {
-        console.error("Customer insert error:", cErr);
-        toast.error(explainCustomerError(cErr, fullName, email), { duration: 8000 });
-        setSubmitting(false);
-        return;
-      }
-
-      // 2. Create booking + items server-side (prices recalculated on server)
-      const { data: rpcData, error: rpcErr } = await supabase.rpc(
-        "create_booking_with_items",
+      // Create customer + booking in one secure backend operation.
+      // This avoids trying to read a customer row from the public checkout,
+      // while prices are still recalculated on the backend.
+      const { data: rpcData, error: rpcErr } = await (supabase as any).rpc(
+        "submit_checkout_request",
         {
-          _customer_id: customer.id,
+          _full_name: fullName,
+          _email: email,
+          _phone: values.phone?.trim() || null,
+          _company: values.company?.trim() || null,
+          _tax_id: values.tax_id?.trim() || null,
+          _address_line1: values.address_line1?.trim() || null,
+          _city: values.city?.trim() || null,
+          _postal_code: values.postal_code?.trim() || null,
+          _country: values.country?.trim() || null,
+          _notes: values.notes?.trim() || null,
           _start_date: cart.startDate!,
           _end_date: cart.endDate!,
-          _notes: values.notes || null,
           _items: cart.items.map((it) => ({
             product_id: it.productId,
             quantity: it.quantity,
-          })) as any,
+          })),
         }
       );
-      if (rpcErr) throw rpcErr;
+      if (rpcErr) {
+        console.error("Checkout RPC error:", rpcErr);
+        toast.error(explainCustomerError(rpcErr, fullName, email), { duration: 8000 });
+        setSubmitting(false);
+        return;
+      }
       const ref = Array.isArray(rpcData) ? rpcData[0]?.reference : (rpcData as any)?.reference;
 
       setSuccess(ref ?? "");
