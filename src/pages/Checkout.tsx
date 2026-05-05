@@ -115,45 +115,44 @@ const Checkout = () => {
         return;
       }
 
-      // 1. Create customer
-      const { data: customer, error: cErr } = await supabase
-        .from("customers")
-        .insert({
-          full_name: fullName,
-          email,
-          phone: values.phone?.trim() || null,
-          company: values.company?.trim() || null,
-          tax_id: values.tax_id?.trim() || null,
-          address_line1: values.address_line1?.trim() || null,
-          city: values.city?.trim() || null,
-          postal_code: values.postal_code?.trim() || null,
-          country: values.country?.trim() || null,
-        })
-        .select()
-        .single();
-      if (cErr) {
-        console.error("Customer insert error:", cErr);
-        toast.error(explainCustomerError(cErr, fullName, email), { duration: 8000 });
+      // Create customer + booking in one secure backend operation.
+      // This avoids trying to read a customer row from the public checkout,
+      // while prices are still recalculated on the backend.
+      const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke(
+        "submit-checkout-request",
+        {
+          body: {
+            full_name: fullName,
+            email,
+            phone: values.phone?.trim() || null,
+            company: values.company?.trim() || null,
+            tax_id: values.tax_id?.trim() || null,
+            address_line1: values.address_line1?.trim() || null,
+            city: values.city?.trim() || null,
+            postal_code: values.postal_code?.trim() || null,
+            country: values.country?.trim() || null,
+            notes: values.notes?.trim() || null,
+            start_date: cart.startDate!,
+            end_date: cart.endDate!,
+            items: cart.items.map((it) => ({
+              product_id: it.productId,
+              quantity: it.quantity,
+            })),
+          },
+        }
+      );
+      if (checkoutErr) {
+        console.error("Checkout function error:", checkoutErr);
+        toast.error(explainCustomerError(checkoutErr, fullName, email), { duration: 8000 });
         setSubmitting(false);
         return;
       }
-
-      // 2. Create booking + items server-side (prices recalculated on server)
-      const { data: rpcData, error: rpcErr } = await supabase.rpc(
-        "create_booking_with_items",
-        {
-          _customer_id: customer.id,
-          _start_date: cart.startDate!,
-          _end_date: cart.endDate!,
-          _notes: values.notes || null,
-          _items: cart.items.map((it) => ({
-            product_id: it.productId,
-            quantity: it.quantity,
-          })) as any,
-        }
-      );
-      if (rpcErr) throw rpcErr;
-      const ref = Array.isArray(rpcData) ? rpcData[0]?.reference : (rpcData as any)?.reference;
+      if (!checkoutData?.ok) {
+        toast.error(checkoutData?.error || t("checkout.error"), { duration: 8000 });
+        setSubmitting(false);
+        return;
+      }
+      const ref = checkoutData?.reference;
 
       setSuccess(ref ?? "");
       cart.clear();

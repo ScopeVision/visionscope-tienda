@@ -628,6 +628,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      submit_checkout_request: {
+        Args: {
+          _address_line1: string
+          _city: string
+          _company: string
+          _country: string
+          _email: string
+          _end_date: string
+          _full_name: string
+          _items: Json
+          _notes: string
+          _phone: string
+          _postal_code: string
+          _start_date: string
+          _tax_id: string
+        }
+        Returns: {
+          booking_id: string
+          reference: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
