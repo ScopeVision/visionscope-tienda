@@ -519,6 +519,33 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          contact_email: string
+          id: boolean
+          instagram_url: string
+          orders_email: string
+          updated_at: string
+          whatsapp_url: string
+        }
+        Insert: {
+          contact_email?: string
+          id?: boolean
+          instagram_url?: string
+          orders_email?: string
+          updated_at?: string
+          whatsapp_url?: string
+        }
+        Update: {
+          contact_email?: string
+          id?: boolean
+          instagram_url?: string
+          orders_email?: string
+          updated_at?: string
+          whatsapp_url?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           created_at: string
