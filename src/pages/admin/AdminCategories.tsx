@@ -35,6 +35,8 @@ import {
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { SiteImageUploader } from "@/components/admin/SiteImageUploader";
+
 type Category = {
   id: string;
   slug: string;
@@ -43,6 +45,8 @@ type Category = {
   name_ca?: string | null;
   name_en?: string | null;
   name_fr?: string | null;
+  image_url?: string | null;
+  link_url?: string | null;
 };
 
 const AdminCategories = () => {
@@ -216,6 +220,8 @@ const CategoryDialog = ({
     name_en: category?.name_en ?? "",
     name_fr: category?.name_fr ?? "",
     sort_order: category?.sort_order ?? nextSortOrder,
+    image_url: category?.image_url ?? "",
+    link_url: category?.link_url ?? "",
   });
 
   const set = (k: keyof typeof form, v: string | number) =>
@@ -244,6 +250,8 @@ const CategoryDialog = ({
       name_en: form.name_en || null,
       name_fr: form.name_fr || null,
       sort_order: Number(form.sort_order) || 0,
+      image_url: form.image_url || null,
+      link_url: form.link_url || null,
     };
     const { error } = category
       ? await supabase.from("categories").update(payload).eq("id", category.id)
