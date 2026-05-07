@@ -316,6 +316,23 @@ const CategoryDialog = ({
               />
             </div>
           </div>
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Imagen</Label>
+            <SiteImageUploader
+              folder="categories"
+              value={form.image_url}
+              onChange={(url) => set("image_url" as any, url)}
+              recommendation="Recomendado: 1200×900 px (4:3), máx 8 MB."
+            />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Enlace personalizado (opcional)</Label>
+            <Input
+              value={form.link_url}
+              onChange={(e) => set("link_url" as any, e.target.value)}
+              placeholder="Vacío = /rental?category=slug"
+            />
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
               {t("common.cancel")}
