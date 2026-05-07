@@ -194,6 +194,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
+          link_url: string | null
           name_ca: string | null
           name_en: string | null
           name_es: string
@@ -205,6 +207,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
+          link_url?: string | null
           name_ca?: string | null
           name_en?: string | null
           name_es: string
@@ -216,6 +220,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
+          link_url?: string | null
           name_ca?: string | null
           name_en?: string | null
           name_es?: string
@@ -273,6 +279,45 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hero_slides: {
+        Row: {
+          created_at: string
+          cta_label: string
+          cta_url: string
+          id: string
+          image_url: string
+          published: boolean
+          sort_order: number
+          subtitle: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string
+          cta_url?: string
+          id?: string
+          image_url: string
+          published?: boolean
+          sort_order?: number
+          subtitle?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string
+          cta_url?: string
+          id?: string
+          image_url?: string
+          published?: boolean
+          sort_order?: number
+          subtitle?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -519,6 +564,57 @@ export type Database = {
           },
         ]
       }
+      project_items: {
+        Row: {
+          category: string
+          client: string
+          cover_image: string
+          created_at: string
+          description: string
+          gallery: string[]
+          id: string
+          link_url: string
+          published: boolean
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          category?: string
+          client?: string
+          cover_image?: string
+          created_at?: string
+          description?: string
+          gallery?: string[]
+          id?: string
+          link_url?: string
+          published?: boolean
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          category?: string
+          client?: string
+          cover_image?: string
+          created_at?: string
+          description?: string
+          gallery?: string[]
+          id?: string
+          link_url?: string
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           contact_email: string
@@ -618,6 +714,14 @@ export type Database = {
         Returns: {
           booking_id: string
           reference: string
+        }[]
+      }
+      get_public_contact: {
+        Args: never
+        Returns: {
+          contact_email: string
+          instagram_url: string
+          whatsapp_url: string
         }[]
       }
       has_any_admin: { Args: never; Returns: boolean }
