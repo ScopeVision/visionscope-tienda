@@ -1,35 +1,32 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Mail, Phone, MapPin, MessageCircle, Send } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Send, Instagram } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-
-const WHATSAPP_NUMBER = "34000000000"; // international format, no +
-const EMAIL = "hello@visionscope.com";
-const PHONE_DISPLAY = "+34 000 000 000";
+import { useSiteContact } from "@/hooks/useSiteContact";
 
 const Contact = () => {
   const { t } = useTranslation();
+  const { data: contact } = useSiteContact();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
+
+  const email = contact?.contact_email ?? "thevisionscope.ventas@gmail.com";
+  const whatsappUrl = contact?.whatsapp_url ?? "https://wa.me/qr/3BHCCMSKBRQZP1";
+  const instagramUrl = contact?.instagram_url ?? "https://www.instagram.com/thevisionscope/";
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    // Open default mail client with prefilled subject/body
     const subject = encodeURIComponent(`VisionScope · ${form.name || "Contact"}`);
     const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`);
-    window.location.href = `mailto:${EMAIL}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     toast({ title: t("checkout.success") });
     setSubmitting(false);
   };
-
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "Hola VisionScope, me gustaría hablar sobre un proyecto."
-  )}`;
 
   return (
     <div className="container-page py-20 max-w-6xl">
@@ -40,22 +37,24 @@ const Contact = () => {
       <p className="text-secondary mt-3 max-w-xl">{t("contact.intro")}</p>
 
       <div className="mt-12 grid lg:grid-cols-[1fr_1.3fr] gap-10">
-        {/* Info */}
         <div className="space-y-4">
           <div className="p-6 rounded-sm bg-surface border border-border hover-glow transition-smooth">
             <Mail className="h-5 w-5 text-accent mb-4" />
             <div className="text-[10px] uppercase tracking-[0.28em] text-secondary">Email</div>
-            <a href={`mailto:${EMAIL}`} className="font-medium text-foreground hover:text-accent transition-colors">
-              {EMAIL}
+            <a href={`mailto:${email}`} className="font-medium text-foreground hover:text-accent transition-colors">
+              {email}
             </a>
           </div>
-          <div className="p-6 rounded-sm bg-surface border border-border hover-glow transition-smooth">
-            <Phone className="h-5 w-5 text-accent mb-4" />
-            <div className="text-[10px] uppercase tracking-[0.28em] text-secondary">{t("contact.phone")}</div>
-            <a href={`tel:+${WHATSAPP_NUMBER}`} className="font-medium text-foreground hover:text-accent transition-colors">
-              {PHONE_DISPLAY}
-            </a>
-          </div>
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block p-6 rounded-sm bg-surface border border-border hover-glow transition-smooth"
+          >
+            <Instagram className="h-5 w-5 text-accent mb-4" />
+            <div className="text-[10px] uppercase tracking-[0.28em] text-secondary">Instagram</div>
+            <span className="font-medium text-foreground hover:text-accent transition-colors">@thevisionscope</span>
+          </a>
           <div className="p-6 rounded-sm bg-surface border border-border hover-glow transition-smooth">
             <MapPin className="h-5 w-5 text-accent mb-4" />
             <div className="text-[10px] uppercase tracking-[0.28em] text-secondary">{t("common.address")}</div>
@@ -74,59 +73,31 @@ const Contact = () => {
                 {t("contact.whatsapp")}
               </span>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-accent group-hover:text-accent-foreground">
-              →
-            </span>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-accent group-hover:text-accent-foreground">→</span>
           </a>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={onSubmit}
-          className="p-8 rounded-sm bg-surface border border-border space-y-5"
-        >
+        <form onSubmit={onSubmit} className="p-8 rounded-sm bg-surface border border-border space-y-5">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-[0.22em] text-secondary">{t("contact.name")}</Label>
-              <Input
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="bg-background border-border focus-visible:ring-accent"
-              />
+              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-background border-border focus-visible:ring-accent" />
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-[0.22em] text-secondary">{t("contact.email")}</Label>
-              <Input
-                required
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-background border-border focus-visible:ring-accent"
-              />
+              <Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-background border-border focus-visible:ring-accent" />
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-[10px] uppercase tracking-[0.22em] text-secondary">{t("contact.message")}</Label>
-            <Textarea
-              required
-              rows={6}
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-              className="bg-background border-border focus-visible:ring-accent"
-            />
+            <Textarea required rows={6} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="bg-background border-border focus-visible:ring-accent" />
           </div>
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-11 px-7 rounded-sm w-full sm:w-auto gap-2"
-          >
+          <Button type="submit" disabled={submitting} className="bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-11 px-7 rounded-sm w-full sm:w-auto gap-2">
             <Send className="h-4 w-4" /> {t("contact.send")}
           </Button>
         </form>
       </div>
 
-      {/* Floating WhatsApp button (mobile-friendly) */}
       <a
         href={whatsappUrl}
         target="_blank"
