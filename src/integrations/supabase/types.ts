@@ -642,6 +642,45 @@ export type Database = {
         }
         Relationships: []
       }
+      store_products: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          images: string[]
+          name: string
+          price: number
+          published: boolean
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[]
+          name: string
+          price?: number
+          published?: boolean
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[]
+          name?: string
+          price?: number
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           created_at: string
