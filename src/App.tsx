@@ -30,6 +30,7 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminHero from "./pages/admin/AdminHero";
 import AdminProjects from "./pages/admin/AdminProjects";
+import AdminStoreProducts from "./pages/admin/AdminStoreProducts";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="hero" element={<AdminHero />} />
                 <Route path="site-projects" element={<AdminProjects />} />
+                <Route path="store-products" element={<AdminStoreProducts />} />
                 <Route path="blog" element={<AdminBlog />} />
               </Route>
               <Route path="*" element={<NotFound />} />
