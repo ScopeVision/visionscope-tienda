@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
-import { LogOut, Package, Tag, FolderTree, Users, ClipboardList, FileText, Home, Image, Film } from "lucide-react";
+import { LogOut, Package, Tag, FolderTree, Users, ClipboardList, FileText, Home, Image, Film, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const AdminLayout = () => {
@@ -19,6 +19,7 @@ const AdminLayout = () => {
     { to: "/admin/hero", label: "Hero", icon: Image },
     { to: "/admin/site-projects", label: "Proyectos", icon: Film },
     { to: "/admin/products", label: t("admin.products.label"), icon: Package },
+    { to: "/admin/store-products", label: "Super Store", icon: Store },
     { to: "/admin/categories", label: t("admin.categories"), icon: FolderTree },
     { to: "/admin/tags", label: t("admin.tags"), icon: Tag },
     { to: "/admin/customers", label: t("admin.customers"), icon: Users },
