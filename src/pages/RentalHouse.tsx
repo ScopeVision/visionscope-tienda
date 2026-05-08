@@ -283,13 +283,13 @@ const RentalCard = ({ product }: { product: any }) => {
       to={`/product/${product.slug}`}
       className="group block rounded-sm bg-surface border border-border overflow-hidden transition-smooth hover-glow"
     >
-      <div className="relative aspect-square bg-muted overflow-hidden">
+      <div className="relative aspect-square overflow-hidden">
         {img ? (
           <img
             src={img}
             alt={name}
             loading="lazy"
-            className="w-full h-full object-contain p-4 opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+            className="w-full h-full object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-secondary/40">
