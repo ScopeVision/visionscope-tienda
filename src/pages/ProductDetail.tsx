@@ -15,6 +15,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
