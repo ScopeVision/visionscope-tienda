@@ -324,23 +324,26 @@ const RentalCard = ({ product }: { product: any }) => {
           <p className="mt-3 text-sm text-secondary line-clamp-2 leading-relaxed">{desc}</p>
         ) : null}
 
-        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-          <div>
-            {hasVariants && (
-              <span className="text-[10px] uppercase tracking-[0.22em] text-secondary mr-1.5">
-                {t("rental.from")}
+        <div className="mt-5 pt-4 border-t border-border space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              {hasVariants && (
+                <span className="text-[10px] uppercase tracking-[0.22em] text-secondary mr-1.5">
+                  {t("rental.from")}
+                </span>
+              )}
+              <span className="text-base font-medium text-foreground">
+                {formatCurrency(minVariantPrice, i18n.language)}
               </span>
-            )}
-            <span className="text-base font-medium text-foreground">
-              {formatCurrency(minVariantPrice, i18n.language)}
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-secondary ml-1.5">
-              {t("common.perDay")}
+              <span className="text-[10px] uppercase tracking-[0.22em] text-secondary ml-1.5">
+                {t("common.perDay")}
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-accent group-hover:gap-2.5 transition-all">
+              {t("rental.viewGear")} <ArrowRight className="h-3 w-3" />
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-accent group-hover:gap-2.5 transition-all">
-            {t("rental.viewGear")} <ArrowRight className="h-3 w-3" />
-          </span>
+          <WeeklyDiscountBadge priceDay={minVariantPrice} variant="pill" />
         </div>
       </div>
     </Link>
