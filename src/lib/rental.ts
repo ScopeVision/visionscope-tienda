@@ -1,27 +1,49 @@
 import { differenceInCalendarDays } from "date-fns";
 
-/** Calculate the rental price for one item across N days, applying weekly rate if cheaper. */
+/**
+ * Progressive daily discount: each additional day costs 6% less than the base
+ * day rate, calculated against the base price. Day n = P * (1 - 0.06 * (n-1)).
+ * Only valid for 1..7 days. For 8+ days, contactRequired is true and subtotal
+ * is returned as 0 — the UI must surface a "contact us" CTA instead.
+ */
+export const MAX_AUTO_DAYS = 7;
+export const DAILY_DISCOUNT_STEP = 0.06;
+
+export function dailyFactor(dayIndex: number): number {
+  // dayIndex is 1-based. Floor at 0 to be safe.
+  return Math.max(0, 1 - DAILY_DISCOUNT_STEP * (dayIndex - 1));
+}
+
 export function calcItemPrice(opts: {
   priceDay: number;
-  priceWeek?: number | null;
+  priceWeek?: number | null; // kept for backward compatibility — ignored
   days: number;
   quantity?: number;
-}): { subtotal: number; weeklyApplied: boolean } {
+}): {
+  subtotal: number;
+  weeklyApplied: boolean;
+  contactRequired: boolean;
+  avgPerDay: number;
+} {
   const qty = Math.max(1, opts.quantity ?? 1);
   const days = Math.max(1, Math.floor(opts.days));
   const day = Number(opts.priceDay) || 0;
-  const week = opts.priceWeek ? Number(opts.priceWeek) : null;
 
-  if (!week || days < 7) {
-    return { subtotal: day * days * qty, weeklyApplied: false };
+  if (days > MAX_AUTO_DAYS) {
+    return { subtotal: 0, weeklyApplied: false, contactRequired: true, avgPerDay: 0 };
   }
 
-  const weeks = Math.floor(days / 7);
-  const remDays = days - weeks * 7;
-  // Daily extras capped at weekly rate.
-  const remCost = Math.min(remDays * day, week);
-  const subtotal = (weeks * week + remCost) * qty;
-  return { subtotal, weeklyApplied: true };
+  let perUnit = 0;
+  for (let n = 1; n <= days; n++) {
+    perUnit += day * dailyFactor(n);
+  }
+  const subtotal = perUnit * qty;
+  return {
+    subtotal,
+    weeklyApplied: false,
+    contactRequired: false,
+    avgPerDay: days > 0 ? perUnit / days : day,
+  };
 }
 
 export function daysBetween(start: Date | string, end: Date | string): number {

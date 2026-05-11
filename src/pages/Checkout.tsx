@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
-import { calcItemPrice, formatCurrency } from "@/lib/rental";
+import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
@@ -61,6 +61,10 @@ const Checkout = () => {
       navigate("/cart");
       return null;
     }
+  }
+  if (cart.days > MAX_AUTO_DAYS && !success) {
+    navigate("/cart");
+    return null;
   }
 
   const explainCustomerError = (err: any, fullName: string, email: string): string => {

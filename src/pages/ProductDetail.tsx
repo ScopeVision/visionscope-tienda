@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { calcItemPrice, daysBetween, formatCurrency } from "@/lib/rental";
+import { calcItemPrice, daysBetween, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { useCart } from "@/contexts/CartContext";
+import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
   const cart = useCart();
+  const { data: siteContact } = useSiteContact();
   const [start, setStart] = useState<Date | undefined>(
     cart.startDate ? new Date(cart.startDate) : undefined
   );
@@ -175,7 +177,7 @@ const ProductDetail = () => {
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
   const kitCalc = useMemo(() => {
-    if (!product) return { subtotal: 0, weeklyApplied: false };
+    if (!product) return { subtotal: 0, weeklyApplied: false, contactRequired: false, avgPerDay: 0 };
     return calcItemPrice({
       priceDay: effectivePriceDay,
       priceWeek: effectivePriceWeek,
@@ -187,6 +189,9 @@ const ProductDetail = () => {
   const individualCalc = useMemo(() => {
     let total = 0;
     let any = false;
+    let contact = false;
+    let avgSum = 0;
+    let count = 0;
     visibleComponents.forEach((c: any) => {
       if (!selectedComponents.has(c.child_product_id)) return;
       const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
@@ -198,8 +203,16 @@ const ProductDetail = () => {
       });
       total += r.subtotal;
       any = any || r.weeklyApplied;
+      contact = contact || r.contactRequired;
+      avgSum += r.avgPerDay;
+      count += 1;
     });
-    return { subtotal: total, weeklyApplied: any };
+    return {
+      subtotal: total,
+      weeklyApplied: any,
+      contactRequired: contact,
+      avgPerDay: count > 0 ? avgSum / count : 0,
+    };
   }, [visibleComponents, selectedComponents, days]);
 
   const allSelected =
@@ -612,7 +625,25 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {start && end && currentCalc.subtotal > 0 && (
+            {start && end && currentCalc.contactRequired && (
+              <div className="mt-5 p-4 rounded-lg border border-accent bg-accent-soft">
+                <p className="text-sm font-medium">
+                  For rentals of 8 days or more, please contact us.
+                </p>
+                {siteContact?.whatsapp_url && (
+                  <a
+                    href={siteContact.whatsapp_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center justify-center w-full h-10 rounded-md bg-[#25D366] text-white font-medium hover:bg-[#1ebe5d] transition-colors"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            )}
+
+            {start && end && !currentCalc.contactRequired && currentCalc.subtotal > 0 && (
               <div className="mt-5 p-4 rounded-lg bg-accent-soft">
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">
@@ -622,11 +653,10 @@ const ProductDetail = () => {
                     {formatCurrency(currentCalc.subtotal, i18n.language)}
                   </span>
                 </div>
-                {currentCalc.weeklyApplied && (
-                  <div className="mt-1 flex items-center gap-1 text-xs text-accent-foreground/70">
-                    <Check className="h-3 w-3" /> {t("product.weeklyDiscount")}
-                  </div>
-                )}
+                <div className="mt-1 flex justify-between text-xs text-secondary">
+                  <span>Avg / day</span>
+                  <span>{formatCurrency(currentCalc.avgPerDay, i18n.language)}</span>
+                </div>
                 <p className="mt-2 text-xs text-secondary">{t("product.depositInfo")}</p>
               </div>
             )}
@@ -635,7 +665,7 @@ const ProductDetail = () => {
               size="lg"
               className="w-full mt-6 bg-foreground text-background hover:bg-foreground/90"
               onClick={handleAdd}
-              disabled={!canAdd}
+              disabled={!canAdd || (!!start && !!end && currentCalc.contactRequired)}
             >
               {!canAdd && !isKit
                 ? t("catalog.outOfStock")
