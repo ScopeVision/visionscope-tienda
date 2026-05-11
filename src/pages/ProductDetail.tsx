@@ -614,7 +614,25 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {start && end && currentCalc.subtotal > 0 && (
+            {start && end && currentCalc.contactRequired && (
+              <div className="mt-5 p-4 rounded-lg border border-accent bg-accent-soft">
+                <p className="text-sm font-medium">
+                  For rentals of 8 days or more, please contact us.
+                </p>
+                {siteContact?.whatsapp_url && (
+                  <a
+                    href={siteContact.whatsapp_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center justify-center w-full h-10 rounded-md bg-[#25D366] text-white font-medium hover:bg-[#1ebe5d] transition-colors"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            )}
+
+            {start && end && !currentCalc.contactRequired && currentCalc.subtotal > 0 && (
               <div className="mt-5 p-4 rounded-lg bg-accent-soft">
                 <div className="flex justify-between text-sm">
                   <span className="text-secondary">
@@ -624,11 +642,10 @@ const ProductDetail = () => {
                     {formatCurrency(currentCalc.subtotal, i18n.language)}
                   </span>
                 </div>
-                {currentCalc.weeklyApplied && (
-                  <div className="mt-1 flex items-center gap-1 text-xs text-accent-foreground/70">
-                    <Check className="h-3 w-3" /> {t("product.weeklyDiscount")}
-                  </div>
-                )}
+                <div className="mt-1 flex justify-between text-xs text-secondary">
+                  <span>Avg / day</span>
+                  <span>{formatCurrency(currentCalc.avgPerDay, i18n.language)}</span>
+                </div>
                 <p className="mt-2 text-xs text-secondary">{t("product.depositInfo")}</p>
               </div>
             )}
@@ -637,7 +654,7 @@ const ProductDetail = () => {
               size="lg"
               className="w-full mt-6 bg-foreground text-background hover:bg-foreground/90"
               onClick={handleAdd}
-              disabled={!canAdd}
+              disabled={!canAdd || (!!start && !!end && currentCalc.contactRequired)}
             >
               {!canAdd && !isKit
                 ? t("catalog.outOfStock")
