@@ -14,7 +14,9 @@ import { cn } from "@/lib/utils";
 const Cart = () => {
   const { t, i18n } = useTranslation();
   const cart = useCart();
+  const { data: siteContact } = useSiteContact();
   const navigate = useNavigate();
+  const contactRequired = cart.days > MAX_AUTO_DAYS;
   const [start, setStart] = useState<Date | undefined>(
     cart.startDate ? new Date(cart.startDate) : undefined
   );
