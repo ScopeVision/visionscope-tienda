@@ -137,10 +137,28 @@ const Cart = () => {
             </div>
           </div>
 
+          {contactRequired && (
+            <div className="mt-5 p-4 rounded-lg border border-accent bg-accent-soft">
+              <p className="text-sm font-medium">
+                For rentals of 8 days or more, please contact us.
+              </p>
+              {siteContact?.whatsapp_url && (
+                <a
+                  href={siteContact.whatsapp_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center justify-center w-full h-10 rounded-md bg-[#25D366] text-white font-medium hover:bg-[#1ebe5d] transition-colors"
+                >
+                  WhatsApp
+                </a>
+              )}
+            </div>
+          )}
+
           <Button
             size="lg"
             className="w-full mt-6 bg-foreground text-background hover:bg-foreground/90 gap-2"
-            disabled={!start || !end}
+            disabled={!start || !end || contactRequired}
             onClick={() => navigate("/checkout")}
           >
             {t("cart.checkout")} <ArrowRight className="h-4 w-4" />
