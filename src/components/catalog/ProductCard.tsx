@@ -68,16 +68,19 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
       <div className="p-5">
         <div className="text-[10px] uppercase tracking-[0.28em] text-secondary mb-1.5">{cat}</div>
         <h3 className="font-medium text-base uppercase tracking-[0.06em] text-accent group-hover:text-accent/90 transition-colors">{name}</h3>
-        <div className="mt-4 pt-4 border-t border-border flex items-baseline justify-between">
-          <div>
-            <span className="text-lg font-medium text-foreground">
-              {formatCurrency(Number(product.price_day), i18n.language)}
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-secondary ml-1.5">{t("common.perDay")}</span>
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <span className="text-lg font-medium text-foreground">
+                {formatCurrency(Number(product.price_day), i18n.language)}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.22em] text-secondary ml-1.5">{t("common.perDay")}</span>
+            </div>
+            {product.stock <= 0 && (
+              <span className="text-[10px] uppercase tracking-[0.22em] text-destructive">{t("catalog.outOfStock")}</span>
+            )}
           </div>
-          {product.stock <= 0 && (
-            <span className="text-[10px] uppercase tracking-[0.22em] text-destructive">{t("catalog.outOfStock")}</span>
-          )}
+          <WeeklyDiscountBadge priceDay={Number(product.price_day)} variant="pill" />
         </div>
       </div>
     </Link>
