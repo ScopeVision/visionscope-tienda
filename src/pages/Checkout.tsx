@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
