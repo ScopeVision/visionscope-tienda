@@ -485,22 +485,25 @@ const ProductDetail = () => {
 
             {/* Pricing block — variant-driven when present */}
             {(mode === "kit" || hasPricedVariants) && (
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-3xl font-medium">
-                    {formatCurrency(effectivePriceDay, i18n.language)}
-                  </span>
-                  <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
-                </div>
-                {effectivePriceWeek && (
-                  <div className="text-right">
-                    <div className="text-sm text-secondary">{t("common.perWeek")}</div>
-                    <div className="font-medium">
-                      {formatCurrency(effectivePriceWeek, i18n.language)}
-                    </div>
+              <>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <span className="text-3xl font-medium">
+                      {formatCurrency(effectivePriceDay, i18n.language)}
+                    </span>
+                    <span className="text-sm text-secondary ml-1">{t("common.perDay")}</span>
                   </div>
-                )}
-              </div>
+                  {effectivePriceWeek && (
+                    <div className="text-right">
+                      <div className="text-sm text-secondary">{t("common.perWeek")}</div>
+                      <div className="font-medium">
+                        {formatCurrency(effectivePriceWeek, i18n.language)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <WeeklyDiscountBadge priceDay={effectivePriceDay} variant="block" className="mt-3" />
+              </>
             )}
 
             {/* Includes list for the active priced variant */}
