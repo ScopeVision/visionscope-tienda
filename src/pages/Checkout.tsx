@@ -62,6 +62,10 @@ const Checkout = () => {
       return null;
     }
   }
+  if (cart.days > MAX_AUTO_DAYS && !success) {
+    navigate("/cart");
+    return null;
+  }
 
   const explainCustomerError = (err: any, fullName: string, email: string): string => {
     const raw = (err?.message || "").toLowerCase();
