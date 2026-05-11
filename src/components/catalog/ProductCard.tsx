@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { localized } from "@/i18n";
 import { formatCurrency } from "@/lib/rental";
+import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { ImageOff } from "lucide-react";
 
 type Props = {
