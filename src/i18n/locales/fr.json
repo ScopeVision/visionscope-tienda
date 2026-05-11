@@ -192,6 +192,15 @@
       "includes": "Inclut"
     }
   },
+  "pricing": {
+    "progressiveDiscount": "Remise progressive appliquée",
+    "weeklyFrom": "Semaine dès",
+    "saveAmount": "économisez {{amount}} ({{pct}}%)",
+    "listPrice": "1 jour × 7",
+    "weeklyReal": "Prix hebdo réel",
+    "savings": "Économie totale",
+    "tooltip": "Liste : {{list}} · Semaine réelle : {{weekly}} · Économie {{savings}}"
+  },
   "cart": {
     "title": "Votre réservation",
     "empty": "Votre réservation est vide",

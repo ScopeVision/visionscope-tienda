@@ -46,6 +46,26 @@ export function calcItemPrice(opts: {
   };
 }
 
+/**
+ * Computes the effective weekly price (sum of progressive day prices for 7 days)
+ * along with the "list price" (day × 7) and the absolute and relative savings.
+ * Useful to surface the progressive discount in the UI.
+ */
+export function calcWeeklyBreakdown(priceDay: number): {
+  weekly: number;
+  listPrice: number;
+  savings: number;
+  savingsPct: number;
+} {
+  const day = Number(priceDay) || 0;
+  let weekly = 0;
+  for (let n = 1; n <= 7; n++) weekly += day * dailyFactor(n);
+  const listPrice = day * 7;
+  const savings = Math.max(0, listPrice - weekly);
+  const savingsPct = listPrice > 0 ? savings / listPrice : 0;
+  return { weekly, listPrice, savings, savingsPct };
+}
+
 export function daysBetween(start: Date | string, end: Date | string): number {
   const s = typeof start === "string" ? new Date(start) : start;
   const e = typeof end === "string" ? new Date(end) : end;

@@ -9,6 +9,7 @@ import { Trash2, ArrowRight, CalendarIcon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { useSiteContact } from "@/hooks/useSiteContact";
+import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { cn } from "@/lib/utils";
 
 const Cart = () => {
@@ -88,6 +89,7 @@ const Cart = () => {
                 </div>
                 <div className="text-right">
                   <div className="font-medium">{formatCurrency(calc.subtotal, i18n.language)}</div>
+                  <WeeklyDiscountBadge priceDay={item.priceDay} variant="pill" className="mt-1" />
                   <button
                     onClick={() => cart.remove(item.productId)}
                     className="mt-2 text-secondary hover:text-destructive"
