@@ -7,7 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Trash2, ArrowRight, CalendarIcon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { calcItemPrice, formatCurrency } from "@/lib/rental";
+import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { useSiteContact } from "@/hooks/useSiteContact";
 import { cn } from "@/lib/utils";
 
 const Cart = () => {
