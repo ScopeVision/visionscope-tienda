@@ -192,6 +192,15 @@
       "includes": "Inclou"
     }
   },
+  "pricing": {
+    "progressiveDiscount": "Descompte progressiu aplicat",
+    "weeklyFrom": "Setmana des de",
+    "saveAmount": "estalvies {{amount}} ({{pct}}%)",
+    "listPrice": "1 dia × 7",
+    "weeklyReal": "Preu setmanal real",
+    "savings": "Estalvi total",
+    "tooltip": "Llista: {{list}} · Setmana real: {{weekly}} · Estalvies {{savings}}"
+  },
   "cart": {
     "title": "La teva reserva",
     "empty": "La teva reserva està buida",
