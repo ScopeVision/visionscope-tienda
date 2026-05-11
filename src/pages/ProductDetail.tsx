@@ -20,6 +20,7 @@ const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
   const cart = useCart();
+  const { data: siteContact } = useSiteContact();
   const [start, setStart] = useState<Date | undefined>(
     cart.startDate ? new Date(cart.startDate) : undefined
   );
