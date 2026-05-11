@@ -177,7 +177,7 @@ const ProductDetail = () => {
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
   const kitCalc = useMemo(() => {
-    if (!product) return { subtotal: 0, weeklyApplied: false };
+    if (!product) return { subtotal: 0, weeklyApplied: false, contactRequired: false, avgPerDay: 0 };
     return calcItemPrice({
       priceDay: effectivePriceDay,
       priceWeek: effectivePriceWeek,
