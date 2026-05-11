@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { calcItemPrice, daysBetween, formatCurrency } from "@/lib/rental";
+import { calcItemPrice, daysBetween, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { useCart } from "@/contexts/CartContext";
+import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
