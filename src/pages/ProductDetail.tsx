@@ -189,6 +189,9 @@ const ProductDetail = () => {
   const individualCalc = useMemo(() => {
     let total = 0;
     let any = false;
+    let contact = false;
+    let avgSum = 0;
+    let count = 0;
     visibleComponents.forEach((c: any) => {
       if (!selectedComponents.has(c.child_product_id)) return;
       const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
@@ -200,8 +203,16 @@ const ProductDetail = () => {
       });
       total += r.subtotal;
       any = any || r.weeklyApplied;
+      contact = contact || r.contactRequired;
+      avgSum += r.avgPerDay;
+      count += 1;
     });
-    return { subtotal: total, weeklyApplied: any };
+    return {
+      subtotal: total,
+      weeklyApplied: any,
+      contactRequired: contact,
+      avgPerDay: count > 0 ? avgSum / count : 0,
+    };
   }, [visibleComponents, selectedComponents, days]);
 
   const allSelected =
