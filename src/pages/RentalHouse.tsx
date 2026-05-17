@@ -166,6 +166,25 @@ const RentalHouse = () => {
         <div className="mb-6 p-5 rounded-sm bg-surface border border-border space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-200">
           {dynamicSpecs.map((spec) => {
             const active = dynFilters[spec.key] ?? [];
+            if (spec.kind === "boolean") {
+              const isActive = active.length > 0;
+              return (
+                <div key={spec.key} className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleDynValue(spec.key, "1")}
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                      isActive
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
+                    )}
+                  >
+                    {t(spec.labelKey)}
+                  </button>
+                </div>
+              );
+            }
             return (
               <div key={spec.key}>
                 <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">
