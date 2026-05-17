@@ -63,6 +63,10 @@ const RentalHouse = () => {
       for (const spec of specs) {
         const active = dynFilters[spec.key] ?? [];
         if (active.length === 0) continue;
+        if (spec.kind === "boolean") {
+          if ((p as any)[spec.column] !== true) return false;
+          continue;
+        }
         const value = (p as any)[spec.column];
         if (!value || !active.includes(value)) return false;
       }
