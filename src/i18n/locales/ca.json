@@ -65,10 +65,23 @@
       "mountType": "Muntura",
       "lensType": "Tipus d'òptica",
       "format": "Format",
+      "coverage": "Cobertura / Format",
+      "anamorphic": "Anamòrfica",
+      "vintage": "Vintage",
+      "rehoused": "Rehoused",
+      "series": "Sèrie",
+      "year": "Any",
       "lightingType": "Tipus d'il·luminació",
       "gripType": "Tipus de grip",
       "accessoryType": "Tipus d'accessori",
       "kitType": "Tipus de kit",
+      "cov": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format",
+        "anaFF": "Anamorphic Full Frame",
+        "anaS35": "Anamorphic Super 35"
+      },
       "sensor": {
         "fullframe": "Full Frame",
         "super35": "Super 35",
