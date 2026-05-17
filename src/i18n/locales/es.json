@@ -75,7 +75,13 @@
       "gripType": "Tipo de grip",
       "accessoryType": "Tipo de accesorio",
       "kitType": "Tipo de kit",
-      "coverage_values": {},
+      "cov": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format",
+        "anaFF": "Anamorphic Full Frame",
+        "anaS35": "Anamorphic Super 35"
+      },
       "sensor": {
         "fullframe": "Full Frame",
         "super35": "Super 35",
