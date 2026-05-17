@@ -308,7 +308,9 @@
         "tags": "Etiquetes",
         "brand": "Marca",
         "model": "Model",
-        "kitMode": "Tipus de producte"
+        "kitMode": "Tipus de producte",
+        "series": "Sèrie / Família òptica",
+        "year": "Any"
       },
       "uploader": {
         "title": "Arrossega imatges o fes clic per pujar",
