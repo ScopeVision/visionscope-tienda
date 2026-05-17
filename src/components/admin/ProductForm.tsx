@@ -436,23 +436,74 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 {t("admin.products.specsNone")}
               </p>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {dynamicSpecs.map((spec) => (
-                  <Field key={spec.key} label={t(spec.labelKey)}>
-                    <select
-                      {...form.register(spec.column as any)}
-                      className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      <option value="">—</option>
-                      {spec.options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                ))}
-              </div>
+              <>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {dynamicSpecs
+                    .filter((spec) => spec.kind !== "boolean")
+                    .map((spec) => (
+                      <Field key={spec.key} label={t(spec.labelKey)}>
+                        <select
+                          {...form.register(spec.column as any)}
+                          className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">—</option>
+                          {spec.options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    ))}
+                </div>
+
+                {isLensesCategory && (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field label={t("admin.products.fields.series")}>
+                      <Input {...form.register("series")} placeholder="Master Prime, Supreme Prime…" />
+                    </Field>
+                    <Field label={t("admin.products.fields.year")}>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="1900"
+                        max="2100"
+                        {...form.register("year" as any)}
+                      />
+                    </Field>
+                  </div>
+                )}
+
+                {dynamicSpecs.some((spec) => spec.kind === "boolean") && (
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {dynamicSpecs
+                      .filter((spec) => spec.kind === "boolean")
+                      .map((spec) => {
+                        const fieldName = spec.column as
+                          | "is_anamorphic"
+                          | "is_vintage"
+                          | "is_rehoused";
+                        const checked = !!form.watch(fieldName);
+                        return (
+                          <div
+                            key={spec.key}
+                            className="flex items-center justify-between gap-3 h-10 px-3 rounded-md border border-input bg-background"
+                          >
+                            <span className="text-xs uppercase tracking-wider text-secondary">
+                              {t(spec.labelKey)}
+                            </span>
+                            <Switch
+                              checked={checked}
+                              onCheckedChange={(v) =>
+                                form.setValue(fieldName, v, { shouldDirty: true })
+                              }
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
