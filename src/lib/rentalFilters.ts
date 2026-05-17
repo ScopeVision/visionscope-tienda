@@ -65,11 +65,11 @@ export const MOUNTS: FilterOption[] = [
 // Coverage / format (digital + film + anamorphic).
 export const COVERAGE_FORMATS: FilterOption[] = [
   // Digital
-  { value: "fullframe", labelKey: "rental.dyn.coverage.fullframe" },
-  { value: "super35", labelKey: "rental.dyn.coverage.super35" },
+  { value: "fullframe", labelKey: "rental.dyn.cov.fullframe" },
+  { value: "super35", labelKey: "rental.dyn.cov.super35" },
   { value: "apsc", labelKey: "APS-C" },
   { value: "vistavision", labelKey: "VistaVision" },
-  { value: "large_format", labelKey: "rental.dyn.coverage.largeformat" },
+  { value: "large_format", labelKey: "rental.dyn.cov.largeformat" },
   { value: "mft", labelKey: "Micro Four Thirds" },
   // Film
   { value: "8mm", labelKey: "8mm" },
@@ -80,8 +80,8 @@ export const COVERAGE_FORMATS: FilterOption[] = [
   { value: "65mm", labelKey: "65mm" },
   { value: "imax70", labelKey: "IMAX 70mm" },
   // Anamorphic
-  { value: "anamorphic_ff", labelKey: "rental.dyn.coverage.anaFF" },
-  { value: "anamorphic_s35", labelKey: "rental.dyn.coverage.anaS35" },
+  { value: "anamorphic_ff", labelKey: "rental.dyn.cov.anaFF" },
+  { value: "anamorphic_s35", labelKey: "rental.dyn.cov.anaS35" },
 ];
 
 export const LENS_TYPES: FilterOption[] = [
