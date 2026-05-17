@@ -308,6 +308,8 @@
         "tags": "Etiquetas",
         "brand": "Marca",
         "model": "Modelo",
+        "series": "Serie / Familia óptica",
+        "year": "Año",
         "kitMode": "Tipo de producto"
       },
       "uploader": {
