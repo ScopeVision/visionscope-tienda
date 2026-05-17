@@ -49,6 +49,12 @@ const schema = z.object({
   sensor_type: optStr,
   lens_type: optStr,
   format: optStr,
+  coverage: optStr,
+  series: z.string().trim().max(120).optional().or(z.literal("")).nullable(),
+  year: z.union([z.coerce.number().int().min(1900).max(2100), z.literal("").transform(() => null)]).nullable().optional(),
+  is_anamorphic: z.boolean().default(false),
+  is_vintage: z.boolean().default(false),
+  is_rehoused: z.boolean().default(false),
   lighting_type: optStr,
   grip_type: optStr,
   accessory_type: optStr,
@@ -113,6 +119,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       sensor_type: product?.sensor_type ?? "",
       lens_type: product?.lens_type ?? "",
       format: product?.format ?? "",
+      coverage: product?.coverage ?? "",
+      series: product?.series ?? "",
+      year: product?.year ?? null,
+      is_anamorphic: product?.is_anamorphic ?? false,
+      is_vintage: product?.is_vintage ?? false,
+      is_rehoused: product?.is_rehoused ?? false,
       lighting_type: product?.lighting_type ?? "",
       grip_type: product?.grip_type ?? "",
       accessory_type: product?.accessory_type ?? "",
@@ -201,6 +213,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         sensor_type: values.sensor_type || null,
         lens_type: values.lens_type || null,
         format: values.format || null,
+        coverage: values.coverage || null,
+        series: values.series || null,
+        year: values.year == null || (values.year as any) === "" ? null : Number(values.year),
+        is_anamorphic: !!values.is_anamorphic,
+        is_vintage: !!values.is_vintage,
+        is_rehoused: !!values.is_rehoused,
         lighting_type: values.lighting_type || null,
         grip_type: values.grip_type || null,
         accessory_type: values.accessory_type || null,
@@ -418,23 +436,74 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 {t("admin.products.specsNone")}
               </p>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {dynamicSpecs.map((spec) => (
-                  <Field key={spec.key} label={t(spec.labelKey)}>
-                    <select
-                      {...form.register(spec.column as any)}
-                      className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      <option value="">—</option>
-                      {spec.options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                ))}
-              </div>
+              <>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {dynamicSpecs
+                    .filter((spec) => spec.kind !== "boolean")
+                    .map((spec) => (
+                      <Field key={spec.key} label={t(spec.labelKey)}>
+                        <select
+                          {...form.register(spec.column as any)}
+                          className="h-10 w-full px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">—</option>
+                          {spec.options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    ))}
+                </div>
+
+                {isLensesCategory && (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field label={t("admin.products.fields.series")}>
+                      <Input {...form.register("series")} placeholder="Master Prime, Supreme Prime…" />
+                    </Field>
+                    <Field label={t("admin.products.fields.year")}>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="1900"
+                        max="2100"
+                        {...form.register("year" as any)}
+                      />
+                    </Field>
+                  </div>
+                )}
+
+                {dynamicSpecs.some((spec) => spec.kind === "boolean") && (
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {dynamicSpecs
+                      .filter((spec) => spec.kind === "boolean")
+                      .map((spec) => {
+                        const fieldName = spec.column as
+                          | "is_anamorphic"
+                          | "is_vintage"
+                          | "is_rehoused";
+                        const checked = !!form.watch(fieldName);
+                        return (
+                          <div
+                            key={spec.key}
+                            className="flex items-center justify-between gap-3 h-10 px-3 rounded-md border border-input bg-background"
+                          >
+                            <span className="text-xs uppercase tracking-wider text-secondary">
+                              {t(spec.labelKey)}
+                            </span>
+                            <Switch
+                              checked={checked}
+                              onCheckedChange={(v) =>
+                                form.setValue(fieldName, v, { shouldDirty: true })
+                              }
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 

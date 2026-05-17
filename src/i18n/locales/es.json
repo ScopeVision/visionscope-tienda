@@ -65,10 +65,23 @@
       "mountType": "Montura",
       "lensType": "Tipo de óptica",
       "format": "Formato",
+      "coverage": "Cobertura / Formato",
+      "anamorphic": "Anamórfica",
+      "vintage": "Vintage",
+      "rehoused": "Rehoused",
+      "series": "Serie",
+      "year": "Año",
       "lightingType": "Tipo de iluminación",
       "gripType": "Tipo de grip",
       "accessoryType": "Tipo de accesorio",
       "kitType": "Tipo de kit",
+      "cov": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format",
+        "anaFF": "Anamorphic Full Frame",
+        "anaS35": "Anamorphic Super 35"
+      },
       "sensor": {
         "fullframe": "Full Frame",
         "super35": "Super 35",
@@ -295,6 +308,8 @@
         "tags": "Etiquetas",
         "brand": "Marca",
         "model": "Modelo",
+        "series": "Serie / Familia óptica",
+        "year": "Año",
         "kitMode": "Tipo de producto"
       },
       "uploader": {
