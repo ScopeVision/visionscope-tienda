@@ -308,7 +308,9 @@
         "tags": "Étiquettes",
         "brand": "Marque",
         "model": "Modèle",
-        "kitMode": "Type de produit"
+        "kitMode": "Type de produit",
+        "series": "Série / Famille optique",
+        "year": "Année"
       },
       "uploader": {
         "title": "Glissez des images ou cliquez pour téléverser",
