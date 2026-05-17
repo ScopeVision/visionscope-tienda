@@ -308,7 +308,9 @@
         "tags": "Tags",
         "brand": "Brand",
         "model": "Model",
-        "kitMode": "Product type"
+        "kitMode": "Product type",
+        "series": "Series / Optical family",
+        "year": "Year"
       },
       "uploader": {
         "title": "Drag images or click to upload",
