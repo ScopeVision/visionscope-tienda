@@ -462,6 +462,7 @@ export type Database = {
           accessory_type: string | null
           brand: string | null
           category_id: string | null
+          coverage: string | null
           created_at: string
           deposit: number
           description_ca: string | null
@@ -472,6 +473,9 @@ export type Database = {
           grip_type: string | null
           id: string
           images: string[]
+          is_anamorphic: boolean
+          is_rehoused: boolean
+          is_vintage: boolean
           kit_mode: string
           kit_type: string | null
           lens_type: string | null
@@ -486,14 +490,17 @@ export type Database = {
           price_week: number | null
           published: boolean
           sensor_type: string | null
+          series: string | null
           slug: string
           stock: number
           updated_at: string
+          year: number | null
         }
         Insert: {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          coverage?: string | null
           created_at?: string
           deposit?: number
           description_ca?: string | null
@@ -504,6 +511,9 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          is_anamorphic?: boolean
+          is_rehoused?: boolean
+          is_vintage?: boolean
           kit_mode?: string
           kit_type?: string | null
           lens_type?: string | null
@@ -518,14 +528,17 @@ export type Database = {
           price_week?: number | null
           published?: boolean
           sensor_type?: string | null
+          series?: string | null
           slug: string
           stock?: number
           updated_at?: string
+          year?: number | null
         }
         Update: {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          coverage?: string | null
           created_at?: string
           deposit?: number
           description_ca?: string | null
@@ -536,6 +549,9 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          is_anamorphic?: boolean
+          is_rehoused?: boolean
+          is_vintage?: boolean
           kit_mode?: string
           kit_type?: string | null
           lens_type?: string | null
@@ -550,9 +566,11 @@ export type Database = {
           price_week?: number | null
           published?: boolean
           sensor_type?: string | null
+          series?: string | null
           slug?: string
           stock?: number
           updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {
