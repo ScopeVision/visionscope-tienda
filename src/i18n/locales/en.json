@@ -65,10 +65,23 @@
       "mountType": "Mount",
       "lensType": "Lens type",
       "format": "Format",
+      "coverage": "Coverage / Format",
+      "anamorphic": "Anamorphic",
+      "vintage": "Vintage",
+      "rehoused": "Rehoused",
+      "series": "Series",
+      "year": "Year",
       "lightingType": "Lighting type",
       "gripType": "Grip type",
       "accessoryType": "Accessory type",
       "kitType": "Kit type",
+      "cov": {
+        "fullframe": "Full Frame",
+        "super35": "Super 35",
+        "largeformat": "Large Format",
+        "anaFF": "Anamorphic Full Frame",
+        "anaS35": "Anamorphic Super 35"
+      },
       "sensor": {
         "fullframe": "Full Frame",
         "super35": "Super 35",
