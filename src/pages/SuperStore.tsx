@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, ImageOff, ArrowRight } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 
 /**
  * Super Store — public catalog (independent module).
