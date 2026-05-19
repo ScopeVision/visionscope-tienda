@@ -1,83 +1,144 @@
+## Plan: Sistema Operativo de Pedidos Editables (Rental Admin)
 
-# Sistema de atributos profesionales para catálogo
+Transformar el panel `AdminBookings` en una herramienta operativa profesional, manteniendo intacta la lógica automática (pricing progresivo 6%, fianzas, stock, checkout público).
 
-Ampliar la base de datos técnica de productos con atributos profesionales de equipamiento cinematográfico (especialmente ópticas y cámaras), y exponerlos como filtros en el catálogo.
+---
 
-## 1. Migración DB — nuevas columnas en `products`
+### 1. Cambios de base de datos (migration)
 
-Añadir columnas opcionales (nullable) a `products`:
+**Tabla `bookings` — nuevas columnas:**
+- `payment_status` (enum nuevo `payment_status`: `unpaid`, `deposit_pending`, `partially_paid`, `paid`, `refunded`) default `unpaid`
+- `discount_type` (`none` | `fixed` | `percent`) default `none`
+- `discount_value` numeric default 0
+- `extra_fees` jsonb default `[]` — lista de `{label, amount}` (transporte, montaje, etc.)
+- `subtotal_override` numeric nullable (si no es null, sobrescribe el subtotal calculado)
+- `total_override` numeric nullable (si no es null, sobrescribe el total final)
+- `internal_notes` text nullable (notas internas — el campo `notes` existente queda como notas generales)
 
-- `mount_extra` ya no hace falta — ampliamos las opciones existentes de `mount`.
-- `coverage` text — Full Frame / Super 35 / VistaVision / Large Format / APS-C / MFT / 16mm / Super 16 / 35mm / 65mm / IMAX 70mm / Anamorphic FF / Anamorphic S35 / 8mm / Super 8.
-- `series` text — serie/familia óptica (Master Prime, Supreme Prime, Signature Prime, Ultra Prime, etc.) — texto libre.
-- `year` int — año del modelo.
-- `is_anamorphic` boolean default false.
-- `is_vintage` boolean default false.
-- `is_rehoused` boolean default false.
+**Ampliar enum `booking_status`:** añadir `pending_review`, `awaiting_confirmation`, `ready_for_pickup`, `returned`. Mantener los actuales (`nuevo`, `confirmado`, `preparacion`, `alquiler`, `finalizado`, `cancelado`) y mapearlos al nuevo flujo en UI (nuevo→New, confirmado→Confirmed, preparacion→In Preparation, alquiler→Active Rental, finalizado→Completed, cancelado→Cancelled).
 
-(No tocamos `format`, `sensor_type`, `lens_type`, `brand` — ya existen y se mantienen.)
+**Tabla `booking_items` — nuevas columnas:**
+- `variant_id` uuid nullable
+- `discount_type` (`none` | `fixed` | `percent`) default `none`
+- `discount_value` numeric default 0
+- `price_override` numeric nullable (override del subtotal de la línea)
 
-Sin cambios en RLS.
+**Nueva tabla `booking_audit_log`:**
+- `id`, `booking_id`, `actor_user_id`, `action` (text), `changes` (jsonb), `created_at`
+- RLS: solo admins leen/escriben
 
-## 2. Catálogo de monturas y formatos (`src/lib/rentalFilters.ts`)
+**Trigger `validate_booking_item_price`:** relajar para admins (ya lo hace) — no cambia. Para no-admin sigue estricto; admins pueden poner cualquier precio.
 
-Ampliar `CAMERA_MOUNTS` y `LENS_MOUNTS` a la lista solicitada:
+**RLS:** añadir política `Admins insert bookings` y `Admins insert booking_items` (actualmente solo el RPC inserta — ahora el admin necesita CRUD directo desde el panel).
 
+---
+
+### 2. Helper de cálculo `src/lib/bookingPricing.ts`
+
+Función pura que toma `{items, discount, extra_fees, subtotal_override, total_override}` y devuelve:
 ```
-Arri PL, Arri LPL, Arri Standard, Arri Bayonet,
-Canon EF, Canon RF, Canon FD,
-Sony E,
-Nikon F, Nikon Z,
-Leica M, Leica R, Leica L,
-Panavision PV, B4, C-Mount, OCT-19, M42, MFT, L39/LTM
+{
+  items: [{ auto_subtotal, discount_amount, final_subtotal }],
+  auto_subtotal,           // suma de items con pricing progresivo
+  items_discount_total,
+  global_discount_amount,
+  extra_fees_total,
+  effective_subtotal,      // subtotal_override ?? auto_subtotal - descuentos
+  total,                   // total_override ?? effective_subtotal + fees
+}
+```
+Reutiliza la lógica progresiva 6% de `src/lib/rental.ts`.
+
+---
+
+### 3. UI Admin — refactor `AdminBookings.tsx`
+
+**Lista (tabs):** ampliar tabs a los 10 estados nuevos + filtro/badge de `payment_status`.
+
+**Editor de pedido (Dialog grande):**
+
+```text
+┌──────────────────────────────────────────────────┐
+│ LR-260518-abc123              [Status ▾] [Pay ▾] │
+├──────────────────────────────────────────────────┤
+│ Cliente: nombre · email                          │
+│ Fechas:  [start] → [end]                         │
+├──────────────────────────────────────────────────┤
+│ PRODUCTOS                            [+ Añadir]  │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Producto ▾  Variante ▾  Qty  Days  €/día  ✕ │ │
+│ │ Subtotal auto: 120€  Descuento: [10%]  →108€ │ │
+│ └──────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────┤
+│ DESCUENTO GLOBAL: [○ none ○ fixed ○ %] [value]   │
+│ FEES EXTRA:                          [+ Añadir]  │
+│   Transporte           50€                    ✕  │
+├──────────────────────────────────────────────────┤
+│ RESUMEN FINANCIERO                               │
+│   Subtotal automático        540€                │
+│   Descuentos por línea       -54€                │
+│   Descuento global           -49€                │
+│   Fees extra                 +50€                │
+│   ─────────────────────                          │
+│   Total calculado            487€                │
+│   [☐ Override total]        [        ] €         │
+│   TOTAL FINAL                487€                │
+│   Fianza                     200€                │
+├──────────────────────────────────────────────────┤
+│ NOTAS GENERALES (visibles internamente)          │
+│ NOTAS INTERNAS (operativas)                      │
+└──────────────────────────────────────────────────┘
+                              [Cancelar] [Guardar]
 ```
 
-Añadir nuevo array `COVERAGE_FORMATS` con los formatos digitales + film + anamórficos solicitados.
+**Selector de productos:** búsqueda por nombre con `products` publicados; al elegir, carga sus `product_variants` para el dropdown de variante.
 
-Ampliar `BRANDS` con: Zeiss, Cooke, Angénieux, Leica, Nikon, Sigma, Tokina, Schneider, Laowa, DZOFilm, Atlas, Tribe7, Vantage.
+**Recalculo en vivo:** cada cambio invoca `computeBookingPricing()` y refleja los totales sin guardar hasta pulsar Guardar.
 
-Añadir `LENS_SERIES` (texto libre por ahora, no opciones cerradas).
+**Audit log:** al guardar, diff vs estado original → insertar fila en `booking_audit_log` (cambios de status, payment_status, items añadidos/eliminados, totales). Mostrar timeline expandible al final del dialog.
 
-## 3. Ampliar `CATEGORY_FILTERS`
+**Acciones rápidas en la lista:** mantener el botón "avanzar al siguiente estado" pero adaptado al nuevo enum.
 
-- `cameras`: añadir filtro `coverage` (multi).
-- `lenses`: reemplazar `format` por `coverage`; añadir filtros boolean `anamorphic`, `vintage`, `rehoused` (chips toggle); añadir filtro `series` (texto libre/búsqueda) — opcional, si añade complejidad lo dejamos solo en specs.
+---
 
-El componente `RentalHouse.tsx` debe interpretar los nuevos booleans (se renderizan como toggles, no select).
+### 4. i18n
 
-## 4. `ProductForm.tsx`
+Añadir keys en `es/ca/en/fr`:
+- `bookings.status.*` (los 10 nuevos)
+- `bookings.payment.*` (5 estados)
+- `bookings.editor.*` (productos, descuentos, fees, override, resumen, audit)
 
-En la pestaña **Specs**:
+---
 
-- Añadir campos: `coverage` (select), `series` (input), `year` (input number), y 3 switches: `is_anamorphic`, `is_vintage`, `is_rehoused`.
-- Los switches se muestran siempre que la categoría sea `lenses`.
+### 5. Lo que NO cambia
 
-Actualizar zod schema, defaults, payload del submit.
+- Pricing progresivo 6% (`src/lib/rental.ts`) — base
+- Checkout público `/checkout` y RPC `submit_checkout_request` / `create_booking_with_items`
+- Fórmula automática de subtotales
+- Stock disponible (`available_stock`)
+- Super Store, productos, variantes
 
-## 5. `RentalHouse.tsx`
+---
 
-- Soportar filtros boolean (chips toggle "Anamórfica", "Vintage", "Rehoused").
-- Soportar nuevo filtro `coverage` (multi-select).
-- Construir query Supabase: `.eq('is_anamorphic', true)` cuando esté activo, `.in('coverage', [...])` cuando haya selección.
+### Archivos
 
-## 6. i18n
+**Nuevos:**
+- `supabase/migrations/<ts>_booking_editor.sql`
+- `src/lib/bookingPricing.ts`
+- `src/components/admin/BookingEditor.tsx` (Dialog grande, extraído del current inline)
+- `src/components/admin/BookingItemRow.tsx`
+- `src/components/admin/BookingAuditLog.tsx`
 
-Añadir claves nuevas en `es/ca/en/fr.json`:
+**Modificados:**
+- `src/pages/admin/AdminBookings.tsx` (tabs + lista + abrir editor)
+- `src/i18n/locales/{es,ca,en,fr}.json`
+- `src/integrations/supabase/types.ts` (auto-regenerado)
 
-- `rental.dyn.coverage`, `rental.dyn.coverage.<value>` (FF, S35, VV, LF, 8mm, S8, 16mm, S16, 35mm, 65mm, IMAX70, AnaFF, AnaS35, APSC, MFT).
-- `rental.dyn.anamorphic`, `rental.dyn.vintage`, `rental.dyn.rehoused`, `rental.dyn.series`, `rental.dyn.year`.
-- `admin.products.fields.coverage`, `series`, `year`, `anamorphic`, `vintage`, `rehoused`.
+---
 
-## Archivos a crear/modificar
+### Confirma para proceder
 
-- **Migración SQL** (nuevas columnas en `products`).
-- **Modificar:** `src/lib/rentalFilters.ts`, `src/components/admin/ProductForm.tsx`, `src/pages/RentalHouse.tsx`, los 4 ficheros `src/i18n/locales/*.json`.
+¿Procedo con esta arquitectura? Dos puntos abiertos:
 
-## Fuera de alcance (para iteraciones siguientes)
-
-- Estado Rental vs Store por producto — actualmente Store y Rental usan tablas separadas (`store_products` vs `products`); no hace falta una columna `status`. Si quieres unificarlo dímelo y lo planteo aparte.
-- Filtros booleanos en Super Store (`store_products`) — el módulo Store es independiente y aún muy simple.
-- UI de "compare specs" entre productos.
-- Búsqueda full-text de series/modelo.
-
-¿Apruebas el plan? Si quieres ajustar algo (p.ej. añadir también el campo `status` Rental/Store en `products` para unificar, o aplicar los mismos filtros a Super Store), dímelo antes de implementar.
+1. **Estados existentes:** propongo mantener los actuales en DB y añadir los nuevos al enum (compatible con pedidos en curso). ¿OK o prefieres renombrarlos?
+2. **Audit log:** versión mínima (action + changes JSON) en esta iteración. ¿Suficiente o quieres ya un timeline visual rico?

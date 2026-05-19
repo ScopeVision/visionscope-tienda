@@ -80,45 +80,84 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          booking_id: string
+          changes: Json
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          booking_id: string
+          changes?: Json
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          booking_id?: string
+          changes?: Json
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       booking_items: {
         Row: {
           booking_id: string
           created_at: string
           days: number
           deposit: number
+          discount_type: string
+          discount_value: number
           id: string
           price_day: number
+          price_override: number | null
           price_week: number | null
           product_id: string | null
           product_name: string
           quantity: number
           subtotal: number
+          variant_id: string | null
         }
         Insert: {
           booking_id: string
           created_at?: string
           days?: number
           deposit?: number
+          discount_type?: string
+          discount_value?: number
           id?: string
           price_day?: number
+          price_override?: number | null
           price_week?: number | null
           product_id?: string | null
           product_name: string
           quantity?: number
           subtotal?: number
+          variant_id?: string | null
         }
         Update: {
           booking_id?: string
           created_at?: string
           days?: number
           deposit?: number
+          discount_type?: string
+          discount_value?: number
           id?: string
           price_day?: number
+          price_override?: number | null
           price_week?: number | null
           product_id?: string | null
           product_name?: string
           quantity?: number
           subtotal?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -142,42 +181,63 @@ export type Database = {
           created_at: string
           customer_id: string | null
           deposit_total: number
+          discount_type: string
+          discount_value: number
           end_date: string
+          extra_fees: Json
           id: string
+          internal_notes: string | null
           notes: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
           reference: string
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           subtotal: number
+          subtotal_override: number | null
           total: number
+          total_override: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           customer_id?: string | null
           deposit_total?: number
+          discount_type?: string
+          discount_value?: number
           end_date: string
+          extra_fees?: Json
           id?: string
+          internal_notes?: string | null
           notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           subtotal?: number
+          subtotal_override?: number | null
           total?: number
+          total_override?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           customer_id?: string | null
           deposit_total?: number
+          discount_type?: string
+          discount_value?: number
           end_date?: string
+          extra_fees?: Json
           id?: string
+          internal_notes?: string | null
           notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           subtotal?: number
+          subtotal_override?: number | null
           total?: number
+          total_override?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -820,6 +880,16 @@ export type Database = {
         | "alquiler"
         | "finalizado"
         | "cancelado"
+        | "pending_review"
+        | "awaiting_confirmation"
+        | "ready_for_pickup"
+        | "returned"
+      payment_status:
+        | "unpaid"
+        | "deposit_pending"
+        | "partially_paid"
+        | "paid"
+        | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -955,6 +1025,17 @@ export const Constants = {
         "alquiler",
         "finalizado",
         "cancelado",
+        "pending_review",
+        "awaiting_confirmation",
+        "ready_for_pickup",
+        "returned",
+      ],
+      payment_status: [
+        "unpaid",
+        "deposit_pending",
+        "partially_paid",
+        "paid",
+        "refunded",
       ],
     },
   },
