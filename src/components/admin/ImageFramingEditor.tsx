@@ -276,9 +276,3 @@ function FramePanel({
     </div>
   );
 }
-        />
-        <span className="text-xs tabular-nums w-12 text-right">{frame.zoom.toFixed(2)}×</span>
-      </div>
-    </div>
-  );
-}
