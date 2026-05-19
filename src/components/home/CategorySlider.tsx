@@ -107,12 +107,12 @@ export const CategorySlider = () => {
             const isExternal = /^https?:/.test(href);
             const inner = (
               <div className="group block relative rounded-sm overflow-hidden bg-surface aspect-[4/3] w-full border border-border transition-smooth hover:border-accent/60">
-                <img
+                <SmartImage
                   src={img}
                   alt={localized(c, "name", i18n.language)}
                   loading="lazy"
                   draggable={false}
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:opacity-90 group-hover:scale-105"
+                  className="absolute inset-0 opacity-60 transition-all duration-700 group-hover:opacity-90 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/10" />
                 <div className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.3em] text-accent/80 font-medium tabular-nums">
