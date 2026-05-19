@@ -2,8 +2,9 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, UploadCloud, X } from "lucide-react";
+import { Loader2, UploadCloud, X, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { ImageFramingEditor } from "@/components/admin/ImageFramingEditor";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX_BYTES = 8 * 1024 * 1024;
