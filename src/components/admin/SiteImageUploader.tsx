@@ -114,6 +114,11 @@ export const SiteImageUploader = ({ folder, value, onChange, recommendation }: P
       >
         <UploadCloud className="h-3.5 w-3.5" /> {value ? "Cambiar" : "Subir"}
       </Button>
+      <ImageFramingEditor
+        url={value || null}
+        open={framingOpen}
+        onClose={() => setFramingOpen(false)}
+      />
     </div>
   );
 };
