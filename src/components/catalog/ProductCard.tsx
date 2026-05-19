@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { localized } from "@/i18n";
 import { formatCurrency } from "@/lib/rental";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
+import { SmartImage } from "@/components/SmartImage";
 import { ImageOff } from "lucide-react";
 
 type Props = {
@@ -25,7 +26,7 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
       >
         <div className="relative shrink-0 w-32 h-32 rounded-sm overflow-hidden bg-muted">
           {img ? (
-            <img src={img} alt={name} loading="lazy" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+            <SmartImage src={img} alt={name} loading="lazy" className="opacity-90 group-hover:opacity-100 transition-opacity" />
           ) : (
             <div className="w-full h-full grid place-items-center text-secondary/40">
               <ImageOff className="h-6 w-6" />
@@ -52,11 +53,11 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
     >
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
         {img ? (
-          <img
+          <SmartImage
             src={img}
             alt={name}
             loading="lazy"
-            className="w-full h-full object-cover opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+            className="opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-secondary/40">

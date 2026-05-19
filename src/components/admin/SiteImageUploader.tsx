@@ -2,8 +2,9 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, UploadCloud, X } from "lucide-react";
+import { Loader2, UploadCloud, X, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { ImageFramingEditor } from "@/components/admin/ImageFramingEditor";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -18,6 +19,7 @@ type Props = {
 export const SiteImageUploader = ({ folder, value, onChange, recommendation }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [framingOpen, setFramingOpen] = useState(false);
 
   const upload = async (file: File) => {
     if (!ACCEPTED.includes(file.type)) {
@@ -55,6 +57,14 @@ export const SiteImageUploader = ({ folder, value, onChange, recommendation }: P
       {value ? (
         <div className="relative w-full aspect-video rounded-md overflow-hidden border border-border bg-muted group">
           <img src={value} alt="" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => setFramingOpen(true)}
+            className="absolute top-2 left-2 grid place-items-center w-7 h-7 rounded-full bg-background/80 hover:bg-accent hover:text-accent-foreground transition-colors"
+            aria-label="Ajustar encuadre"
+          >
+            <Crop className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={() => onChange("")}
@@ -104,6 +114,11 @@ export const SiteImageUploader = ({ folder, value, onChange, recommendation }: P
       >
         <UploadCloud className="h-3.5 w-3.5" /> {value ? "Cambiar" : "Subir"}
       </Button>
+      <ImageFramingEditor
+        url={value || null}
+        open={framingOpen}
+        onClose={() => setFramingOpen(false)}
+      />
     </div>
   );
 };

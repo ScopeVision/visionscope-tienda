@@ -382,6 +382,39 @@ export type Database = {
         }
         Relationships: []
       }
+      image_settings: {
+        Row: {
+          focal_x: number
+          focal_x_mobile: number | null
+          focal_y: number
+          focal_y_mobile: number | null
+          updated_at: string
+          url: string
+          zoom: number
+          zoom_mobile: number | null
+        }
+        Insert: {
+          focal_x?: number
+          focal_x_mobile?: number | null
+          focal_y?: number
+          focal_y_mobile?: number | null
+          updated_at?: string
+          url: string
+          zoom?: number
+          zoom_mobile?: number | null
+        }
+        Update: {
+          focal_x?: number
+          focal_x_mobile?: number | null
+          focal_y?: number
+          focal_y_mobile?: number | null
+          updated_at?: string
+          url?: string
+          zoom?: number
+          zoom_mobile?: number | null
+        }
+        Relationships: []
+      }
       product_components: {
         Row: {
           child_product_id: string

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import heroImg from "@/assets/hero-camera.jpg";
 import { useTranslation } from "react-i18next";
+import { SmartImage } from "@/components/SmartImage";
 
 type Slide = {
   id: string;
@@ -57,11 +58,11 @@ export const HeroSlider = () => {
   return (
     <section className="relative -mt-16 h-[100vh] min-h-[640px] w-full overflow-hidden grain">
       {slides.map((s, i) => (
-        <img
+        <SmartImage
           key={s.id}
           src={s.image_url}
           alt={s.title || "Hero"}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+          className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}

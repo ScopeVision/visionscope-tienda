@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
@@ -340,10 +341,10 @@ const ProductDetail = () => {
         <div>
           <div className="aspect-square rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden shadow-soft">
             {images.length > 0 ? (
-              <img
+              <SmartImage
                 src={images[Math.min(activeImageIdx, images.length - 1)]}
                 alt={name}
-                className="w-full h-full object-cover transition-opacity duration-300"
+                className="transition-opacity duration-300"
               />
             ) : (
               <div className="w-full h-full grid place-items-center text-secondary/40">
@@ -366,7 +367,7 @@ const ProductDetail = () => {
                   )}
                   aria-label={`${name} - ${idx + 1}`}
                 >
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <SmartImage src={url} alt="" />
                 </button>
               ))}
             </div>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/rental";
 import { Search, X, ImageOff, ArrowRight } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
@@ -309,11 +310,11 @@ const RentalCard = ({ product }: { product: any }) => {
     >
       <div className="relative aspect-square overflow-hidden">
         {img ? (
-          <img
+          <SmartImage
             src={img}
             alt={name}
             loading="lazy"
-            className="w-full h-full object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+            className="object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-secondary/40">

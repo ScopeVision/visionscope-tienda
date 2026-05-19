@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 import type { ProjectItem } from "./Projects";
 
 const ProjectDetail = () => {
@@ -47,7 +48,7 @@ const ProjectDetail = () => {
   return (
     <div>
       <section className="relative -mt-16 h-[80vh] min-h-[520px] w-full overflow-hidden grain">
-        <img src={project.cover_image} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
+        <SmartImage src={project.cover_image} alt={project.title} className="absolute inset-0" />
         <div
           className="absolute inset-0"
           style={{

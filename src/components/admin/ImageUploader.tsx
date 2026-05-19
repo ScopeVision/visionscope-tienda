@@ -2,9 +2,10 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, UploadCloud, X, Star } from "lucide-react";
+import { Loader2, UploadCloud, X, Star, Crop } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ImageFramingEditor } from "@/components/admin/ImageFramingEditor";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -21,6 +22,7 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [framingUrl, setFramingUrl] = useState<string | null>(null);
 
   const handleFiles = async (files: FileList | File[]) => {
     const list = Array.from(files);
@@ -143,7 +145,16 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
                   {t("admin.products.uploader.cover")}
                 </span>
               )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center gap-2">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center gap-2 p-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setFramingUrl(url)}
+                  className="h-7 px-2 text-xs gap-1"
+                >
+                  <Crop className="h-3 w-3" /> {t("admin.imageFraming.button", { defaultValue: "Framing" })}
+                </Button>
                 {idx !== 0 && (
                   <Button
                     type="button"
@@ -169,6 +180,11 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
           ))}
         </div>
       )}
+      <ImageFramingEditor
+        url={framingUrl}
+        open={!!framingUrl}
+        onClose={() => setFramingUrl(null)}
+      />
     </div>
   );
 };
