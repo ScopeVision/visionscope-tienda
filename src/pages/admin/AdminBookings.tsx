@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/rental";
 import { Download, Eye } from "lucide-react";
-import { toast } from "sonner";
+
 import BookingEditor, {
   BOOKING_STATUSES,
   STATUS_LABELS,
