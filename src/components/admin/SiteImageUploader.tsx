@@ -59,6 +59,14 @@ export const SiteImageUploader = ({ folder, value, onChange, recommendation }: P
           <img src={value} alt="" className="w-full h-full object-cover" />
           <button
             type="button"
+            onClick={() => setFramingOpen(true)}
+            className="absolute top-2 left-2 grid place-items-center w-7 h-7 rounded-full bg-background/80 hover:bg-accent hover:text-accent-foreground transition-colors"
+            aria-label="Ajustar encuadre"
+          >
+            <Crop className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
             onClick={() => onChange("")}
             className="absolute top-2 right-2 grid place-items-center w-7 h-7 rounded-full bg-background/80 hover:bg-destructive hover:text-destructive-foreground transition-colors"
             aria-label="Quitar imagen"
