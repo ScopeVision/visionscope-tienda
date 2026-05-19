@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import heroImg from "@/assets/hero-camera.jpg";
 import { useTranslation } from "react-i18next";
+import { SmartImage } from "@/components/SmartImage";
 
 type Slide = {
   id: string;
