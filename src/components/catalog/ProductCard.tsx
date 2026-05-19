@@ -26,7 +26,7 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
       >
         <div className="relative shrink-0 w-32 h-32 rounded-sm overflow-hidden bg-muted">
           {img ? (
-            <img src={img} alt={name} loading="lazy" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+            <SmartImage src={img} alt={name} loading="lazy" className="opacity-90 group-hover:opacity-100 transition-opacity" />
           ) : (
             <div className="w-full h-full grid place-items-center text-secondary/40">
               <ImageOff className="h-6 w-6" />
