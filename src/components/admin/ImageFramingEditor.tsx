@@ -112,34 +112,49 @@ export const ImageFramingEditor = ({ url, open, onClose }: Props) => {
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            <FramePanel
-              label={t("admin.imageFraming.desktop", { defaultValue: "Desktop" })}
-              aspect="4 / 3"
-              url={url}
-              frame={desktop}
-              onChange={setDesktop}
-            />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-[0.18em]">
-                  {t("admin.imageFraming.mobile", { defaultValue: "Mobile" })}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-secondary">
-                    {t("admin.imageFraming.sameAsDesktop", { defaultValue: "Same as desktop" })}
-                  </span>
-                  <Switch checked={sameAsDesktop} onCheckedChange={setSameAsDesktop} />
-                </div>
-              </div>
+          <div className="space-y-4">
+            <p className="text-xs text-secondary leading-relaxed">
+              {t("admin.imageFraming.help", {
+                defaultValue:
+                  "Drag the image to reposition. Use zoom to crop closer. The visible area shows exactly what will render on the site.",
+              })}
+            </p>
+            <div className="grid md:grid-cols-3 gap-4">
               <FramePanel
-                label=""
-                aspect="4 / 5"
+                label={t("admin.imageFraming.card", { defaultValue: "Card (4:3)" })}
+                aspect="4 / 3"
                 url={url}
-                frame={sameAsDesktop ? desktop : mobile}
-                onChange={sameAsDesktop ? () => {} : setMobile}
-                disabled={sameAsDesktop}
+                frame={desktop}
+                onChange={setDesktop}
               />
+              <FramePanel
+                label={t("admin.imageFraming.wide", { defaultValue: "Wide (16:9)" })}
+                aspect="16 / 9"
+                url={url}
+                frame={desktop}
+                onChange={setDesktop}
+              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs uppercase tracking-[0.18em]">
+                    {t("admin.imageFraming.mobile", { defaultValue: "Mobile (4:5)" })}
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-secondary">
+                      {t("admin.imageFraming.sameAsDesktop", { defaultValue: "= desktop" })}
+                    </span>
+                    <Switch checked={sameAsDesktop} onCheckedChange={setSameAsDesktop} />
+                  </div>
+                </div>
+                <FramePanel
+                  label=""
+                  aspect="4 / 5"
+                  url={url}
+                  frame={sameAsDesktop ? desktop : mobile}
+                  onChange={sameAsDesktop ? () => {} : setMobile}
+                  disabled={sameAsDesktop}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -180,14 +195,29 @@ function FramePanel({
   disabled?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ x: number; y: number; fx: number; fy: number } | null>(null);
 
-  const apply = (clientX: number, clientY: number) => {
-    if (!ref.current) return;
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (disabled) return;
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, fx: frame.x, fy: frame.y };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-    onChange({ ...frame, x, y });
+    const dx = e.clientX - drag.current.x;
+    const dy = e.clientY - drag.current.y;
+    // Dragging right shifts focal LEFT (image moves with cursor)
+    // Sensitivity scales with zoom: more zoom = finer control
+    const sens = Math.max(1, frame.zoom);
+    const nx = Math.max(0, Math.min(100, drag.current.fx - (dx / rect.width) * 100 / sens));
+    const ny = Math.max(0, Math.min(100, drag.current.fy - (dy / rect.height) * 100 / sens));
+    onChange({ ...frame, x: nx, y: ny });
+  };
+
+  const onPointerUp = () => {
+    drag.current = null;
   };
 
   return (
@@ -198,17 +228,13 @@ function FramePanel({
       <div
         ref={ref}
         className={`relative w-full overflow-hidden rounded-md border border-border bg-muted ${
-          disabled ? "opacity-50 pointer-events-none" : "cursor-crosshair"
+          disabled ? "opacity-50 pointer-events-none" : "cursor-grab active:cursor-grabbing"
         }`}
-        style={{ aspectRatio: aspect }}
-        onPointerDown={(e) => {
-          (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-          setDragging(true);
-          apply(e.clientX, e.clientY);
-        }}
-        onPointerMove={(e) => dragging && apply(e.clientX, e.clientY)}
-        onPointerUp={() => setDragging(false)}
-        onPointerCancel={() => setDragging(false)}
+        style={{ aspectRatio: aspect, touchAction: "none" }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
         {url && (
           <img
@@ -223,9 +249,16 @@ function FramePanel({
             }}
           />
         )}
+        {/* Rule-of-thirds grid */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-y-0 left-1/3 w-px bg-white/20" />
+          <div className="absolute inset-y-0 left-2/3 w-px bg-white/20" />
+          <div className="absolute inset-x-0 top-1/3 h-px bg-white/20" />
+          <div className="absolute inset-x-0 top-2/3 h-px bg-white/20" />
+        </div>
         <div
-          className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg bg-accent/80 pointer-events-none -translate-x-1/2 -translate-y-1/2"
-          style={{ left: `${frame.x}%`, top: `${frame.y}%` }}
+          className="absolute w-3 h-3 rounded-full border-2 border-white shadow-lg bg-accent pointer-events-none -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `50%`, top: `50%` }}
         />
       </div>
       <div className="flex items-center gap-3 pt-1">
@@ -233,7 +266,7 @@ function FramePanel({
         <Slider
           value={[frame.zoom]}
           min={1}
-          max={3}
+          max={4}
           step={0.05}
           disabled={disabled}
           onValueChange={(v) => onChange({ ...frame, zoom: v[0] })}
