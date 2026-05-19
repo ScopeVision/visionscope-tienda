@@ -341,10 +341,10 @@ const ProductDetail = () => {
         <div>
           <div className="aspect-square rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden shadow-soft">
             {images.length > 0 ? (
-              <img
+              <SmartImage
                 src={images[Math.min(activeImageIdx, images.length - 1)]}
                 alt={name}
-                className="w-full h-full object-cover transition-opacity duration-300"
+                className="transition-opacity duration-300"
               />
             ) : (
               <div className="w-full h-full grid place-items-center text-secondary/40">
