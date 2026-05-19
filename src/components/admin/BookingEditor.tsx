@@ -148,7 +148,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       items,
       discount_type: (booking.discount_type as DiscountType) || "none",
       discount_value: Number(booking.discount_value) || 0,
-      extra_fees: Array.isArray(booking.extra_fees) ? (booking.extra_fees as ExtraFee[]) : [],
+      extra_fees: Array.isArray(booking.extra_fees) ? (booking.extra_fees as unknown as ExtraFee[]) : [],
       subtotal_override: booking.subtotal_override != null ? Number(booking.subtotal_override) : null,
       total_override: booking.total_override != null ? Number(booking.total_override) : null,
       status: booking.status,
