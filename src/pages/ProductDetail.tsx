@@ -367,7 +367,7 @@ const ProductDetail = () => {
                   )}
                   aria-label={`${name} - ${idx + 1}`}
                 >
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <SmartImage src={url} alt="" />
                 </button>
               ))}
             </div>
