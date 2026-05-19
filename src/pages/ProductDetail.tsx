@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
