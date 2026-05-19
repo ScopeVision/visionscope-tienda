@@ -65,11 +65,11 @@ const Projects = () => {
                 className="group relative block mb-5 break-inside-avoid rounded-sm overflow-hidden border border-border bg-surface transition-smooth hover-glow"
               >
                 <div className={span === "tall" ? "aspect-[3/4]" : span === "wide" ? "aspect-[16/10]" : "aspect-[4/3]"}>
-                  <img
+                  <SmartImage
                     src={p.cover_image}
                     alt={p.title}
                     loading="lazy"
-                    className="w-full h-full object-cover opacity-85 transition-all duration-500 group-hover:opacity-100 group-hover:scale-[1.03]"
+                    className="opacity-85 transition-all duration-500 group-hover:opacity-100 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div
