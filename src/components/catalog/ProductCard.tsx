@@ -53,11 +53,11 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
     >
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
         {img ? (
-          <img
+          <SmartImage
             src={img}
             alt={name}
             loading="lazy"
-            className="w-full h-full object-cover opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+            className="opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-secondary/40">
