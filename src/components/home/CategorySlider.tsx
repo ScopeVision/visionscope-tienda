@@ -9,6 +9,7 @@ import camImg from "@/assets/cat-cameras.jpg";
 import lensImg from "@/assets/cat-lenses.jpg";
 import lightImg from "@/assets/cat-lighting.jpg";
 import soundImg from "@/assets/cat-sound.jpg";
+import { SmartImage } from "@/components/SmartImage";
 
 const FALLBACK_IMAGES: Record<string, string> = {
   camaras: camImg,
