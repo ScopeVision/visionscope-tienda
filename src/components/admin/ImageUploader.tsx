@@ -22,6 +22,7 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [framingUrl, setFramingUrl] = useState<string | null>(null);
 
   const handleFiles = async (files: FileList | File[]) => {
     const list = Array.from(files);
