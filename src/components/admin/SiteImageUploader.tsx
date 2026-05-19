@@ -19,6 +19,7 @@ type Props = {
 export const SiteImageUploader = ({ folder, value, onChange, recommendation }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [framingOpen, setFramingOpen] = useState(false);
 
   const upload = async (file: File) => {
     if (!ACCEPTED.includes(file.type)) {
