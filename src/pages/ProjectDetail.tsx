@@ -48,7 +48,7 @@ const ProjectDetail = () => {
   return (
     <div>
       <section className="relative -mt-16 h-[80vh] min-h-[520px] w-full overflow-hidden grain">
-        <img src={project.cover_image} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
+        <SmartImage src={project.cover_image} alt={project.title} className="absolute inset-0" />
         <div
           className="absolute inset-0"
           style={{
