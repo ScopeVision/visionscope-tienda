@@ -112,34 +112,49 @@ export const ImageFramingEditor = ({ url, open, onClose }: Props) => {
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            <FramePanel
-              label={t("admin.imageFraming.desktop", { defaultValue: "Desktop" })}
-              aspect="4 / 3"
-              url={url}
-              frame={desktop}
-              onChange={setDesktop}
-            />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-[0.18em]">
-                  {t("admin.imageFraming.mobile", { defaultValue: "Mobile" })}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-secondary">
-                    {t("admin.imageFraming.sameAsDesktop", { defaultValue: "Same as desktop" })}
-                  </span>
-                  <Switch checked={sameAsDesktop} onCheckedChange={setSameAsDesktop} />
-                </div>
-              </div>
+          <div className="space-y-4">
+            <p className="text-xs text-secondary leading-relaxed">
+              {t("admin.imageFraming.help", {
+                defaultValue:
+                  "Drag the image to reposition. Use zoom to crop closer. The visible area shows exactly what will render on the site.",
+              })}
+            </p>
+            <div className="grid md:grid-cols-3 gap-4">
               <FramePanel
-                label=""
-                aspect="4 / 5"
+                label={t("admin.imageFraming.card", { defaultValue: "Card (4:3)" })}
+                aspect="4 / 3"
                 url={url}
-                frame={sameAsDesktop ? desktop : mobile}
-                onChange={sameAsDesktop ? () => {} : setMobile}
-                disabled={sameAsDesktop}
+                frame={desktop}
+                onChange={setDesktop}
               />
+              <FramePanel
+                label={t("admin.imageFraming.wide", { defaultValue: "Wide (16:9)" })}
+                aspect="16 / 9"
+                url={url}
+                frame={desktop}
+                onChange={setDesktop}
+              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs uppercase tracking-[0.18em]">
+                    {t("admin.imageFraming.mobile", { defaultValue: "Mobile (4:5)" })}
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-secondary">
+                      {t("admin.imageFraming.sameAsDesktop", { defaultValue: "= desktop" })}
+                    </span>
+                    <Switch checked={sameAsDesktop} onCheckedChange={setSameAsDesktop} />
+                  </div>
+                </div>
+                <FramePanel
+                  label=""
+                  aspect="4 / 5"
+                  url={url}
+                  frame={sameAsDesktop ? desktop : mobile}
+                  onChange={sameAsDesktop ? () => {} : setMobile}
+                  disabled={sameAsDesktop}
+                />
+              </div>
             </div>
           </div>
         )}
