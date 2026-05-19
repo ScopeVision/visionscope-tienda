@@ -58,11 +58,11 @@ export const HeroSlider = () => {
   return (
     <section className="relative -mt-16 h-[100vh] min-h-[640px] w-full overflow-hidden grain">
       {slides.map((s, i) => (
-        <img
+        <SmartImage
           key={s.id}
           src={s.image_url}
           alt={s.title || "Hero"}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+          className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}
