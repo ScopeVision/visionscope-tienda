@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/rental";
 import { Search, X, ImageOff, ArrowRight } from "lucide-react";
+import { SmartImage } from "@/components/SmartImage";
 import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
