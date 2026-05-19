@@ -310,11 +310,11 @@ const RentalCard = ({ product }: { product: any }) => {
     >
       <div className="relative aspect-square overflow-hidden">
         {img ? (
-          <img
+          <SmartImage
             src={img}
             alt={name}
             loading="lazy"
-            className="w-full h-full object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+            className="object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-secondary/40">
