@@ -145,7 +145,16 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
                   {t("admin.products.uploader.cover")}
                 </span>
               )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center gap-2">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center gap-2 p-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setFramingUrl(url)}
+                  className="h-7 px-2 text-xs gap-1"
+                >
+                  <Crop className="h-3 w-3" /> {t("admin.imageFraming.button", { defaultValue: "Framing" })}
+                </Button>
                 {idx !== 0 && (
                   <Button
                     type="button"
@@ -171,6 +180,11 @@ export const ImageUploader = ({ ownerId, value, onChange }: Props) => {
           ))}
         </div>
       )}
+      <ImageFramingEditor
+        url={framingUrl}
+        open={!!framingUrl}
+        onClose={() => setFramingUrl(null)}
+      />
     </div>
   );
 };
