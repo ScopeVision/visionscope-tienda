@@ -6,6 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { StoreVariantsManager, StoreVariant } from "@/components/admin/StoreVariantsManager";
 import { slugify } from "@/lib/slugify";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ImageOff } from "lucide-react";
@@ -33,20 +42,29 @@ type StoreProduct = {
   slug: string;
   name: string;
   description: string;
+  short_description: string;
   images: string[];
   price: number;
+  stock: number;
+  sku: string | null;
+  category_id: string | null;
   published: boolean;
   sort_order: number;
-  created_at: string;
-  updated_at: string;
 };
+
+type StoreCategory = { id: string; name: string };
+type StoreTag = { id: string; name: string };
 
 const empty = (): Partial<StoreProduct> => ({
   name: "",
   slug: "",
   description: "",
+  short_description: "",
   images: [],
   price: 0,
+  stock: 0,
+  sku: "",
+  category_id: null,
   published: true,
   sort_order: 0,
 });
@@ -54,6 +72,8 @@ const empty = (): Partial<StoreProduct> => ({
 const AdminStoreProducts = () => {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Partial<StoreProduct> | null>(null);
+  const [editingTags, setEditingTags] = useState<string[]>([]);
+  const [draftVariants, setDraftVariants] = useState<StoreVariant[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -70,19 +90,63 @@ const AdminStoreProducts = () => {
     },
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["admin-store-categories"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("store_categories")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as StoreCategory[];
+    },
+  });
+
+  const { data: allTags = [] } = useQuery({
+    queryKey: ["admin-store-tags"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("store_tags")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as StoreTag[];
+    },
+  });
+
   const isNew = editing && !editing.id;
   const tempId = useMemo(
-    () => (editing?.id ?? `new-${Math.random().toString(36).slice(2, 10)}`),
+    () => editing?.id ?? `new-${Math.random().toString(36).slice(2, 10)}`,
     [editing?.id],
   );
 
-  // Auto-fill slug from name when creating
   useEffect(() => {
     if (editing && isNew && editing.name && !editing.slug) {
       setEditing({ ...editing, slug: slugify(editing.name) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing?.name]);
+
+  // Load tags for the editing product
+  useEffect(() => {
+    if (!editing?.id) {
+      setEditingTags([]);
+      return;
+    }
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("store_product_tags")
+        .select("tag_id")
+        .eq("product_id", editing.id);
+      setEditingTags(((data ?? []) as { tag_id: string }[]).map((r) => r.tag_id));
+    })();
+  }, [editing?.id]);
+
+  const toggleTag = (tagId: string) => {
+    setEditingTags((curr) =>
+      curr.includes(tagId) ? curr.filter((t) => t !== tagId) : [...curr, tagId],
+    );
+  };
 
   const save = async () => {
     if (!editing) return;
@@ -96,23 +160,66 @@ const AdminStoreProducts = () => {
       name,
       slug,
       description: editing.description ?? "",
+      short_description: editing.short_description ?? "",
       images: editing.images ?? [],
       price: Number(editing.price ?? 0),
+      stock: Number(editing.stock ?? 0),
+      sku: editing.sku || null,
+      category_id: editing.category_id || null,
       published: editing.published ?? true,
       sort_order: Number(editing.sort_order ?? 0),
     };
 
-    const { error } = editing.id
-      ? await (supabase as any).from("store_products").update(payload).eq("id", editing.id)
-      : await (supabase as any).from("store_products").insert(payload);
+    let productId = editing.id;
+    if (editing.id) {
+      const { error } = await (supabase as any)
+        .from("store_products")
+        .update(payload)
+        .eq("id", editing.id);
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    } else {
+      const { data, error } = await (supabase as any)
+        .from("store_products")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+      productId = data.id;
+      // Insert buffered draft variants
+      if (draftVariants.length > 0) {
+        const rows = draftVariants.map((v) => ({
+          product_id: productId,
+          name: v.name.trim() || "Variante",
+          description: v.description ?? "",
+          sku: v.sku || null,
+          price: Number(v.price ?? 0),
+          stock: Number(v.stock ?? 0),
+          sort_order: Number(v.sort_order ?? 0),
+        }));
+        await (supabase as any).from("store_variants").insert(rows);
+      }
+    }
+
+    // Sync tags
+    if (productId) {
+      await (supabase as any).from("store_product_tags").delete().eq("product_id", productId);
+      if (editingTags.length > 0) {
+        await (supabase as any).from("store_product_tags").insert(
+          editingTags.map((tag_id) => ({ product_id: productId, tag_id })),
+        );
+      }
+    }
 
     setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
     toast.success(editing.id ? "Producto actualizado" : "Producto creado");
     setEditing(null);
+    setDraftVariants([]);
     qc.invalidateQueries({ queryKey: ["admin-store-products"] });
     qc.invalidateQueries({ queryKey: ["store-products"] });
   };
@@ -130,6 +237,9 @@ const AdminStoreProducts = () => {
     qc.invalidateQueries({ queryKey: ["store-products"] });
   };
 
+  const catName = (id: string | null) =>
+    id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -141,7 +251,13 @@ const AdminStoreProducts = () => {
             Catálogo independiente del Rental.
           </p>
         </div>
-        <Button onClick={() => setEditing(empty())} className="gap-2">
+        <Button
+          onClick={() => {
+            setDraftVariants([]);
+            setEditing(empty());
+          }}
+          className="gap-2"
+        >
           <Plus className="h-4 w-4" /> Nuevo producto
         </Button>
       </div>
@@ -180,13 +296,17 @@ const AdminStoreProducts = () => {
               <div className="p-4 flex-1 flex flex-col">
                 <div className="font-medium text-sm">{p.name}</div>
                 <div className="text-xs text-secondary mt-0.5">/{p.slug}</div>
+                <div className="text-[11px] text-secondary mt-1">{catName(p.category_id)}</div>
                 <div className="text-sm mt-2">{Number(p.price).toFixed(2)} €</div>
                 <div className="mt-4 flex gap-2">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditing(p)}
+                    onClick={() => {
+                      setDraftVariants([]);
+                      setEditing(p);
+                    }}
                     className="gap-1.5"
                   >
                     <Pencil className="h-3.5 w-3.5" /> Editar
@@ -207,8 +327,16 @@ const AdminStoreProducts = () => {
         </div>
       )}
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog
+        open={!!editing}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditing(null);
+            setDraftVariants([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isNew ? "Nuevo producto" : "Editar producto"}
@@ -216,15 +344,13 @@ const AdminStoreProducts = () => {
           </DialogHeader>
 
           {editing && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label>Nombre</Label>
                   <Input
                     value={editing.name ?? ""}
-                    onChange={(e) =>
-                      setEditing({ ...editing, name: e.target.value })
-                    }
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                   />
                 </div>
                 <div>
@@ -238,6 +364,47 @@ const AdminStoreProducts = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Categoría</Label>
+                  <Select
+                    value={editing.category_id ?? "none"}
+                    onValueChange={(v) =>
+                      setEditing({ ...editing, category_id: v === "none" ? null : v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sin categoría</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>SKU</Label>
+                  <Input
+                    value={editing.sku ?? ""}
+                    onChange={(e) => setEditing({ ...editing, sku: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Descripción corta</Label>
+                <Input
+                  value={editing.short_description ?? ""}
+                  onChange={(e) =>
+                    setEditing({ ...editing, short_description: e.target.value })
+                  }
+                />
+              </div>
+
               <div>
                 <Label>Descripción</Label>
                 <Textarea
@@ -249,7 +416,7 @@ const AdminStoreProducts = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <Label>Precio (€)</Label>
                   <Input
@@ -258,10 +425,17 @@ const AdminStoreProducts = () => {
                     min="0"
                     value={editing.price ?? 0}
                     onChange={(e) =>
-                      setEditing({
-                        ...editing,
-                        price: Number(e.target.value),
-                      })
+                      setEditing({ ...editing, price: Number(e.target.value) })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Stock</Label>
+                  <Input
+                    type="number"
+                    value={editing.stock ?? 0}
+                    onChange={(e) =>
+                      setEditing({ ...editing, stock: Number(e.target.value) })
                     }
                   />
                 </div>
@@ -271,24 +445,17 @@ const AdminStoreProducts = () => {
                     type="number"
                     value={editing.sort_order ?? 0}
                     onChange={(e) =>
-                      setEditing({
-                        ...editing,
-                        sort_order: Number(e.target.value),
-                      })
+                      setEditing({ ...editing, sort_order: Number(e.target.value) })
                     }
                   />
                 </div>
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <Label>Publicado</Label>
-                    <div className="h-10 flex items-center">
-                      <Switch
-                        checked={editing.published ?? true}
-                        onCheckedChange={(v) =>
-                          setEditing({ ...editing, published: v })
-                        }
-                      />
-                    </div>
+                <div>
+                  <Label>Publicado</Label>
+                  <div className="h-10 flex items-center">
+                    <Switch
+                      checked={editing.published ?? true}
+                      onCheckedChange={(v) => setEditing({ ...editing, published: v })}
+                    />
                   </div>
                 </div>
               </div>
@@ -301,11 +468,56 @@ const AdminStoreProducts = () => {
                   onChange={(urls) => setEditing({ ...editing, images: urls })}
                 />
               </div>
+
+              {allTags.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Tags</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map((t) => {
+                      const active = editingTags.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => toggleTag(t.id)}
+                          className="focus:outline-none"
+                        >
+                          <Badge
+                            variant={active ? "default" : "secondary"}
+                            className={
+                              active
+                                ? ""
+                                : "bg-muted text-secondary font-normal hover:text-foreground"
+                            }
+                          >
+                            {t.name}
+                          </Badge>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4">
+                <Label className="mb-2 block">Variantes</Label>
+                <StoreVariantsManager
+                  productId={editing.id}
+                  draftVariants={draftVariants}
+                  onDraftChange={setDraftVariants}
+                />
+              </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditing(null)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditing(null);
+                setDraftVariants([]);
+              }}
+            >
               Cancelar
             </Button>
             <Button onClick={save} disabled={saving}>
@@ -323,7 +535,7 @@ const AdminStoreProducts = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer.
+              Esta acción no se puede deshacer. Sus variantes también se eliminarán.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

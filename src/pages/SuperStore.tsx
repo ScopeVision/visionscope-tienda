@@ -1,30 +1,39 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, ImageOff, ArrowRight } from "lucide-react";
 import { SmartImage } from "@/components/SmartImage";
+import { cn } from "@/lib/utils";
 
 /**
  * Super Store — public catalog (independent module).
  *
- * Reads from the dedicated `store_products` table. NOT linked to Rental.
+ * Reads ONLY from `store_*` tables. NOT linked to Rental.
  */
 type StoreProduct = {
   id: string;
   slug: string;
   name: string;
+  short_description: string;
   description: string;
   images: string[];
   price: number;
+  category_id: string | null;
   published: boolean;
+};
+
+type StoreCategory = {
+  id: string;
+  slug: string;
+  name: string;
 };
 
 const SuperStore = () => {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState("");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["store-products"],
@@ -40,13 +49,31 @@ const SuperStore = () => {
     },
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["store-categories"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("store_categories")
+        .select("id, slug, name")
+        .eq("published", true)
+        .order("sort_order")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as StoreCategory[];
+    },
+  });
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) =>
-      [p.name, p.description, p.slug].join(" ").toLowerCase().includes(q),
-    );
-  }, [products, search]);
+    return products.filter((p) => {
+      if (activeCat && p.category_id !== activeCat) return false;
+      if (!q) return true;
+      return [p.name, p.description, p.short_description, p.slug]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [products, search, activeCat]);
 
   const fmt = useMemo(
     () =>
@@ -69,7 +96,7 @@ const SuperStore = () => {
         </p>
       </header>
 
-      <div className="relative mb-8">
+      <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
         <Input
           placeholder="Buscar…"
@@ -78,6 +105,38 @@ const SuperStore = () => {
           className="pl-9 bg-surface border-border focus-visible:ring-accent h-11"
         />
       </div>
+
+      {categories.length > 0 && (
+        <div className="mb-8 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveCat(null)}
+            className={cn(
+              "px-3 py-1.5 rounded-sm text-[11px] uppercase tracking-[0.18em] border transition-colors",
+              activeCat === null
+                ? "bg-accent text-accent-foreground border-accent"
+                : "border-border text-secondary hover:text-foreground hover:border-foreground/40",
+            )}
+          >
+            Todo
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setActiveCat(c.id)}
+              className={cn(
+                "px-3 py-1.5 rounded-sm text-[11px] uppercase tracking-[0.18em] border transition-colors",
+                activeCat === c.id
+                  ? "bg-accent text-accent-foreground border-accent"
+                  : "border-border text-secondary hover:text-foreground hover:border-foreground/40",
+              )}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <p className="text-secondary">{t("common.loading")}</p>
@@ -112,9 +171,9 @@ const SuperStore = () => {
                 <h3 className="font-medium text-lg uppercase tracking-[0.06em] text-accent">
                   {p.name}
                 </h3>
-                {p.description && (
+                {(p.short_description || p.description) && (
                   <p className="mt-3 text-sm text-secondary line-clamp-2 leading-relaxed">
-                    {p.description}
+                    {p.short_description || p.description}
                   </p>
                 )}
                 <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
