@@ -31,6 +31,8 @@ import AdminBlog from "./pages/admin/AdminBlog";
 import AdminHero from "./pages/admin/AdminHero";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminStoreProducts from "./pages/admin/AdminStoreProducts";
+import AdminStoreCategories from "./pages/admin/AdminStoreCategories";
+import AdminStoreTags from "./pages/admin/AdminStoreTags";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
