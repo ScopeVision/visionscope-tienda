@@ -753,14 +753,14 @@ export type Database = {
         }
         Relationships: []
       }
-      store_products: {
+      store_categories: {
         Row: {
           created_at: string
           description: string
           id: string
-          images: string[]
+          image_url: string
           name: string
-          price: number
+          parent_id: string | null
           published: boolean
           slug: string
           sort_order: number
@@ -770,9 +770,9 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
-          images?: string[]
+          image_url?: string
           name: string
-          price?: number
+          parent_id?: string | null
           published?: boolean
           slug: string
           sort_order?: number
@@ -782,15 +782,180 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
-          images?: string[]
+          image_url?: string
           name?: string
-          price?: number
+          parent_id?: string | null
           published?: boolean
           slug?: string
           sort_order?: number
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "store_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "store_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_product_tags: {
+        Row: {
+          product_id: string
+          tag_id: string
+        }
+        Insert: {
+          product_id: string
+          tag_id: string
+        }
+        Update: {
+          product_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_product_tags_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_product_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "store_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_products: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string
+          id: string
+          images: string[]
+          name: string
+          price: number
+          published: boolean
+          short_description: string
+          sku: string | null
+          slug: string
+          sort_order: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[]
+          name: string
+          price?: number
+          published?: boolean
+          short_description?: string
+          sku?: string | null
+          slug: string
+          sort_order?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[]
+          name?: string
+          price?: number
+          published?: boolean
+          short_description?: string
+          sku?: string | null
+          slug?: string
+          sort_order?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "store_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
         Relationships: []
+      }
+      store_variants: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          price: number
+          product_id: string
+          sku: string | null
+          sort_order: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          price?: number
+          product_id: string
+          sku?: string | null
+          sort_order?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          price?: number
+          product_id?: string
+          sku?: string | null
+          sort_order?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {
