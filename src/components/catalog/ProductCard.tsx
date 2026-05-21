@@ -51,7 +51,7 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
       to={`/product/${product.slug}`}
       className="group block rounded-sm bg-surface border border-border overflow-hidden transition-smooth hover-glow"
     >
-      <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+      <div className="relative aspect-square bg-muted overflow-hidden">
         {img ? (
           <SmartImage
             src={img}
