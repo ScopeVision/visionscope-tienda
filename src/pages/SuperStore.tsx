@@ -98,7 +98,7 @@ const SuperStore = () => {
                     src={p.images[0]}
                     alt={p.name}
                     loading="lazy"
-                    className="object-contain opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
+                    className="opacity-90 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105"
                   />
                 ) : (
                   <div className="w-full h-full grid place-items-center text-secondary/40">
