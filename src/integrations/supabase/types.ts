@@ -107,6 +107,51 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_communications: {
+        Row: {
+          body: string
+          booking_id: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          language: string
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          subject: string
+          type: string
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          language?: string
+          recipient_email: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          type: string
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          language?: string
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
       booking_items: {
         Row: {
           booking_id: string
