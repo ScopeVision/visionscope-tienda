@@ -35,7 +35,17 @@ import AdminStoreCategories from "./pages/admin/AdminStoreCategories";
 import AdminStoreTags from "./pages/admin/AdminStoreTags";
 import NotFound from "./pages/NotFound.tsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Avoid duplicate fetches & flashes when navigating between pages.
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -55,6 +65,9 @@ const App = () => (
                 <Route path="/projects/:slug" element={<ProjectDetail />} />
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
+                {/* Clean SEO-friendly URL aliases */}
+                <Route path="/rental/:slug" element={<ProductDetail />} />
+                <Route path="/super-store/:slug" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/blog" element={<Blog />} />
