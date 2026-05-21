@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { HeroSlider } from "@/components/home/HeroSlider";
@@ -23,6 +24,21 @@ const Home = () => {
 
   return (
     <>
+      <Helmet>
+        <title>VisionScope — Cinematic Rental House</title>
+        <meta
+          name="description"
+          content="Rental house de cine profesional: cámaras, ópticas, iluminación y sonido. Equipo para producciones de alto nivel con servicio premium."
+        />
+        <link rel="canonical" href="https://thevisionscope.lovable.app/" />
+        <meta property="og:title" content="VisionScope — Cinematic Rental House" />
+        <meta
+          property="og:description"
+          content="Capture Stories. Craft Vision. Equipo cinematográfico profesional para tu próximo rodaje."
+        />
+        <meta property="og:url" content="https://thevisionscope.lovable.app/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <HeroSlider />
       <CategorySlider />
 

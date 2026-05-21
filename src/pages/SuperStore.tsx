@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, ImageOff, ArrowRight } from "lucide-react";
@@ -86,6 +87,17 @@ const SuperStore = () => {
 
   return (
     <div className="container-page py-20">
+      <Helmet>
+        <title>Super Store — VisionScope</title>
+        <meta
+          name="description"
+          content="Super Store de VisionScope: accesorios, consumibles y equipo cinematográfico a la venta. Productos seleccionados por profesionales del cine."
+        />
+        <link rel="canonical" href="https://thevisionscope.lovable.app/super-store" />
+        <meta property="og:title" content="Super Store — VisionScope" />
+        <meta property="og:url" content="https://thevisionscope.lovable.app/super-store" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <header className="mb-10">
         <span className="cine-eyebrow">{t("nav.store")}</span>
         <h1 className="mt-3 text-4xl md:text-5xl font-display font-medium tracking-tight uppercase">
