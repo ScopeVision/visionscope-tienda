@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useInvalidateImageSettings, type ImageSetting } from "@/hooks/useImageSettings";
+import { SmartImage } from "@/components/SmartImage";
 import { Loader2, RotateCcw } from "lucide-react";
 
 type Props = {
