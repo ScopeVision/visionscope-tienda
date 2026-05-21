@@ -63,6 +63,8 @@ const AdminLayout = () => {
       label: "Super Store",
       items: [
         { to: "/admin/store-products", label: "Products", icon: Store },
+        { to: "/admin/store-categories", label: "Categories", icon: FolderTree },
+        { to: "/admin/store-tags", label: "Tags", icon: Tag },
       ],
     },
     {
