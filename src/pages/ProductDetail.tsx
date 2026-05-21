@@ -337,9 +337,9 @@ const ProductDetail = () => {
         <ArrowLeft className="h-4 w-4" /> {t("product.back")}
       </Link>
 
-      <div className="grid lg:grid-cols-2 gap-12">
-        <div>
-          <div className="aspect-square rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 overflow-hidden shadow-soft">
+      <div className="grid lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16">
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="aspect-square rounded-sm bg-surface border border-border overflow-hidden">
             {images.length > 0 ? (
               <SmartImage
                 src={images[Math.min(activeImageIdx, images.length - 1)]}
@@ -347,7 +347,7 @@ const ProductDetail = () => {
                 className="transition-opacity duration-300"
               />
             ) : (
-              <div className="w-full h-full grid place-items-center text-secondary/40">
+              <div className="w-full h-full grid place-items-center text-secondary/30">
                 <ImageOff className="h-16 w-16" />
               </div>
             )}
@@ -360,10 +360,10 @@ const ProductDetail = () => {
                   type="button"
                   onClick={() => setActiveImageIdx(idx)}
                   className={cn(
-                    "aspect-square rounded-md overflow-hidden border-2 bg-muted transition-all",
+                    "aspect-square rounded-sm overflow-hidden border bg-muted transition-all",
                     idx === activeImageIdx
-                      ? "border-accent opacity-100"
-                      : "border-transparent opacity-70 hover:opacity-100"
+                      ? "border-accent ring-1 ring-accent/40"
+                      : "border-border opacity-70 hover:opacity-100 hover:border-accent/40"
                   )}
                   aria-label={`${name} - ${idx + 1}`}
                 >
@@ -376,9 +376,15 @@ const ProductDetail = () => {
 
 
         <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-accent mb-2">{cat}</div>
-          <h1 className="text-3xl md:text-4xl font-display font-medium tracking-tight">{name}</h1>
-          <p className="mt-4 text-secondary leading-relaxed whitespace-pre-line">{desc}</p>
+          {cat && (
+            <div className="text-[10px] uppercase tracking-[0.28em] text-accent mb-3">{cat}</div>
+          )}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium tracking-tight uppercase leading-[1.05]">
+            {name}
+          </h1>
+          {desc && (
+            <p className="mt-5 text-secondary leading-relaxed whitespace-pre-line max-w-prose">{desc}</p>
+          )}
 
           {product.product_tags?.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">
@@ -386,7 +392,7 @@ const ProductDetail = () => {
                 <Badge
                   key={pt.tag.id}
                   variant="secondary"
-                  className="bg-muted text-foreground font-normal"
+                  className="bg-muted text-foreground font-normal text-[10px] uppercase tracking-[0.18em] px-2.5 py-1"
                 >
                   {localized(pt.tag, "name", i18n.language)}
                 </Badge>
@@ -394,7 +400,8 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <div className="mt-8 p-6 rounded-xl bg-surface border border-border">
+          <div className="mt-8 p-6 rounded-sm bg-surface border border-border">
+
             {/* Priced variants selector (Basic Kit / Pro Kit ...) */}
             {hasPricedVariants && (
               <div className="mb-5">

@@ -26,20 +26,26 @@ const Home = () => {
       <HeroSlider />
       <CategorySlider />
 
-      <section className="container-page pb-28">
-        <div className="mb-10">
-          <span className="cine-eyebrow">Featured Gear</span>
-          <h2 className="mt-3 text-3xl md:text-4xl font-display font-medium tracking-tight uppercase">
-            {t("home.featuredTitle")}
-          </h2>
-          <p className="text-secondary mt-3 max-w-xl">{t("home.featuredSubtitle")}</p>
+      <section className="container-page py-24 md:py-32">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
+          <div className="max-w-2xl">
+            <span className="cine-eyebrow">Featured Gear</span>
+            <h2 className="mt-3 text-3xl md:text-4xl lg:text-5xl font-display font-medium tracking-tight uppercase leading-[1.05]">
+              {t("home.featuredTitle")}
+            </h2>
+            <p className="text-secondary mt-4 max-w-xl leading-relaxed">
+              {t("home.featuredSubtitle")}
+            </p>
+          </div>
+          <div className="hidden md:block h-px flex-1 bg-border ml-8" aria-hidden />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {featured.map((p: any) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </section>
+
     </>
   );
 };

@@ -191,66 +191,106 @@ const Checkout = () => {
 
   return (
     <div className="container-page py-12">
-      <h1 className="text-3xl md:text-4xl font-display font-medium tracking-tight mb-8">
-        {t("checkout.title")}
-      </h1>
-      <div className="grid lg:grid-cols-[1fr_360px] gap-10">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-6 rounded-xl bg-surface border border-border">
-          <h2 className="text-lg font-medium">{t("checkout.yourData")}</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label={t("common.name") + " *"} error={form.formState.errors.full_name?.message}>
-              <Input {...form.register("full_name")} />
+      <div className="mb-10">
+        <span className="cine-eyebrow">Checkout</span>
+        <h1 className="mt-3 text-3xl md:text-4xl font-display font-medium tracking-tight uppercase">
+          {t("checkout.title")}
+        </h1>
+      </div>
+      <div className="grid lg:grid-cols-[1fr_380px] gap-8 lg:gap-10">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <section className="p-6 md:p-7 rounded-sm bg-surface border border-border">
+            <header className="mb-5 pb-4 border-b border-border">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-accent">01</div>
+              <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
+                {t("checkout.yourData")}
+              </h2>
+            </header>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label={t("common.name") + " *"} error={form.formState.errors.full_name?.message}>
+                <Input {...form.register("full_name")} />
+              </Field>
+              <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
+                <Input type="email" {...form.register("email")} />
+              </Field>
+              <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
+                <Input {...form.register("phone")} />
+              </Field>
+              <Field label={t("common.company")}>
+                <Input {...form.register("company")} />
+              </Field>
+            </div>
+          </section>
+
+          <section className="p-6 md:p-7 rounded-sm bg-surface border border-border">
+            <header className="mb-5 pb-4 border-b border-border">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-accent">02</div>
+              <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
+                {t("common.address", { defaultValue: "Dirección" })} & NIF
+              </h2>
+            </header>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="NIF/CIF">
+                <Input {...form.register("tax_id")} />
+              </Field>
+              <Field label={t("common.address")}>
+                <Input {...form.register("address_line1")} />
+              </Field>
+              <Field label="Ciudad / Ville">
+                <Input {...form.register("city")} />
+              </Field>
+              <Field label="CP">
+                <Input {...form.register("postal_code")} />
+              </Field>
+              <Field label="País / Country">
+                <Input {...form.register("country")} />
+              </Field>
+            </div>
+          </section>
+
+          <section className="p-6 md:p-7 rounded-sm bg-surface border border-border">
+            <header className="mb-5 pb-4 border-b border-border">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-accent">03</div>
+              <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
+                {t("common.notes")}
+              </h2>
+            </header>
+            <Field label={t("common.notes")}>
+              <Textarea rows={4} {...form.register("notes")} />
             </Field>
-            <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
-              <Input type="email" {...form.register("email")} />
-            </Field>
-            <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
-              <Input {...form.register("phone")} />
-            </Field>
-            <Field label={t("common.company")}>
-              <Input {...form.register("company")} />
-            </Field>
-            <Field label="NIF/CIF">
-              <Input {...form.register("tax_id")} />
-            </Field>
-            <Field label={t("common.address")}>
-              <Input {...form.register("address_line1")} />
-            </Field>
-            <Field label="Ciudad / Ville">
-              <Input {...form.register("city")} />
-            </Field>
-            <Field label="CP">
-              <Input {...form.register("postal_code")} />
-            </Field>
-            <Field label="País / Country">
-              <Input {...form.register("country")} />
-            </Field>
-          </div>
-          <Field label={t("common.notes")}>
-            <Textarea rows={4} {...form.register("notes")} />
-          </Field>
+          </section>
+
           <Button
             type="submit"
             size="lg"
             disabled={submitting}
-            className="w-full bg-foreground text-background hover:bg-foreground/90"
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-12 rounded-sm"
           >
             {submitting ? t("common.loading") : t("checkout.submit")}
           </Button>
         </form>
 
-        <aside className="h-fit p-6 rounded-xl bg-surface border border-border">
-          <h2 className="text-lg font-medium mb-4">{t("cart.summary")}</h2>
-          <div className="text-sm space-y-2">
-            <div className="flex justify-between text-secondary">
-              <span>{cart.startDate} → {cart.endDate}</span>
-              <span>{cart.days} {t("common.days")}</span>
-            </div>
+        <aside className="h-fit lg:sticky lg:top-24 p-6 md:p-7 rounded-sm bg-surface border border-border">
+          <header className="mb-5 pb-4 border-b border-border">
+            <div className="text-[10px] uppercase tracking-[0.28em] text-accent">Summary</div>
+            <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
+              {t("cart.summary")}
+            </h2>
+          </header>
+
+          <div className="text-xs uppercase tracking-[0.18em] text-secondary mb-3 flex justify-between">
+            <span>{cart.startDate} → {cart.endDate}</span>
+            <span className="text-foreground tabular-nums">
+              {cart.days} {t("common.days")}
+            </span>
+          </div>
+
+          <div className="space-y-3 text-sm">
             {cart.items.map((it) => (
-              <div key={it.productId} className="space-y-1">
-                <div className="flex justify-between">
-                  <span>{it.name} ×{it.quantity}</span>
-                  <span>
+              <div key={it.productId} className="space-y-1.5 pb-3 border-b border-border/60 last:border-0 last:pb-0">
+                <div className="flex justify-between gap-3">
+                  <span className="text-foreground">{it.name} <span className="text-secondary">×{it.quantity}</span></span>
+                  <span className="tabular-nums">
                     {formatCurrency(
                       calcItemPrice({
                         priceDay: it.priceDay,
@@ -266,18 +306,22 @@ const Checkout = () => {
               </div>
             ))}
           </div>
-          <div className="border-t border-border my-4" />
-          <div className="flex justify-between text-sm">
-            <span className="text-secondary">{t("cart.subtotal")}</span>
-            <span className="font-medium">{formatCurrency(cart.subtotal, i18n.language)}</span>
+
+          <div className="mt-5 pt-4 border-t border-border space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-secondary">{t("cart.subtotal")}</span>
+              <span className="font-medium tabular-nums">{formatCurrency(cart.subtotal, i18n.language)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-secondary">{t("cart.deposit")}</span>
+              <span className="font-medium tabular-nums">{formatCurrency(cart.depositTotal, i18n.language)}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-secondary">{t("cart.deposit")}</span>
-            <span className="font-medium">{formatCurrency(cart.depositTotal, i18n.language)}</span>
-          </div>
-          <div className="flex justify-between mt-3 pt-3 border-t border-border">
-            <span>{t("cart.total")}</span>
-            <span className="text-xl font-medium">{formatCurrency(cart.total, i18n.language)}</span>
+          <div className="mt-4 pt-4 border-t border-border flex items-baseline justify-between">
+            <span className="text-[10px] uppercase tracking-[0.22em] text-secondary">{t("cart.total")}</span>
+            <span className="text-2xl font-medium tabular-nums text-foreground">
+              {formatCurrency(cart.total, i18n.language)}
+            </span>
           </div>
         </aside>
       </div>
@@ -295,10 +339,11 @@ const Field = ({
   children: React.ReactNode;
 }) => (
   <div>
-    <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">{label}</Label>
+    <Label className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-1.5 block">{label}</Label>
     {children}
     {error && <p className="text-xs text-destructive mt-1">{error}</p>}
   </div>
 );
 
 export default Checkout;
+
