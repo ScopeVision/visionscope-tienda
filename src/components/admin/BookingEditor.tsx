@@ -592,6 +592,9 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 </div>
               </section>
 
+              {/* Communications + PDF */}
+              {booking && <BookingCommunications booking={booking} />}
+
               {/* Audit log */}
               <section>
                 <Button variant="ghost" size="sm" className="gap-2" onClick={() => setShowLog((v) => !v)}>
