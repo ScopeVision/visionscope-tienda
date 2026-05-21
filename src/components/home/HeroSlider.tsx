@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
-import heroImg from "@/assets/hero-camera.jpg";
 import { useTranslation } from "react-i18next";
 import { SmartImage } from "@/components/SmartImage";
 
@@ -17,22 +16,11 @@ type Slide = {
   cta_url: string;
 };
 
-const FALLBACK: Slide[] = [
-  {
-    id: "fallback",
-    image_url: heroImg,
-    title: "Capture Stories.",
-    subtitle: "Cinematic gear rental for filmmakers, agencies, and storytellers.",
-    cta_label: "",
-    cta_url: "",
-  },
-];
-
 export const HeroSlider = () => {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["hero-slides"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,17 +31,38 @@ export const HeroSlider = () => {
       if (error) throw error;
       return ((data ?? []) as unknown) as Slide[];
     },
+    staleTime: 60 * 1000,
   });
 
-  const slides = data && data.length > 0 ? data : FALLBACK;
-  const current = slides[Math.min(index, slides.length - 1)];
+  const slides = data ?? [];
+  const hasSlides = slides.length > 0;
+  const current = hasSlides ? slides[Math.min(index, slides.length - 1)] : null;
 
   useEffect(() => {
-    if (index >= slides.length) setIndex(0);
+    if (slides.length && index >= slides.length) setIndex(0);
   }, [slides.length, index]);
 
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const next = () => setIndex((i) => (i + 1) % slides.length);
+
+  // Loading / empty: dark cinematic skeleton — no old hardcoded image flashes through.
+  if (isLoading || !current) {
+    return (
+      <section
+        className="relative -mt-16 h-[100vh] min-h-[640px] w-full overflow-hidden grain"
+        aria-busy={isLoading}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_40%,hsl(var(--accent)/0.08),transparent_60%)]" />
+        <div className="relative z-10 h-full container-page flex flex-col justify-center pt-16">
+          <div className="h-3 w-40 bg-foreground/5 rounded-sm animate-pulse mb-6" />
+          <div className="h-16 md:h-24 w-3/4 max-w-3xl bg-foreground/5 rounded-sm animate-pulse" />
+          <div className="mt-5 h-16 md:h-24 w-2/3 max-w-2xl bg-foreground/5 rounded-sm animate-pulse" />
+          <div className="mt-8 h-4 w-1/2 max-w-md bg-foreground/5 rounded-sm animate-pulse" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative -mt-16 h-[100vh] min-h-[640px] w-full overflow-hidden grain">
