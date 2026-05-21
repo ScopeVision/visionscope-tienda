@@ -52,6 +52,36 @@ Deno.serve(async (req) => {
     }
 
     const result = Array.isArray(data) ? data[0] : data;
+
+    // Log the automatic "booking received" communication. Real email delivery
+    // will activate once an email provider is configured; for now this serves
+    // as the audit trail visible in the admin panel.
+    if (result?.booking_id) {
+      try {
+        const itemsText = Array.isArray(payload.items)
+          ? payload.items.map((it: any) => `- product ${it.product_id} x${it.quantity}`).join("\n")
+          : "";
+        const subject = `Hemos recibido tu reserva ${result.reference ?? ""}`.trim();
+        const body =
+          `Hola ${payload.full_name ?? ""},\n\n` +
+          `Hemos recibido tu solicitud de reserva ${result.reference ?? ""}.\n\n` +
+          `Fechas: ${payload.start_date} → ${payload.end_date}\n` +
+          `Productos:\n${itemsText}\n\n` +
+          `Tu reserva será revisada manualmente por nuestro equipo. Te confirmaremos la disponibilidad lo antes posible.`;
+        await admin.from("booking_communications").insert({
+          booking_id: result.booking_id,
+          type: "auto_received",
+          status: "queued",
+          language: payload.language ?? "es",
+          recipient_email: payload.email,
+          subject,
+          body,
+        });
+      } catch (logErr) {
+        console.error("Failed to log auto communication", logErr);
+      }
+    }
+
     return json({ ok: true, reference: result?.reference ?? "", booking_id: result?.booking_id ?? null });
   } catch (error) {
     console.error("Checkout function error", error);
