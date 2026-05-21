@@ -202,6 +202,7 @@ const AdminStoreCategories = () => {
               <div>
                 <Label className="mb-2 block">Imagen</Label>
                 <SiteImageUploader
+                  folder="store-categories"
                   value={editing.image_url ?? ""}
                   onChange={(url) => setEditing({ ...editing, image_url: url })}
                 />
