@@ -71,6 +71,7 @@ export const HeroSlider = () => {
           key={s.id}
           src={s.image_url}
           alt={s.title || "Hero"}
+          priority={i === index}
           className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: i === index ? 1 : 0 }}
         />

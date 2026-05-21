@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
 import { SmartImage } from "@/components/SmartImage";
@@ -328,8 +329,39 @@ const ProductDetail = () => {
         ? visibleComponents.length > 0
         : product.stock > 0;
 
+  const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
+  const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en VisionScope — rental house de cine profesional.`);
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    description: metaDesc,
+    image: images,
+    sku: product.id,
+    category: cat || undefined,
+    brand: { "@type": "Brand", name: "VisionScope" },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EUR",
+      price: effectivePriceDay,
+      availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      url: canonicalUrl,
+    },
+  };
+
   return (
-    <div className="container-page py-10">
+    <article className="container-page py-10">
+      <Helmet>
+        <title>{`${name} — VisionScope Rental`}</title>
+        <meta name="description" content={metaDesc} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${name} — VisionScope Rental`} />
+        <meta property="og:description" content={metaDesc} />
+        <meta property="og:url" content={canonicalUrl} />
+        {img && <meta property="og:image" content={img} />}
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
+      </Helmet>
       <Link
         to="/rental"
         className="inline-flex items-center gap-2 text-sm text-secondary hover:text-foreground mb-6"
@@ -344,6 +376,7 @@ const ProductDetail = () => {
               <SmartImage
                 src={images[Math.min(activeImageIdx, images.length - 1)]}
                 alt={name}
+                priority
                 className="transition-opacity duration-300"
               />
             ) : (
@@ -688,7 +721,7 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
