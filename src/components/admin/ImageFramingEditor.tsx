@@ -121,8 +121,8 @@ export const ImageFramingEditor = ({ url, open, onClose }: Props) => {
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               <FramePanel
-                label={t("admin.imageFraming.card", { defaultValue: "Card (4:3)" })}
-                aspect="4 / 3"
+                label={t("admin.imageFraming.card", { defaultValue: "Card (1:1)" })}
+                aspect="1 / 1"
                 url={url}
                 frame={desktop}
                 onChange={setDesktop}
