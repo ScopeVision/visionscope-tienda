@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, History, Save } from "lucide-react";
+import BookingCommunications from "./BookingCommunications";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency, daysBetween } from "@/lib/rental";
@@ -590,6 +591,9 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                   <Textarea rows={3} value={draft.internal_notes} onChange={(e) => setDraft({ ...draft, internal_notes: e.target.value })} />
                 </div>
               </section>
+
+              {/* Communications + PDF */}
+              {booking && <BookingCommunications booking={booking} />}
 
               {/* Audit log */}
               <section>

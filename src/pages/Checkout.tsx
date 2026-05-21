@@ -177,6 +177,7 @@ const Checkout = () => {
             start_date: cart.startDate!,
             end_date: cart.endDate!,
             items: cart.items.map((it) => ({ product_id: it.productId, quantity: it.quantity })),
+            language: i18n.language,
           },
         },
       );
