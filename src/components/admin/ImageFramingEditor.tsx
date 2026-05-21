@@ -238,15 +238,17 @@ function FramePanel({
         onPointerCancel={onPointerUp}
       >
         {url && (
-          <img
+          <SmartImage
             src={url}
             alt=""
-            draggable={false}
-            className="w-full h-full object-cover select-none pointer-events-none"
-            style={{
-              objectPosition: `${frame.x}% ${frame.y}%`,
-              transform: frame.zoom !== 1 ? `scale(${frame.zoom})` : "none",
-              transformOrigin: `${frame.x}% ${frame.y}%`,
+            settingOverride={{
+              url,
+              focal_x: frame.x,
+              focal_y: frame.y,
+              zoom: frame.zoom,
+              focal_x_mobile: null,
+              focal_y_mobile: null,
+              zoom_mobile: null,
             }}
           />
         )}
