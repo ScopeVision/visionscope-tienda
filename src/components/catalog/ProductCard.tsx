@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { localized } from "@/i18n";
@@ -11,7 +12,7 @@ type Props = {
   view?: "grid" | "list";
 };
 
-export const ProductCard = ({ product, view = "grid" }: Props) => {
+const ProductCardComponent = ({ product, view = "grid" }: Props) => {
   const { i18n, t } = useTranslation();
   const name = localized(product, "name", i18n.language);
   const desc = localized(product, "description", i18n.language);
@@ -137,3 +138,7 @@ export const ProductCard = ({ product, view = "grid" }: Props) => {
     </Link>
   );
 };
+
+export const ProductCard = memo(ProductCardComponent, (a, b) => {
+  return a.view === b.view && a.product?.id === b.product?.id && a.product?.updated_at === b.product?.updated_at;
+});
