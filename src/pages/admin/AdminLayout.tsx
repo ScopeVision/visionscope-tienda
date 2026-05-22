@@ -21,6 +21,7 @@ import {
   BadgePercent,
   Home as HomeIcon,
   Star,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +75,13 @@ const AdminLayout = () => {
         { to: "/admin/hero", label: "Hero", icon: ImageIcon },
         { to: "/admin/site-projects", label: "Projects", icon: Film },
         { to: "/admin/blog", label: "Blog", icon: FileText },
+      ],
+    },
+    {
+      key: "finance",
+      label: "Finance",
+      items: [
+        { to: "/admin/finance", label: "Finanzas", icon: Wallet },
       ],
     },
     {
