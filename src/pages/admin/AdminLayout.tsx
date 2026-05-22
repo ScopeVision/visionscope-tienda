@@ -78,6 +78,13 @@ const AdminLayout = () => {
       ],
     },
     {
+      key: "finance",
+      label: "Finance",
+      items: [
+        { to: "/admin/finance", label: "Finanzas", icon: Wallet },
+      ],
+    },
+    {
       key: "system",
       label: "System",
       items: [
