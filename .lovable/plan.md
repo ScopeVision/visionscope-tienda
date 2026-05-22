@@ -1,44 +1,150 @@
-# Unificar sistema de imágenes (crop / focal point / zoom)
+# Finance Core System V3 — Plan
 
-## Diagnóstico
+Sistema financiero interno dentro del admin que centraliza ingresos, splits 70/30, payouts, deuda de socios, caja, beneficio distribuible y gestión de activos. **No es contabilidad legal**, es el cerebro operativo del dinero.
 
-Todas las vistas ya usan `SmartImage`, pero el render no es consistente porque:
+## Alcance de esta entrega
 
-1. **`tailwind-merge` elimina `object-cover`** cuando un consumidor pasa otra utilidad `object-*`. `SuperStore` pasa `object-contain`, lo que anula el cover y, por tanto, el `objectPosition` (focal point) deja de tener efecto visible.
-2. **El `transform: scale()` del zoom va en el `<img>` con `style` inline**. Eso entra en conflicto con clases como `group-hover:scale-105` (en `ProductCard`), que quedan anuladas por el estilo inline. Resultado: en cards con zoom configurado el hover se pierde, y la composición zoom + hover no es idéntica entre vistas.
-3. **El preview del admin aplica `transform-origin` al `<img>` igual que el frontend, pero el frontend no envuelve la imagen** (`wrap=false` por defecto). Si el contenedor padre no tiene `overflow-hidden`, el zoom “sangra” fuera del marco — algunas vistas lo tienen, otras no.
-4. **`Projects.tsx` usa aspect ratios distintos** (3/4, 16/10, 4/3). El usuario pide no tocar aspect ratios de cards, así que se respeta; sólo se garantiza que el render interno aplique el focal point igual.
+Construir la **base completa** (datos + admin UI + eventos automáticos) sobre la que iterar. No tocamos el flujo público (checkout, store, rental). Solo se enchufa al ciclo `payment_status = 'paid'` y a un futuro estado `refunded`.
 
-## Cambios
+---
 
-### 1. `SmartImage` — un solo modelo de render
+## 1. Modelo de datos (nuevo schema `finance`)
 
-- Aplicar siempre `overflow-hidden` envolviendo el `<img>` en un wrapper interno (sin cambiar la geometría externa: el wrapper toma `w-full h-full absolute inset-0`).
-- Mover el `transform: scale(zoom)` y el `transform-origin` al `<img>`, pero usando una clase utilitaria propia que NO colisione con `scale-*` de Tailwind (aplicar como `style` SOLO cuando hay zoom != 1, y exponer un wrapper aparte para efectos hover).
-- Reservar el `<img>` para zoom guardado + focal point. Cualquier efecto `hover:scale-*` se aplica en el **wrapper** vía nueva prop `hoverZoomClassName`.
-- Normalizar las clases del `<img>` para que `object-cover` no pueda ser sobreescrito accidentalmente: usar `!object-cover` (importante) o aplicar el cover vía `style={{ objectFit: "cover" }}` para blindarlo de `twMerge`.
-- Eliminar la prop `wrap` (queda redundante; siempre envolvemos).
+Tablas nuevas en `public`:
 
-### 2. Consumidores — quitar overrides que rompen el sistema
+- **`finance_assets`** — inventario financiero de equipos
+  - `name`, `origin_type` (`socio` | `concession` | `external` | `company`)
+  - `owner_label` (texto libre: "Socio A", "Estudio X")
+  - `revenue_model` (`split_70_30` | `company_100` | `custom`)
+  - `custom_company_pct` (numeric, solo si custom)
+  - `acquisition_value`, `recovered_value` (calculado)
+  - `transition_status` (`normal` | `in_transition` | `transferred`)
+  - `product_id` / `store_product_id` opcionales (link al catálogo)
+  - `notes`, `active`
 
-- `ProductCard` (grid): mover `group-hover:scale-105` a la nueva prop `hoverZoomClassName` del wrapper, en vez de pasarlo en `className` del `<img>`.
-- `SuperStore`: eliminar `object-contain` del `<SmartImage>` para no anular el cover/focal point. Si se quiere preservar producto completo sin recorte, hacerlo a nivel de configuración por imagen (zoom 1 + focal centrado ya lo hace).
-- `RentalHouse`, `CategorySlider`, `HeroSlider`, `Projects`, `ProjectDetail`, `ProductDetail` (principal + thumbnails): revisar y usar la API unificada (`hoverZoomClassName` donde aplique).
+- **`finance_entries`** — fuente única de verdad del dinero confirmado
+  - `origin_system` (`rental` | `store` | `services`)
+  - `source_type` (`order_paid` | `refund` | `manual_adjustment` | `expense` | `debt_repayment` | `payout`)
+  - `booking_id` / `store_order_id` / `asset_id` (nullable refs)
+  - `gross_amount`, `company_amount`, `payout_amount`
+  - `currency` = `EUR`
+  - `occurred_at`, `created_by`, `notes`
+  - `is_reversed` (para refunds)
 
-### 3. Admin preview = frontend
+- **`finance_payouts`** — payouts pendientes/pagados a propietarios de activos
+  - `asset_id`, `entry_id`, `amount`, `status` (`pending` | `paid`), `paid_at`, `notes`
 
-- En `ImageFramingEditor` reusar `SmartImage` (con `objectPosition` y `scale` derivados del estado en edición vía un setting “virtual”) en lugar de duplicar el render manual. Así el preview del admin pinta exactamente como las cards/sliders/detalle.
-- Mantener el drag-to-pan y el grid de tercios encima del `SmartImage`.
+- **`finance_partners`** — socios y su deuda interna
+  - `name`, `profit_share_pct` (40/40/20), `initial_debt`, `notes`
 
-### 4. Sin cambios
+- **`finance_debt_repayments`** — historial de devoluciones a socios
+  - `partner_id`, `amount`, `paid_at`, `notes`
 
-- Tabla `image_settings` y `useImageSettings` se mantienen.
-- Aspect ratios de cada vista NO se modifican (cuadrado en cards/RentalHouse/SuperStore, 4/3 en CategorySlider, mixto en Projects, etc.).
-- No se toca lógica de catálogo, carrito, edge functions ni RLS.
+- **`finance_expenses`** — gastos manuales de empresa
+  - `category`, `amount`, `occurred_at`, `notes`
 
-## Resultado esperado
+- **`finance_cash_reserve`** — config de reserva de caja
+  - singleton: `reserved_amount`, `target_amount`
 
-- Una imagen configurada en admin se ve idéntica en home, catálogo, página individual, related, sliders y Super Store.
-- Cero recortes “automáticos” no controlados; el `objectPosition` y el `scale` guardados siempre ganan.
-- Efectos hover (zoom on hover) siguen funcionando porque viven en el wrapper, no en el `<img>`.
-- El preview del admin es exactamente lo que se renderiza en producción.
+Tablas existentes:
+
+- `bookings` y `store_orders` (si existe; si no, lo dejamos preparado para futuro store checkout) reciben columna `refunded_at` + transición a `payment_status = 'refunded'`.
+
+## 2. Lógica automática (triggers / RPC)
+
+- **`on_booking_paid()`** — trigger AFTER UPDATE en `bookings` cuando `payment_status` pasa a `paid`:
+  - itera `booking_items`, resuelve el `asset_id` ligado al `product_id` (si existe), aplica `revenue_model` del asset:
+    - `split_70_30` → 30% company / 70% payout (crea `finance_payouts.pending`)
+    - `company_100` → 100% company
+    - `custom` → según `custom_company_pct`
+  - inserta una `finance_entries` (`source_type = order_paid`)
+  - si el producto no tiene asset asociado → default `company_100`
+
+- **`on_booking_refunded()`** — invierte la entrada (crea entry negativa, marca payouts pendientes como `cancelled`).
+
+- **RPC `register_debt_repayment(partner_id, amount)`** — inserta repayment + entry tipo `debt_repayment` (descuenta de caja).
+
+- **RPC `register_expense(...)`**, **`register_manual_adjustment(...)`**.
+
+- **`distributable_profit()`** función SQL:
+  ```
+  ingresos company
+    - payouts pagados
+    - expenses
+    - debt repayments
+    - cash reserve target
+  = distributable
+  ```
+  reparte por `profit_share_pct` (40/40/20).
+
+Todo va al `booking_audit_log` existente (extendemos para aceptar `entity_type`).
+
+## 3. Admin UI — nueva sección "Finance"
+
+Nueva ruta `/admin/finance` con sub-tabs:
+
+1. **Dashboard mensual** — usa `MonthNavigator`
+   - Cards: Ingresos Rental / Store / Services, Payouts externos, Deuda devuelta, Caja, Beneficio distribuible
+   - Tabla de activos en transición (con sugerencia "ya recuperado")
+   - Reparto sugerido socios (40/40/20)
+
+2. **Entries** — feed de movimientos con filtros (origen, tipo, mes), edición manual asistida.
+
+3. **Assets** — CRUD de activos, asignación a producto del catálogo (rental o store), edición de modelo (70/30, 100%, custom), gestión de transición (estado + botón "marcar transferido").
+
+4. **Payouts** — lista de payouts pendientes por propietario, botón "Marcar pagado".
+
+5. **Socios & Deuda** — tarjeta por socio con deuda restante (684€ / 1200€ seed), historial de repayments, botón "Registrar devolución".
+
+6. **Gastos** — CRUD simple.
+
+7. **Caja** — input de `target_amount` reserva, lectura de caja real (sum entries).
+
+## 4. Eventos / control manual
+
+- Todos los cálculos automáticos son **editables** desde admin (override por entry, override por payout, override de % en asset).
+- Cada edición se audita en `booking_audit_log` con actor + diff.
+
+## 5. Fuera de scope (explícito)
+
+- No tocamos el flujo público (checkout, carrito, store).
+- No conectamos pasarela de pago real (`paid` se marca manualmente desde admin, como ya funciona).
+- No multi-moneda.
+- No contabilidad fiscal / facturación.
+- Store orders: si aún no existe tabla, el sistema queda **preparado** (entries soportan `store_order_id` nullable) pero solo Rental enchufa el trigger automático ahora.
+
+## 6. Seed inicial
+
+- 3 `finance_partners`: Socio A (40%, deuda 684€), Socio B (40%, deuda 1200€), Socio C (20%, deuda 0€).
+- `finance_cash_reserve` singleton con `target = 0`.
+- Activos: vacío (admin los crea o los liga a productos existentes).
+
+## 7. Detalles técnicos (para ti)
+
+```text
+bookings.payment_status = 'paid'
+        │
+        ▼  trigger on_booking_paid
+finance_entries (order_paid, company_amount, payout_amount)
+        │
+        ├──► finance_payouts (pending) por cada item con asset 70/30
+        │
+        ▼
+Dashboard agrega por mes ──► Beneficio distribuible
+                                  │
+                                  ├─ 40% A   ─┐
+                                  ├─ 40% B   ─┼─► visualización, no movimiento automático
+                                  └─ 20% C   ─┘
+```
+
+- Migración: crear tipos enum, tablas, RLS (solo admin), triggers, RPC, función `distributable_profit()`.
+- Frontend: `src/pages/admin/finance/*` (Dashboard, Entries, Assets, Payouts, Partners, Expenses, Cash), entrada en `AdminLayout`.
+- Reutilizamos `MonthNavigator`, `MonthlyFinancialSummary` patterns y design tokens existentes.
+
+## Orden de implementación
+
+1. Migración SQL (tablas + triggers + RPC + seed socios).
+2. Tipos TS regenerados.
+3. Layout admin: nueva entrada "Finanzas" y router.
+4. Páginas en este orden: Assets → Partners → Payouts → Expenses → Cash → Entries → Dashboard.
+5. QA: marcar un booking como paid en sandbox y verificar entry + payout generados.
