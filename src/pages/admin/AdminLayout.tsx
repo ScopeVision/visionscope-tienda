@@ -21,6 +21,7 @@ import {
   BadgePercent,
   Home as HomeIcon,
   Star,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
