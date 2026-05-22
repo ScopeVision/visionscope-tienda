@@ -235,6 +235,7 @@ export type Database = {
           notes: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           reference: string
+          refunded_at: string | null
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           subtotal: number
@@ -256,6 +257,7 @@ export type Database = {
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
+          refunded_at?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           subtotal?: number
@@ -277,6 +279,7 @@ export type Database = {
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
+          refunded_at?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           subtotal?: number
@@ -387,6 +390,305 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      finance_assets: {
+        Row: {
+          acquisition_value: number
+          active: boolean
+          created_at: string
+          custom_company_pct: number | null
+          id: string
+          name: string
+          notes: string | null
+          origin_type: Database["public"]["Enums"]["finance_origin_type"]
+          owner_label: string | null
+          product_id: string | null
+          revenue_model: Database["public"]["Enums"]["finance_revenue_model"]
+          store_product_id: string | null
+          transition_status: Database["public"]["Enums"]["finance_transition_status"]
+          updated_at: string
+        }
+        Insert: {
+          acquisition_value?: number
+          active?: boolean
+          created_at?: string
+          custom_company_pct?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          origin_type?: Database["public"]["Enums"]["finance_origin_type"]
+          owner_label?: string | null
+          product_id?: string | null
+          revenue_model?: Database["public"]["Enums"]["finance_revenue_model"]
+          store_product_id?: string | null
+          transition_status?: Database["public"]["Enums"]["finance_transition_status"]
+          updated_at?: string
+        }
+        Update: {
+          acquisition_value?: number
+          active?: boolean
+          created_at?: string
+          custom_company_pct?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          origin_type?: Database["public"]["Enums"]["finance_origin_type"]
+          owner_label?: string | null
+          product_id?: string | null
+          revenue_model?: Database["public"]["Enums"]["finance_revenue_model"]
+          store_product_id?: string | null
+          transition_status?: Database["public"]["Enums"]["finance_transition_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_cash_reserve: {
+        Row: {
+          id: boolean
+          notes: string | null
+          target_amount: number
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          notes?: string | null
+          target_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          notes?: string | null
+          target_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_debt_repayments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          paid_at: string
+          partner_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          partner_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          partner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_debt_repayments_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_entries: {
+        Row: {
+          asset_id: string | null
+          booking_id: string | null
+          company_amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          gross_amount: number
+          id: string
+          is_reversed: boolean
+          notes: string | null
+          occurred_at: string
+          origin_system: Database["public"]["Enums"]["finance_origin_system"]
+          partner_id: string | null
+          payout_amount: number
+          source_type: Database["public"]["Enums"]["finance_source_type"]
+          store_order_id: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          booking_id?: string | null
+          company_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gross_amount?: number
+          id?: string
+          is_reversed?: boolean
+          notes?: string | null
+          occurred_at?: string
+          origin_system: Database["public"]["Enums"]["finance_origin_system"]
+          partner_id?: string | null
+          payout_amount?: number
+          source_type: Database["public"]["Enums"]["finance_source_type"]
+          store_order_id?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          booking_id?: string | null
+          company_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gross_amount?: number
+          id?: string
+          is_reversed?: boolean
+          notes?: string | null
+          occurred_at?: string
+          origin_system?: Database["public"]["Enums"]["finance_origin_system"]
+          partner_id?: string | null
+          payout_amount?: number
+          source_type?: Database["public"]["Enums"]["finance_source_type"]
+          store_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_entries_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "finance_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          occurred_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          occurred_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          occurred_at?: string
+        }
+        Relationships: []
+      }
+      finance_partners: {
+        Row: {
+          created_at: string
+          id: string
+          initial_debt: number
+          name: string
+          notes: string | null
+          profit_share_pct: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initial_debt?: number
+          name: string
+          notes?: string | null
+          profit_share_pct?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initial_debt?: number
+          name?: string
+          notes?: string | null
+          profit_share_pct?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_payouts: {
+        Row: {
+          amount: number
+          asset_id: string | null
+          created_at: string
+          entry_id: string | null
+          id: string
+          notes: string | null
+          owner_label: string | null
+          paid_at: string | null
+          status: Database["public"]["Enums"]["finance_payout_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          asset_id?: string | null
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          notes?: string | null
+          owner_label?: string | null
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["finance_payout_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          asset_id?: string | null
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          notes?: string | null
+          owner_label?: string | null
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["finance_payout_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payouts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "finance_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payouts_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "finance_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hero_slides: {
         Row: {
@@ -1076,6 +1378,21 @@ export type Database = {
           reference: string
         }[]
       }
+      finance_summary: {
+        Args: { _end: string; _start: string }
+        Returns: {
+          cash_balance: number
+          cash_reserve_target: number
+          debt_repaid: number
+          distributable: number
+          expenses_total: number
+          payouts_paid: number
+          payouts_pending: number
+          rental_income: number
+          services_income: number
+          store_income: number
+        }[]
+      }
       get_public_contact: {
         Args: never
         Returns: {
@@ -1127,6 +1444,18 @@ export type Database = {
         | "awaiting_confirmation"
         | "ready_for_pickup"
         | "returned"
+      finance_origin_system: "rental" | "store" | "services"
+      finance_origin_type: "socio" | "concession" | "external" | "company"
+      finance_payout_status: "pending" | "paid" | "cancelled"
+      finance_revenue_model: "split_70_30" | "company_100" | "custom"
+      finance_source_type:
+        | "order_paid"
+        | "refund"
+        | "manual_adjustment"
+        | "expense"
+        | "debt_repayment"
+        | "payout"
+      finance_transition_status: "normal" | "in_transition" | "transferred"
       payment_status:
         | "unpaid"
         | "deposit_pending"
@@ -1273,6 +1602,19 @@ export const Constants = {
         "ready_for_pickup",
         "returned",
       ],
+      finance_origin_system: ["rental", "store", "services"],
+      finance_origin_type: ["socio", "concession", "external", "company"],
+      finance_payout_status: ["pending", "paid", "cancelled"],
+      finance_revenue_model: ["split_70_30", "company_100", "custom"],
+      finance_source_type: [
+        "order_paid",
+        "refund",
+        "manual_adjustment",
+        "expense",
+        "debt_repayment",
+        "payout",
+      ],
+      finance_transition_status: ["normal", "in_transition", "transferred"],
       payment_status: [
         "unpaid",
         "deposit_pending",
