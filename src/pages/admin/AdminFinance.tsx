@@ -274,6 +274,30 @@ function OwnersTab() {
   );
 }
 
+// ============== OWNER HISTORY ==============
+function OwnerHistory({ assetId, owners }: { assetId: string; owners: any[] }) {
+  const { data: history = [] } = useQuery({
+    queryKey: ["asset-owner-history", assetId],
+    queryFn: async () => (await sb.from("finance_asset_owner_history")
+      .select("*").eq("asset_id", assetId).order("changed_at", { ascending: false })).data || [],
+  });
+  const nameOf = (id: string | null) => owners.find((o: any) => o.id === id)?.name || (id ? "—" : "sin owner");
+  if (!history.length) return <div className="mt-2 text-[11px] text-secondary">Sin historial de cambios de owner.</div>;
+  return (
+    <div className="mt-2 border border-border rounded-md p-2 bg-background/50">
+      <div className="text-[10px] uppercase tracking-wider text-secondary mb-1">Historial de owner</div>
+      <ul className="space-y-1 max-h-32 overflow-y-auto">
+        {history.map((h: any) => (
+          <li key={h.id} className="text-[11px] flex justify-between gap-2">
+            <span>{nameOf(h.previous_owner_id)} → <strong>{nameOf(h.new_owner_id)}</strong></span>
+            <span className="text-secondary">{new Date(h.changed_at).toLocaleDateString()}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ============== ASSETS ==============
 function AssetsTab() {
   const qc = useQueryClient();
