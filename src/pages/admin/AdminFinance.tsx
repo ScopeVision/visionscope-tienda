@@ -130,21 +130,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Reparto sugerido a socios</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {partners.map((p: any) => {
-            const share = (distributable * Number(p.profit_share_pct)) / 100;
-            return (
-              <div key={p.id} className="p-4 rounded-xl bg-surface border border-border">
-                <div className="text-sm font-medium">{p.name}</div>
-                <div className="text-xs text-secondary">{p.profit_share_pct}% · deuda inicial {fmt(p.initial_debt)}</div>
-                <div className={`mt-2 text-xl font-display ${share >= 0 ? "" : "text-rose-500"}`}>{fmt(share)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* Reparto sugerido eliminado: el sistema solo refleja datos reales registrados, no estimaciones. */}
 
       {transitionAssets.length > 0 && (
         <section>
