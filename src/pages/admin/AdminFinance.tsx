@@ -448,21 +448,23 @@ function AssetsTab() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Modelo de revenue</Label>
-                  <Select value={editing.revenue_model} onValueChange={(v) => setEditing({ ...editing, revenue_model: v })}>
+                  <Label>Tipo de acuerdo</Label>
+                  <Select value={editing.agreement_type || "company_owned"} onValueChange={(v) => setEditing({ ...editing, agreement_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="company_100">100% empresa</SelectItem>
-                      <SelectItem value="split_70_30">70/30 (30% empresa)</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
+                      <SelectItem value="company_owned">Company owned (100%)</SelectItem>
+                      <SelectItem value="split_70_30">70/30 (owner 70%)</SelectItem>
+                      <SelectItem value="custom_split">Custom split</SelectItem>
+                      <SelectItem value="concession">Concesión</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {editing.revenue_model === "custom" && (
+                {(editing.agreement_type === "custom_split" || editing.agreement_type === "concession") && (
                   <div>
-                    <Label>% empresa</Label>
-                    <Input type="number" min={0} max={100} value={editing.custom_company_pct ?? 100}
-                      onChange={(e) => setEditing({ ...editing, custom_company_pct: Number(e.target.value) })} />
+                    <Label>% owner</Label>
+                    <Input type="number" min={0} max={100} value={editing.owner_split_pct ?? 70}
+                      onChange={(e) => setEditing({ ...editing, owner_split_pct: Number(e.target.value) })} />
+                    <p className="text-[10px] text-secondary mt-1">Empresa: {100 - Number(editing.owner_split_pct || 0)}%</p>
                   </div>
                 )}
               </div>
