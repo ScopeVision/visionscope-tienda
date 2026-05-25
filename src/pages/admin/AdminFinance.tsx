@@ -196,6 +196,9 @@ function EquityPreview() {
       )}
     </section>
   );
+}
+
+
 
 // ============== OWNERS ==============
 function OwnersTab() {
