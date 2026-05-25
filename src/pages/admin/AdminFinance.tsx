@@ -127,7 +127,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      {/* Reparto sugerido eliminado: el sistema solo refleja datos reales registrados, no estimaciones. */}
+      <EquityPreview />
 
       {transitionAssets.length > 0 && (
         <section>
@@ -159,6 +159,46 @@ function DashboardTab() {
     </div>
   );
 }
+
+function EquityPreview() {
+  const { data: dist = [] } = useQuery({
+    queryKey: ["finance-equity-distribution"],
+    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
+  });
+  if (!dist.length) return null;
+  const total = (dist as any[]).reduce((s, d) => s + Number(d.equity_pct || 0), 0);
+  const valid = Math.round(total * 10000) / 10000 === 100;
+  return (
+    <section>
+      <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">
+        Distribución equity (preview · solo informativo)
+      </h3>
+      <div className="rounded-xl bg-surface border border-border overflow-hidden">
+        <Table>
+          <TableHeader><TableRow><TableHead>Socio</TableHead><TableHead>Equity %</TableHead><TableHead>Distribuible año</TableHead><TableHead className="text-right">Le correspondería</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {(dist as any[]).map((d) => (
+              <TableRow key={d.partner_id}>
+                <TableCell className="font-medium">{d.name}</TableCell>
+                <TableCell>{d.equity_pct}%</TableCell>
+                <TableCell className="text-xs text-secondary">{fmt(d.distributable)}</TableCell>
+                <TableCell className="text-right font-medium">{fmt(d.would_receive)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {!valid && (
+        <div className="text-xs text-rose-500 mt-2 flex items-center gap-1.5">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Equity total: {total.toFixed(2)}% (debería ser 100%). Corrige en la tab Equity.
+        </div>
+      )}
+    </section>
+  );
+}
+
+
 
 // ============== OWNERS ==============
 function OwnersTab() {
@@ -319,6 +359,7 @@ function AssetsTab() {
 
   const blank = {
     name: "", origin_type: "company", owner_id: null, owner_label: "",
+    agreement_type: "company_owned", owner_split_pct: 0,
     revenue_model: "company_100", custom_company_pct: 100,
     acquisition_value: 0, target_recovery_value: 0,
     transition_status: "normal", product_id: null,
@@ -333,7 +374,18 @@ function AssetsTab() {
     if (payload.owner_id === "__none__" || !payload.owner_id) {
       return toast.error("Owner obligatorio: asigna un propietario desde el registro");
     }
-    if (payload.revenue_model !== "custom") payload.custom_company_pct = null;
+    const at = payload.agreement_type || "company_owned";
+    if (at === "company_owned") payload.owner_split_pct = 0;
+    else if (at === "split_70_30") payload.owner_split_pct = 70;
+    else {
+      const v = Number(payload.owner_split_pct);
+      if (isNaN(v) || v < 0 || v > 100) return toast.error("% owner inválido (0-100)");
+      payload.owner_split_pct = v;
+    }
+    payload.revenue_model = at === "company_owned" ? "company_100"
+      : at === "split_70_30" ? "split_70_30" : "custom";
+    payload.custom_company_pct = (at === "company_owned" || at === "split_70_30")
+      ? null : 100 - payload.owner_split_pct;
     if (typeof payload.concession_rules === "string") {
       try { payload.concession_rules = JSON.parse(payload.concession_rules || "{}"); }
       catch { return toast.error("JSON de concesión inválido"); }
@@ -384,7 +436,7 @@ function AssetsTab() {
                 <TableCell className="font-medium">{a.name}</TableCell>
                 <TableCell><Badge variant="outline">{a.origin_type}</Badge></TableCell>
                 <TableCell>{a.owner?.name || a.owner_label || "—"}</TableCell>
-                <TableCell>{a.revenue_model === "custom" ? `custom (${a.custom_company_pct}%)` : a.revenue_model}</TableCell>
+                <TableCell className="text-xs">{a.agreement_type || a.revenue_model} {Number(a.owner_split_pct) > 0 ? `· owner ${a.owner_split_pct}%` : ""}</TableCell>
                 <TableCell>{fmt(a.acquisition_value)}</TableCell>
                 <TableCell>{fmt(a.target_recovery_value)}</TableCell>
                 <TableCell><Badge>{a.transition_status}</Badge></TableCell>
@@ -436,21 +488,23 @@ function AssetsTab() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Modelo de revenue</Label>
-                  <Select value={editing.revenue_model} onValueChange={(v) => setEditing({ ...editing, revenue_model: v })}>
+                  <Label>Tipo de acuerdo</Label>
+                  <Select value={editing.agreement_type || "company_owned"} onValueChange={(v) => setEditing({ ...editing, agreement_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="company_100">100% empresa</SelectItem>
-                      <SelectItem value="split_70_30">70/30 (30% empresa)</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
+                      <SelectItem value="company_owned">Company owned (100%)</SelectItem>
+                      <SelectItem value="split_70_30">70/30 (owner 70%)</SelectItem>
+                      <SelectItem value="custom_split">Custom split</SelectItem>
+                      <SelectItem value="concession">Concesión</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {editing.revenue_model === "custom" && (
+                {(editing.agreement_type === "custom_split" || editing.agreement_type === "concession") && (
                   <div>
-                    <Label>% empresa</Label>
-                    <Input type="number" min={0} max={100} value={editing.custom_company_pct ?? 100}
-                      onChange={(e) => setEditing({ ...editing, custom_company_pct: Number(e.target.value) })} />
+                    <Label>% owner</Label>
+                    <Input type="number" min={0} max={100} value={editing.owner_split_pct ?? 70}
+                      onChange={(e) => setEditing({ ...editing, owner_split_pct: Number(e.target.value) })} />
+                    <p className="text-[10px] text-secondary mt-1">Empresa: {100 - Number(editing.owner_split_pct || 0)}%</p>
                   </div>
                 )}
               </div>
@@ -992,11 +1046,12 @@ function OwnerBalancesTab() {
 }
 
 
-// ============== PARTNERS & DEBT ==============
+// ============== EQUITY (SOCIOS) ==============
 function PartnersTab() {
   const qc = useQueryClient();
   const [amount, setAmount] = useState<Record<string, string>>({});
-  const [shareDraft, setShareDraft] = useState<Record<string, string>>({});
+  const [equity, setEquity] = useState<Record<string, string>>({});
+  const [equityDirty, setEquityDirty] = useState(false);
 
   const { data: partners = [] } = useQuery({
     queryKey: ["finance-partners-full"],
@@ -1010,6 +1065,11 @@ function PartnersTab() {
     },
   });
 
+  const { data: equityDist = [] } = useQuery({
+    queryKey: ["finance-equity-distribution"],
+    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
+  });
+
   const { data: history = [] } = useQuery({
     queryKey: ["finance-debt-history"],
     queryFn: async () => (await sb.from("finance_debt_repayments").select("*, partner:finance_partners(name)").order("paid_at", { ascending: false }).limit(30)).data || [],
@@ -1019,6 +1079,26 @@ function PartnersTab() {
     queryKey: ["finance-partner-share-history"],
     queryFn: async () => (await sb.from("finance_partner_share_history").select("*, partner:finance_partners(name)").order("effective_from", { ascending: false }).limit(30)).data || [],
   });
+
+  // Current draft values (falls back to stored value)
+  const valOf = (p: any) => equity[p.id] !== undefined ? equity[p.id] : String(p.profit_share_pct);
+  const draftTotal = useMemo(
+    () => partners.reduce((s: number, p: any) => s + Number(valOf(p) || 0), 0),
+    [partners, equity]
+  );
+  const valid = Math.round(draftTotal * 10000) / 10000 === 100;
+
+  const saveEquity = async () => {
+    if (!valid) return toast.error("Equity distribution must equal 100% before saving changes.");
+    const changes = partners.map((p: any) => ({ id: p.id, pct: Number(valOf(p)) }));
+    const { error } = await sb.rpc("update_partner_equity", { _changes: changes });
+    if (error) return toast.error(error.message);
+    toast.success("Equity actualizado (historial guardado)");
+    setEquity({}); setEquityDirty(false);
+    qc.invalidateQueries({ queryKey: ["finance-partners-full"] });
+    qc.invalidateQueries({ queryKey: ["finance-partner-share-history"] });
+    qc.invalidateQueries({ queryKey: ["finance-equity-distribution"] });
+  };
 
   const register = async (partnerId: string) => {
     const v = Number(amount[partnerId] || 0);
@@ -1032,52 +1112,73 @@ function PartnersTab() {
     qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
 
-  const saveShare = async (partnerId: string) => {
-    const v = Number(shareDraft[partnerId]);
-    if (isNaN(v) || v < 0 || v > 100) return toast.error("Porcentaje inválido");
-    const { error } = await sb.from("finance_partners").update({ profit_share_pct: v }).eq("id", partnerId);
-    if (error) return toast.error(error.message);
-    toast.success("Porcentaje actualizado (historial guardado)");
-    setShareDraft({ ...shareDraft, [partnerId]: "" });
-    qc.invalidateQueries({ queryKey: ["finance-partners-full"] });
-    qc.invalidateQueries({ queryKey: ["finance-partner-share-history"] });
-  };
-
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-medium">Socios & deuda interna</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {partners.map((p: any) => (
-          <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
-            <div>
-              <div className="font-medium">{p.name}</div>
-              <div className="text-xs text-secondary">Reparto actual {p.profit_share_pct}%</div>
-            </div>
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <Label className="text-xs">Nuevo %</Label>
-                <Input type="number" min={0} max={100} value={shareDraft[p.id] ?? ""} placeholder={String(p.profit_share_pct)}
-                  onChange={(e) => setShareDraft({ ...shareDraft, [p.id]: e.target.value })} />
-              </div>
-              <Button size="sm" variant="outline" onClick={() => saveShare(p.id)}>Aplicar</Button>
-            </div>
-            <div className="text-sm border-t border-border pt-2">
-              <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
-              <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
-              <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
-                Restante: <span className="font-medium">{fmt(p.remaining)}</span>
-              </div>
-            </div>
-            {p.remaining > 0 && (
-              <div className="flex gap-2">
-                <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
-                  onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
-                <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
-              </div>
-            )}
-          </div>
-        ))}
+      <div>
+        <h2 className="text-lg font-medium">Equity (socios de la empresa)</h2>
+        <p className="text-xs text-secondary mt-1">
+          El equity solo se usa para distribuir el beneficio final de empresa.
+          No tiene relación con owners de assets ni con payouts operativos.
+        </p>
       </div>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs uppercase tracking-wider text-secondary">Distribución de equity</h3>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className={valid ? "border-emerald-500 text-emerald-600" : "border-rose-500 text-rose-600"}>
+              Total: {draftTotal.toFixed(2)}%
+            </Badge>
+            <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
+              Guardar equity
+            </Button>
+          </div>
+        </div>
+        {!valid && equityDirty && (
+          <div className="text-xs text-rose-500 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Equity distribution must equal 100% before saving changes.
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {partners.map((p: any) => {
+            const dist = (equityDist as any[]).find((d) => d.partner_id === p.id);
+            return (
+              <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
+                <div>
+                  <div className="font-medium">{p.name}</div>
+                  <div className="text-xs text-secondary">Actual {p.profit_share_pct}%</div>
+                </div>
+                <div>
+                  <Label className="text-xs">Equity %</Label>
+                  <Input type="number" min={0} max={100} step="0.01" value={valOf(p)}
+                    onChange={(e) => { setEquity({ ...equity, [p.id]: e.target.value }); setEquityDirty(true); }} />
+                </div>
+                {dist && (
+                  <div className="border-t border-border pt-2 text-xs">
+                    <div className="text-secondary">Le correspondería este año (basado en distribuible actual):</div>
+                    <div className="font-medium text-lg">{fmt(dist.would_receive)}</div>
+                  </div>
+                )}
+                <div className="text-sm border-t border-border pt-2">
+                  <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
+                  <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
+                  <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
+                    Restante: <span className="font-medium">{fmt(p.remaining)}</span>
+                  </div>
+                </div>
+                {p.remaining > 0 && (
+                  <div className="flex gap-2">
+                    <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
+                      onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
+                    <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <section>
         <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial devoluciones</h3>
@@ -1101,7 +1202,7 @@ function PartnersTab() {
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial cambios de reparto %</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial cambios de equity %</h3>
         <div className="rounded-xl bg-surface border border-border overflow-hidden">
           <Table>
             <TableHeader><TableRow><TableHead>Desde</TableHead><TableHead>Hasta</TableHead><TableHead>Socio</TableHead><TableHead>%</TableHead></TableRow></TableHeader>
@@ -1125,22 +1226,42 @@ function PartnersTab() {
   );
 }
 
+
 // ============== EXPENSES ==============
 function ExpensesTab() {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ category: "general", description: "", amount: "" });
+  const [form, setForm] = useState<any>({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
+  const [scopeFilter, setScopeFilter] = useState<string>("__all__");
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ["finance-expenses"],
-    queryFn: async () => (await sb.from("finance_expenses").select("*").order("occurred_at", { ascending: false }).limit(100)).data || [],
+    queryKey: ["finance-expenses", scopeFilter],
+    queryFn: async () => {
+      let q = sb.from("finance_expenses").select("*, asset:finance_assets(name)").order("occurred_at", { ascending: false }).limit(200);
+      if (scopeFilter !== "__all__") q = q.eq("scope", scopeFilter);
+      return (await q).data || [];
+    },
+  });
+
+  const { data: assets = [] } = useQuery({
+    queryKey: ["finance-assets-lookup-exp"],
+    queryFn: async () => (await sb.from("finance_assets").select("id, name").eq("active", true).order("name")).data || [],
   });
 
   const add = async () => {
     const v = Number(form.amount);
     if (!v || v <= 0) return toast.error("Importe inválido");
-    const { error } = await sb.from("finance_expenses").insert({ category: form.category || "general", description: form.description, amount: v });
+    if (form.scope === "asset" && (!form.asset_id || form.asset_id === "__none__")) return toast.error("Selecciona el activo");
+    const payload: any = {
+      scope: form.scope,
+      category: form.category || "general",
+      description: form.description,
+      amount: v,
+      asset_id: form.scope === "asset" ? form.asset_id : null,
+      booking_id: form.scope === "rental" && form.booking_id ? form.booking_id : null,
+    };
+    const { error } = await sb.from("finance_expenses").insert(payload);
     if (error) return toast.error(error.message);
-    setForm({ category: "general", description: "", amount: "" });
+    setForm({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
     qc.invalidateQueries({ queryKey: ["finance-expenses"] });
     qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
@@ -1154,27 +1275,66 @@ function ExpensesTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-medium">Gastos</h2>
-      <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr_auto] gap-2 items-end">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-lg font-medium">Gastos</h2>
+        <Select value={scopeFilter} onValueChange={setScopeFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los ámbitos</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
+            <SelectItem value="asset">Asset</SelectItem>
+            <SelectItem value="rental">Rental</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+        <div>
+          <Label className="text-xs text-secondary">Ámbito</Label>
+          <Select value={form.scope} onValueChange={(v) => setForm({ ...form, scope: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="company">Company</SelectItem>
+              <SelectItem value="asset">Asset</SelectItem>
+              <SelectItem value="rental">Rental</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {form.scope === "asset" && (
+          <div>
+            <Label className="text-xs text-secondary">Activo</Label>
+            <Select value={form.asset_id} onValueChange={(v) => setForm({ ...form, asset_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Activo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">—</SelectItem>
+                {assets.map((a: any) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {form.scope === "rental" && (
+          <div><Label className="text-xs text-secondary">Booking ID (opcional)</Label><Input value={form.booking_id} onChange={(e) => setForm({ ...form, booking_id: e.target.value })} /></div>
+        )}
         <div><Label className="text-xs text-secondary">Categoría</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
-        <div><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+        <div className="md:col-span-2"><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
         <div><Label className="text-xs text-secondary">Importe €</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
         <Button onClick={add} className="gap-2"><Plus className="h-4 w-4" />Añadir</Button>
       </div>
       <div className="rounded-xl bg-surface border border-border overflow-hidden">
         <Table>
-          <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Ámbito</TableHead><TableHead>Asset</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {expenses.map((e: any) => (
               <TableRow key={e.id}>
                 <TableCell className="text-xs">{new Date(e.occurred_at).toLocaleDateString()}</TableCell>
+                <TableCell><Badge variant="outline">{e.scope || "company"}</Badge></TableCell>
+                <TableCell className="text-xs">{e.asset?.name || "—"}</TableCell>
                 <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                 <TableCell>{e.description || "—"}</TableCell>
                 <TableCell className="font-medium">{fmt(e.amount)}</TableCell>
                 <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => remove(e.id)}>Eliminar</Button></TableCell>
               </TableRow>
             ))}
-            {expenses.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
+            {expenses.length === 0 && (<TableRow><TableCell colSpan={7} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
           </TableBody>
         </Table>
       </div>
@@ -1270,7 +1430,7 @@ export default function AdminFinance() {
           <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1.5" />Activos</TabsTrigger>
           <TabsTrigger value="payouts"><ArrowDownToLine className="h-4 w-4 mr-1.5" />Payouts</TabsTrigger>
           <TabsTrigger value="balances"><Users className="h-4 w-4 mr-1.5" />Balances</TabsTrigger>
-          <TabsTrigger value="partners"><Users className="h-4 w-4 mr-1.5" />Socios & deuda</TabsTrigger>
+          <TabsTrigger value="partners"><Users className="h-4 w-4 mr-1.5" />Equity</TabsTrigger>
           <TabsTrigger value="expenses"><Receipt className="h-4 w-4 mr-1.5" />Gastos</TabsTrigger>
           <TabsTrigger value="cash"><Wallet className="h-4 w-4 mr-1.5" />Caja</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="h-4 w-4 mr-1.5" />Settings</TabsTrigger>
