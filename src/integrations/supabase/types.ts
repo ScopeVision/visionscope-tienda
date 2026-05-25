@@ -431,6 +431,7 @@ export type Database = {
         Row: {
           acquisition_value: number
           active: boolean
+          agreement_type: Database["public"]["Enums"]["finance_agreement_type"]
           concession_rules: Json
           created_at: string
           custom_company_pct: number | null
@@ -440,6 +441,7 @@ export type Database = {
           origin_type: Database["public"]["Enums"]["finance_origin_type"]
           owner_id: string | null
           owner_label: string | null
+          owner_split_pct: number
           product_id: string | null
           revenue_model: Database["public"]["Enums"]["finance_revenue_model"]
           store_product_id: string | null
@@ -450,6 +452,7 @@ export type Database = {
         Insert: {
           acquisition_value?: number
           active?: boolean
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
           concession_rules?: Json
           created_at?: string
           custom_company_pct?: number | null
@@ -459,6 +462,7 @@ export type Database = {
           origin_type?: Database["public"]["Enums"]["finance_origin_type"]
           owner_id?: string | null
           owner_label?: string | null
+          owner_split_pct?: number
           product_id?: string | null
           revenue_model?: Database["public"]["Enums"]["finance_revenue_model"]
           store_product_id?: string | null
@@ -469,6 +473,7 @@ export type Database = {
         Update: {
           acquisition_value?: number
           active?: boolean
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
           concession_rules?: Json
           created_at?: string
           custom_company_pct?: number | null
@@ -478,6 +483,7 @@ export type Database = {
           origin_type?: Database["public"]["Enums"]["finance_origin_type"]
           owner_id?: string | null
           owner_label?: string | null
+          owner_split_pct?: number
           product_id?: string | null
           revenue_model?: Database["public"]["Enums"]["finance_revenue_model"]
           store_product_id?: string | null
@@ -552,6 +558,13 @@ export type Database = {
           partner_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_debt_repayments_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_equity_distribution"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "finance_debt_repayments_partner_id_fkey"
             columns: ["partner_id"]
@@ -667,6 +680,13 @@ export type Database = {
             foreignKeyName: "finance_entries_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "finance_equity_distribution"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "finance_partners"
             referencedColumns: ["id"]
           },
@@ -675,30 +695,39 @@ export type Database = {
       finance_expenses: {
         Row: {
           amount: number
+          asset_id: string | null
+          booking_id: string | null
           category: string
           created_at: string
           created_by: string | null
           description: string | null
           id: string
           occurred_at: string
+          scope: Database["public"]["Enums"]["finance_expense_scope"]
         }
         Insert: {
           amount: number
+          asset_id?: string | null
+          booking_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           occurred_at?: string
+          scope?: Database["public"]["Enums"]["finance_expense_scope"]
         }
         Update: {
           amount?: number
+          asset_id?: string | null
+          booking_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           occurred_at?: string
+          scope?: Database["public"]["Enums"]["finance_expense_scope"]
         }
         Relationships: []
       }
@@ -750,6 +779,13 @@ export type Database = {
             foreignKeyName: "finance_owners_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "finance_equity_distribution"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "finance_owners_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "finance_partners"
             referencedColumns: ["id"]
           },
@@ -787,6 +823,13 @@ export type Database = {
           pct?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_partner_share_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_equity_distribution"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "finance_partner_share_history_partner_id_fkey"
             columns: ["partner_id"]
@@ -1681,6 +1724,16 @@ export type Database = {
           },
         ]
       }
+      finance_equity_distribution: {
+        Row: {
+          distributable: number | null
+          equity_pct: number | null
+          name: string | null
+          partner_id: string | null
+          would_receive: number | null
+        }
+        Relationships: []
+      }
       finance_owner_balances: {
         Row: {
           active: boolean | null
@@ -1806,7 +1859,13 @@ export type Database = {
         | "awaiting_confirmation"
         | "ready_for_pickup"
         | "returned"
+      finance_agreement_type:
+        | "company_owned"
+        | "split_70_30"
+        | "custom_split"
+        | "concession"
       finance_entry_status: "active" | "reversed" | "void"
+      finance_expense_scope: "company" | "asset" | "rental"
       finance_origin_system: "rental" | "store" | "services"
       finance_origin_type: "socio" | "concession" | "external" | "company"
       finance_owner_type: "socio" | "external" | "concession" | "company"
@@ -1971,7 +2030,14 @@ export const Constants = {
         "ready_for_pickup",
         "returned",
       ],
+      finance_agreement_type: [
+        "company_owned",
+        "split_70_30",
+        "custom_split",
+        "concession",
+      ],
       finance_entry_status: ["active", "reversed", "void"],
+      finance_expense_scope: ["company", "asset", "rental"],
       finance_origin_system: ["rental", "store", "services"],
       finance_origin_type: ["socio", "concession", "external", "company"],
       finance_owner_type: ["socio", "external", "concession", "company"],
