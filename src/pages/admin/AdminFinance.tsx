@@ -73,16 +73,23 @@ function DashboardTab() {
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
     queryFn: async () => {
-      const { data: assets } = await sb.from("finance_assets").select("*, owner:finance_owners(name)")
+      const { data: kpis } = await sb.from("finance_asset_kpis").select("*");
+      const { data: assets } = await sb.from("finance_assets")
+        .select("id, owner_label, revenue_model, origin_type, owner:finance_owners(name)")
         .neq("transition_status", "transferred").neq("origin_type", "company");
-      const { data: payouts } = await sb.from("finance_payouts").select("asset_id, amount, status");
-      return (assets || []).map((a: any) => {
-        const recovered = (payouts || [])
-          .filter((p: any) => p.asset_id === a.id && p.status === "paid")
-          .reduce((s: number, p: any) => s + Number(p.amount), 0);
-        const target = Number(a.target_recovery_value || a.acquisition_value || 0);
-        return { ...a, recovered, target, progress: target > 0 ? Math.min(100, (recovered / target) * 100) : 0 };
-      });
+      const byId = new Map((kpis || []).map((k: any) => [k.asset_id, k]));
+      return (assets || [])
+        .map((a: any) => {
+          const k: any = byId.get(a.id) || {};
+          const target = Number(k.target_recovery_value || 0);
+          const recovered = Number(k.recovered_value || 0);
+          return {
+            ...a, ...k, target, recovered,
+            progress: target > 0 ? Math.min(100, (recovered / target) * 100) : 0,
+            target_reached: !!k.target_reached,
+          };
+        })
+        .filter((a: any) => a.target > 0);
     },
   });
 
