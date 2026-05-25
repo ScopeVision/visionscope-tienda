@@ -112,21 +112,21 @@ function DashboardTab() {
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Flujo</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Liabilities owners (no es dinero empresa)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card icon={ArrowDownToLine} label="Payouts pagados" value={fmt(summary?.payouts_paid)} tone="negative" />
-          <Card icon={ArrowDownToLine} label="Payouts pendientes" value={fmt(summary?.payouts_pending)} hint="histórico" />
-          <Card icon={Receipt} label="Gastos" value={fmt(summary?.expenses_total)} tone="negative" />
+          <Card icon={ArrowDownToLine} label="Pagado a owners" value={fmt(summary?.payouts_paid)} tone="positive" hint="histórico" />
+          <Card icon={AlertTriangle} label="Liability abierto" value={fmt(summary?.owner_liability_open)} tone="negative" hint="debido a owners" />
+          <Card icon={Receipt} label="Gastos del mes" value={fmt(summary?.expenses_total)} tone="negative" />
           <Card icon={ArrowDownToLine} label="Deuda devuelta" value={fmt(summary?.debt_repaid)} tone="negative" />
         </div>
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio empresa</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" />
+          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" hint="comisión − gastos − deuda" />
           <Card icon={PiggyBank} label="Reserva objetivo" value={fmt(summary?.cash_reserve_target)} />
-          <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} />
+          <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} hint="solo comisión empresa" />
         </div>
       </section>
 
