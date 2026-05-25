@@ -1845,6 +1845,7 @@ export type Database = {
           reference: string
         }[]
       }
+      update_partner_equity: { Args: { _changes: Json }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
