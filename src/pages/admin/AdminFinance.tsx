@@ -65,10 +65,7 @@ function DashboardTab() {
     },
   });
 
-  const { data: partners = [] } = useQuery({
-    queryKey: ["finance-partners"],
-    queryFn: async () => (await sb.from("finance_partners").select("*").order("sort_order")).data || [],
-  });
+  // Partners query removed: no suggested distribution. Real payouts only.
 
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
