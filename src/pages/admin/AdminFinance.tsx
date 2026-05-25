@@ -397,7 +397,7 @@ function AssetsTab() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Owner (registry)</Label>
+                  <Label>Owner (registry) <span className="text-rose-500">*</span></Label>
                   <Select value={editing.owner_id || "__none__"} onValueChange={(v) => setEditing({ ...editing, owner_id: v === "__none__" ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="Sin owner" /></SelectTrigger>
                     <SelectContent>
@@ -407,6 +407,7 @@ function AssetsTab() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {editing.id && <OwnerHistory assetId={editing.id} owners={owners} />}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
