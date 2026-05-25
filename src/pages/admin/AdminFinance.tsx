@@ -319,6 +319,7 @@ function AssetsTab() {
 
   const blank = {
     name: "", origin_type: "company", owner_id: null, owner_label: "",
+    agreement_type: "company_owned", owner_split_pct: 0,
     revenue_model: "company_100", custom_company_pct: 100,
     acquisition_value: 0, target_recovery_value: 0,
     transition_status: "normal", product_id: null,
@@ -333,7 +334,18 @@ function AssetsTab() {
     if (payload.owner_id === "__none__" || !payload.owner_id) {
       return toast.error("Owner obligatorio: asigna un propietario desde el registro");
     }
-    if (payload.revenue_model !== "custom") payload.custom_company_pct = null;
+    const at = payload.agreement_type || "company_owned";
+    if (at === "company_owned") payload.owner_split_pct = 0;
+    else if (at === "split_70_30") payload.owner_split_pct = 70;
+    else {
+      const v = Number(payload.owner_split_pct);
+      if (isNaN(v) || v < 0 || v > 100) return toast.error("% owner inválido (0-100)");
+      payload.owner_split_pct = v;
+    }
+    payload.revenue_model = at === "company_owned" ? "company_100"
+      : at === "split_70_30" ? "split_70_30" : "custom";
+    payload.custom_company_pct = (at === "company_owned" || at === "split_70_30")
+      ? null : 100 - payload.owner_split_pct;
     if (typeof payload.concession_rules === "string") {
       try { payload.concession_rules = JSON.parse(payload.concession_rules || "{}"); }
       catch { return toast.error("JSON de concesión inválido"); }
