@@ -1630,7 +1630,12 @@ export type Database = {
       finance_origin_system: "rental" | "store" | "services"
       finance_origin_type: "socio" | "concession" | "external" | "company"
       finance_owner_type: "socio" | "external" | "concession" | "company"
-      finance_payout_status: "pending" | "paid" | "cancelled"
+      finance_payout_status:
+        | "pending"
+        | "paid"
+        | "cancelled"
+        | "unpaid"
+        | "partially_paid"
       finance_revenue_model: "split_70_30" | "company_100" | "custom"
       finance_source_type:
         | "order_paid"
@@ -1790,7 +1795,13 @@ export const Constants = {
       finance_origin_system: ["rental", "store", "services"],
       finance_origin_type: ["socio", "concession", "external", "company"],
       finance_owner_type: ["socio", "external", "concession", "company"],
-      finance_payout_status: ["pending", "paid", "cancelled"],
+      finance_payout_status: [
+        "pending",
+        "paid",
+        "cancelled",
+        "unpaid",
+        "partially_paid",
+      ],
       finance_revenue_model: ["split_70_30", "company_100", "custom"],
       finance_source_type: [
         "order_paid",
