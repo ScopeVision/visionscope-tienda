@@ -396,7 +396,7 @@ function AssetsTab() {
                 <TableCell className="font-medium">{a.name}</TableCell>
                 <TableCell><Badge variant="outline">{a.origin_type}</Badge></TableCell>
                 <TableCell>{a.owner?.name || a.owner_label || "—"}</TableCell>
-                <TableCell>{a.revenue_model === "custom" ? `custom (${a.custom_company_pct}%)` : a.revenue_model}</TableCell>
+                <TableCell className="text-xs">{a.agreement_type || a.revenue_model} {Number(a.owner_split_pct) > 0 ? `· owner ${a.owner_split_pct}%` : ""}</TableCell>
                 <TableCell>{fmt(a.acquisition_value)}</TableCell>
                 <TableCell>{fmt(a.target_recovery_value)}</TableCell>
                 <TableCell><Badge>{a.transition_status}</Badge></TableCell>
