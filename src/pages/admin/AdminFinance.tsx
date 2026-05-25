@@ -1006,11 +1006,12 @@ function OwnerBalancesTab() {
 }
 
 
-// ============== PARTNERS & DEBT ==============
+// ============== EQUITY (SOCIOS) ==============
 function PartnersTab() {
   const qc = useQueryClient();
   const [amount, setAmount] = useState<Record<string, string>>({});
-  const [shareDraft, setShareDraft] = useState<Record<string, string>>({});
+  const [equity, setEquity] = useState<Record<string, string>>({});
+  const [equityDirty, setEquityDirty] = useState(false);
 
   const { data: partners = [] } = useQuery({
     queryKey: ["finance-partners-full"],
@@ -1024,6 +1025,11 @@ function PartnersTab() {
     },
   });
 
+  const { data: equityDist = [] } = useQuery({
+    queryKey: ["finance-equity-distribution"],
+    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
+  });
+
   const { data: history = [] } = useQuery({
     queryKey: ["finance-debt-history"],
     queryFn: async () => (await sb.from("finance_debt_repayments").select("*, partner:finance_partners(name)").order("paid_at", { ascending: false }).limit(30)).data || [],
@@ -1033,6 +1039,26 @@ function PartnersTab() {
     queryKey: ["finance-partner-share-history"],
     queryFn: async () => (await sb.from("finance_partner_share_history").select("*, partner:finance_partners(name)").order("effective_from", { ascending: false }).limit(30)).data || [],
   });
+
+  // Current draft values (falls back to stored value)
+  const valOf = (p: any) => equity[p.id] !== undefined ? equity[p.id] : String(p.profit_share_pct);
+  const draftTotal = useMemo(
+    () => partners.reduce((s: number, p: any) => s + Number(valOf(p) || 0), 0),
+    [partners, equity]
+  );
+  const valid = Math.round(draftTotal * 10000) / 10000 === 100;
+
+  const saveEquity = async () => {
+    if (!valid) return toast.error("Equity distribution must equal 100% before saving changes.");
+    const changes = partners.map((p: any) => ({ id: p.id, pct: Number(valOf(p)) }));
+    const { error } = await sb.rpc("update_partner_equity", { _changes: changes });
+    if (error) return toast.error(error.message);
+    toast.success("Equity actualizado (historial guardado)");
+    setEquity({}); setEquityDirty(false);
+    qc.invalidateQueries({ queryKey: ["finance-partners-full"] });
+    qc.invalidateQueries({ queryKey: ["finance-partner-share-history"] });
+    qc.invalidateQueries({ queryKey: ["finance-equity-distribution"] });
+  };
 
   const register = async (partnerId: string) => {
     const v = Number(amount[partnerId] || 0);
@@ -1046,52 +1072,73 @@ function PartnersTab() {
     qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
 
-  const saveShare = async (partnerId: string) => {
-    const v = Number(shareDraft[partnerId]);
-    if (isNaN(v) || v < 0 || v > 100) return toast.error("Porcentaje inválido");
-    const { error } = await sb.from("finance_partners").update({ profit_share_pct: v }).eq("id", partnerId);
-    if (error) return toast.error(error.message);
-    toast.success("Porcentaje actualizado (historial guardado)");
-    setShareDraft({ ...shareDraft, [partnerId]: "" });
-    qc.invalidateQueries({ queryKey: ["finance-partners-full"] });
-    qc.invalidateQueries({ queryKey: ["finance-partner-share-history"] });
-  };
-
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-medium">Socios & deuda interna</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {partners.map((p: any) => (
-          <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
-            <div>
-              <div className="font-medium">{p.name}</div>
-              <div className="text-xs text-secondary">Reparto actual {p.profit_share_pct}%</div>
-            </div>
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <Label className="text-xs">Nuevo %</Label>
-                <Input type="number" min={0} max={100} value={shareDraft[p.id] ?? ""} placeholder={String(p.profit_share_pct)}
-                  onChange={(e) => setShareDraft({ ...shareDraft, [p.id]: e.target.value })} />
-              </div>
-              <Button size="sm" variant="outline" onClick={() => saveShare(p.id)}>Aplicar</Button>
-            </div>
-            <div className="text-sm border-t border-border pt-2">
-              <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
-              <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
-              <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
-                Restante: <span className="font-medium">{fmt(p.remaining)}</span>
-              </div>
-            </div>
-            {p.remaining > 0 && (
-              <div className="flex gap-2">
-                <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
-                  onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
-                <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
-              </div>
-            )}
-          </div>
-        ))}
+      <div>
+        <h2 className="text-lg font-medium">Equity (socios de la empresa)</h2>
+        <p className="text-xs text-secondary mt-1">
+          El equity solo se usa para distribuir el beneficio final de empresa.
+          No tiene relación con owners de assets ni con payouts operativos.
+        </p>
       </div>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs uppercase tracking-wider text-secondary">Distribución de equity</h3>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className={valid ? "border-emerald-500 text-emerald-600" : "border-rose-500 text-rose-600"}>
+              Total: {draftTotal.toFixed(2)}%
+            </Badge>
+            <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
+              Guardar equity
+            </Button>
+          </div>
+        </div>
+        {!valid && equityDirty && (
+          <div className="text-xs text-rose-500 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Equity distribution must equal 100% before saving changes.
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {partners.map((p: any) => {
+            const dist = (equityDist as any[]).find((d) => d.partner_id === p.id);
+            return (
+              <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
+                <div>
+                  <div className="font-medium">{p.name}</div>
+                  <div className="text-xs text-secondary">Actual {p.profit_share_pct}%</div>
+                </div>
+                <div>
+                  <Label className="text-xs">Equity %</Label>
+                  <Input type="number" min={0} max={100} step="0.01" value={valOf(p)}
+                    onChange={(e) => { setEquity({ ...equity, [p.id]: e.target.value }); setEquityDirty(true); }} />
+                </div>
+                {dist && (
+                  <div className="border-t border-border pt-2 text-xs">
+                    <div className="text-secondary">Le correspondería este año (basado en distribuible actual):</div>
+                    <div className="font-medium text-lg">{fmt(dist.would_receive)}</div>
+                  </div>
+                )}
+                <div className="text-sm border-t border-border pt-2">
+                  <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
+                  <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
+                  <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
+                    Restante: <span className="font-medium">{fmt(p.remaining)}</span>
+                  </div>
+                </div>
+                {p.remaining > 0 && (
+                  <div className="flex gap-2">
+                    <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
+                      onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
+                    <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <section>
         <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial devoluciones</h3>
@@ -1115,7 +1162,7 @@ function PartnersTab() {
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial cambios de reparto %</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Historial cambios de equity %</h3>
         <div className="rounded-xl bg-surface border border-border overflow-hidden">
           <Table>
             <TableHeader><TableRow><TableHead>Desde</TableHead><TableHead>Hasta</TableHead><TableHead>Socio</TableHead><TableHead>%</TableHead></TableRow></TableHeader>
@@ -1138,6 +1185,7 @@ function PartnersTab() {
     </div>
   );
 }
+
 
 // ============== EXPENSES ==============
 function ExpensesTab() {
