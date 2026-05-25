@@ -303,10 +303,12 @@ function AssetsTab() {
 
   const save = async () => {
     if (!editing.name?.trim()) return toast.error("Nombre obligatorio");
-    const { id, owner, ...rest } = editing;
+    const { id, owner, owner_history, ...rest } = editing;
     const payload: any = { ...rest };
     if (payload.product_id === "__none__") payload.product_id = null;
-    if (payload.owner_id === "__none__") payload.owner_id = null;
+    if (payload.owner_id === "__none__" || !payload.owner_id) {
+      return toast.error("Owner obligatorio: asigna un propietario desde el registro");
+    }
     if (payload.revenue_model !== "custom") payload.custom_company_pct = null;
     if (typeof payload.concession_rules === "string") {
       try { payload.concession_rules = JSON.parse(payload.concession_rules || "{}"); }
