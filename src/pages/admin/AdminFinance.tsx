@@ -127,7 +127,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      {/* Reparto sugerido eliminado: el sistema solo refleja datos reales registrados, no estimaciones. */}
+      <EquityPreview />
 
       {transitionAssets.length > 0 && (
         <section>
