@@ -161,8 +161,9 @@ function DashboardTab() {
                   </div>
                   <div className="text-right text-sm">
                     <div>{fmt(a.recovered)} / {fmt(a.target)}</div>
-                    <Badge variant={a.progress >= 100 ? "default" : "outline"}>
-                      {a.progress >= 100 ? "objetivo alcanzado · sugerir transferir" : `${a.progress.toFixed(0)}%`}
+                    <div className="text-[10px] text-secondary">recuperado = empresa + owner</div>
+                    <Badge variant={a.target_reached ? "default" : "outline"} className={a.target_reached ? "bg-emerald-500" : ""}>
+                      {a.target_reached ? "objetivo alcanzado · sugerir transferir" : `${a.progress.toFixed(0)}%`}
                     </Badge>
                   </div>
                 </div>
