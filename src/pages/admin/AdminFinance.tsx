@@ -73,16 +73,23 @@ function DashboardTab() {
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
     queryFn: async () => {
-      const { data: assets } = await sb.from("finance_assets").select("*, owner:finance_owners(name)")
+      const { data: kpis } = await sb.from("finance_asset_kpis").select("*");
+      const { data: assets } = await sb.from("finance_assets")
+        .select("id, owner_label, revenue_model, origin_type, owner:finance_owners(name)")
         .neq("transition_status", "transferred").neq("origin_type", "company");
-      const { data: payouts } = await sb.from("finance_payouts").select("asset_id, amount, status");
-      return (assets || []).map((a: any) => {
-        const recovered = (payouts || [])
-          .filter((p: any) => p.asset_id === a.id && p.status === "paid")
-          .reduce((s: number, p: any) => s + Number(p.amount), 0);
-        const target = Number(a.target_recovery_value || a.acquisition_value || 0);
-        return { ...a, recovered, target, progress: target > 0 ? Math.min(100, (recovered / target) * 100) : 0 };
-      });
+      const byId = new Map((kpis || []).map((k: any) => [k.asset_id, k]));
+      return (assets || [])
+        .map((a: any) => {
+          const k: any = byId.get(a.id) || {};
+          const target = Number(k.target_recovery_value || 0);
+          const recovered = Number(k.recovered_value || 0);
+          return {
+            ...a, ...k, target, recovered,
+            progress: target > 0 ? Math.min(100, (recovered / target) * 100) : 0,
+            target_reached: !!k.target_reached,
+          };
+        })
+        .filter((a: any) => a.target > 0);
     },
   });
 
@@ -105,21 +112,21 @@ function DashboardTab() {
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Flujo</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Liabilities owners (no es dinero empresa)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card icon={ArrowDownToLine} label="Payouts pagados" value={fmt(summary?.payouts_paid)} tone="negative" />
-          <Card icon={ArrowDownToLine} label="Payouts pendientes" value={fmt(summary?.payouts_pending)} hint="histórico" />
-          <Card icon={Receipt} label="Gastos" value={fmt(summary?.expenses_total)} tone="negative" />
+          <Card icon={ArrowDownToLine} label="Pagado a owners" value={fmt(summary?.payouts_paid)} tone="positive" hint="histórico" />
+          <Card icon={AlertTriangle} label="Liability abierto" value={fmt(summary?.owner_liability_open)} tone="negative" hint="debido a owners" />
+          <Card icon={Receipt} label="Gastos del mes" value={fmt(summary?.expenses_total)} tone="negative" />
           <Card icon={ArrowDownToLine} label="Deuda devuelta" value={fmt(summary?.debt_repaid)} tone="negative" />
         </div>
       </section>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio empresa</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" />
+          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" hint="comisión − gastos − deuda" />
           <Card icon={PiggyBank} label="Reserva objetivo" value={fmt(summary?.cash_reserve_target)} />
-          <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} />
+          <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} hint="solo comisión empresa" />
         </div>
       </section>
 
@@ -154,8 +161,9 @@ function DashboardTab() {
                   </div>
                   <div className="text-right text-sm">
                     <div>{fmt(a.recovered)} / {fmt(a.target)}</div>
-                    <Badge variant={a.progress >= 100 ? "default" : "outline"}>
-                      {a.progress >= 100 ? "objetivo alcanzado · sugerir transferir" : `${a.progress.toFixed(0)}%`}
+                    <div className="text-[10px] text-secondary">recuperado = empresa + owner</div>
+                    <Badge variant={a.target_reached ? "default" : "outline"} className={a.target_reached ? "bg-emerald-500" : ""}>
+                      {a.target_reached ? "objetivo alcanzado · sugerir transferir" : `${a.progress.toFixed(0)}%`}
                     </Badge>
                   </div>
                 </div>
@@ -656,25 +664,73 @@ function EntriesTab() {
   );
 }
 
-// ============== PAYOUTS ==============
+// ============== PAYOUTS (with partial payments) ==============
 function PayoutsTab() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<any | null>(null);
-  const { data: payouts = [] } = useQuery({
-    queryKey: ["finance-payouts"],
-    queryFn: async () => (await sb.from("finance_payouts").select("*, asset:finance_assets(name), owner:finance_owners(name)").order("created_at", { ascending: false })).data || [],
+  const [paying, setPaying] = useState<any | null>(null);
+  const [payForm, setPayForm] = useState({ amount: "", method: "", notes: "" });
+  const [statusFilter, setStatusFilter] = useState<string>("__open__");
+  const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
+
+  const { data: owners = [] } = useQuery({
+    queryKey: ["finance-owners-lookup"],
+    queryFn: async () => (await sb.from("finance_owners").select("id, name").order("name")).data || [],
   });
 
-  const markPaid = async (id: string) => {
-    const { error } = await sb.from("finance_payouts").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", id);
+  const { data: payouts = [] } = useQuery({
+    queryKey: ["finance-payouts", statusFilter, ownerFilter],
+    queryFn: async () => {
+      let q = sb.from("finance_payouts")
+        .select("*, asset:finance_assets(name), owner:finance_owners(name)")
+        .order("created_at", { ascending: false }).limit(500);
+      if (statusFilter === "__open__") q = q.in("status", ["unpaid", "partially_paid", "pending"]);
+      else if (statusFilter !== "__all__") q = q.eq("status", statusFilter);
+      if (ownerFilter !== "__all__") q = q.eq("owner_id", ownerFilter);
+      return (await q).data || [];
+    },
+  });
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ["finance-payout-payments", paying?.id],
+    enabled: !!paying,
+    queryFn: async () => (await sb.from("finance_payout_payments").select("*").eq("payout_id", paying.id).order("paid_at", { ascending: false })).data || [],
+  });
+
+  const registerPayment = async () => {
+    const v = Number(payForm.amount);
+    if (!v || v <= 0) return toast.error("Importe inválido");
+    const remaining = Number(paying.amount) - Number(paying.paid_amount || 0);
+    if (v > remaining + 0.01) return toast.error(`Máximo posible: ${fmt(remaining)}`);
+    const { error } = await sb.from("finance_payout_payments").insert({
+      payout_id: paying.id, amount: v,
+      method: payForm.method || null, notes: payForm.notes || null,
+    });
     if (error) return toast.error(error.message);
-    toast.success("Payout marcado como pagado");
+    toast.success("Pago registrado");
+    setPayForm({ amount: "", method: "", notes: "" });
     qc.invalidateQueries({ queryKey: ["finance-payouts"] });
+    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
     qc.invalidateQueries({ queryKey: ["finance-summary"] });
+    qc.invalidateQueries({ queryKey: ["finance-owner-balances"] });
+    // reload payout for header values
+    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
+    if (fresh) setPaying(fresh);
+  };
+
+  const deletePayment = async (id: string) => {
+    if (!confirm("¿Eliminar este pago?")) return;
+    const { error } = await sb.from("finance_payout_payments").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["finance-payouts"] });
+    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
+    qc.invalidateQueries({ queryKey: ["finance-summary"] });
+    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
+    if (fresh) setPaying(fresh);
   };
 
   const save = async () => {
-    const { id, asset, owner, ...rest } = editing;
+    const { id, asset, owner, paid_amount, ...rest } = editing;
     rest.is_manual_override = true;
     const { error } = await sb.from("finance_payouts").update(rest).eq("id", id);
     if (error) return toast.error(error.message);
@@ -683,63 +739,160 @@ function PayoutsTab() {
     qc.invalidateQueries({ queryKey: ["finance-payouts"] });
   };
 
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = {
+      unpaid: "bg-rose-500/20 text-rose-700 dark:text-rose-300",
+      partially_paid: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
+      paid: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+      cancelled: "bg-secondary text-secondary-foreground",
+      pending: "bg-rose-500/20 text-rose-700 dark:text-rose-300",
+    };
+    return <Badge variant="outline" className={map[s] || ""}>{s}</Badge>;
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-medium">Payouts</h2>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-lg font-medium">Payouts (liabilities a owners)</h2>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__open__">Abiertos (unpaid + parcial)</SelectItem>
+              <SelectItem value="__all__">Todos</SelectItem>
+              <SelectItem value="unpaid">Sin pagar</SelectItem>
+              <SelectItem value="partially_paid">Parcial</SelectItem>
+              <SelectItem value="paid">Pagado</SelectItem>
+              <SelectItem value="cancelled">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos owners</SelectItem>
+              {owners.map((o: any) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="rounded-xl bg-surface border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Activo</TableHead>
               <TableHead>Owner</TableHead>
-              <TableHead>Importe</TableHead>
-              <TableHead>% aplicado</TableHead>
+              <TableHead>Debido</TableHead>
+              <TableHead>Pagado</TableHead>
+              <TableHead>Restante</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Creado</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payouts.map((p: any) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.asset?.name || "—"}</TableCell>
-                <TableCell>{p.owner?.name || p.owner_label || "—"}</TableCell>
-                <TableCell className="font-medium">{fmt(p.amount)}</TableCell>
-                <TableCell className="text-xs">{p.applied_pct ?? "—"}{p.applied_pct != null && "%"}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Badge variant={p.status === "paid" ? "outline" : p.status === "cancelled" ? "secondary" : "default"}>{p.status}</Badge>
-                    {p.is_manual_override && <Badge variant="outline" className="text-amber-500"><AlertTriangle className="h-3 w-3" /></Badge>}
-                  </div>
-                </TableCell>
-                <TableCell className="text-xs text-secondary">{new Date(p.created_at).toLocaleDateString()}</TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p })}>Editar</Button>
-                  {p.status === "pending" && <Button size="sm" variant="outline" onClick={() => markPaid(p.id)}>Marcar pagado</Button>}
-                </TableCell>
-              </TableRow>
-            ))}
+            {payouts.map((p: any) => {
+              const paid = Number(p.paid_amount || 0);
+              const remaining = Number(p.amount) - paid;
+              return (
+                <TableRow key={p.id}>
+                  <TableCell className="text-xs">{p.asset?.name || "—"}</TableCell>
+                  <TableCell>{p.owner?.name || p.owner_label || "—"}</TableCell>
+                  <TableCell className="font-medium">{fmt(p.amount)}</TableCell>
+                  <TableCell className="text-emerald-600">{fmt(paid)}</TableCell>
+                  <TableCell className={remaining > 0.01 ? "text-rose-500 font-medium" : "text-secondary"}>{fmt(remaining)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {statusBadge(p.status)}
+                      {p.is_manual_override && <Badge variant="outline" className="text-amber-500"><AlertTriangle className="h-3 w-3" /></Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs text-secondary">{new Date(p.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right space-x-1 whitespace-nowrap">
+                    {p.status !== "cancelled" && p.status !== "paid" && (
+                      <Button size="sm" variant="outline" onClick={() => { setPaying(p); setPayForm({ amount: String(remaining.toFixed(2)), method: "", notes: "" }); }}>Pagar</Button>
+                    )}
+                    {p.status === "paid" && (
+                      <Button size="sm" variant="ghost" onClick={() => { setPaying(p); setPayForm({ amount: "", method: "", notes: "" }); }}>Historial</Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p })}>Editar</Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {payouts.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-secondary py-8">Sin payouts</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-secondary py-8">Sin payouts</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Payment registration dialog */}
+      <Dialog open={!!paying} onOpenChange={(v) => !v && setPaying(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader><DialogTitle>Registrar pago · {paying?.owner?.name || paying?.owner_label}</DialogTitle></DialogHeader>
+          {paying && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Debido</div><div className="font-medium">{fmt(paying.amount)}</div></div>
+                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Pagado</div><div className="font-medium text-emerald-600">{fmt(paying.paid_amount)}</div></div>
+                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Restante</div><div className="font-medium text-rose-500">{fmt(Number(paying.amount) - Number(paying.paid_amount || 0))}</div></div>
+              </div>
+
+              {paying.status !== "paid" && paying.status !== "cancelled" && (
+                <div className="space-y-2 border border-border rounded-lg p-3">
+                  <div className="text-xs font-medium uppercase tracking-wider text-secondary">Nuevo pago</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className="text-xs">Importe €</Label><Input type="number" step="0.01" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} /></div>
+                    <div><Label className="text-xs">Método</Label><Input placeholder="transferencia, efectivo…" value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} /></div>
+                  </div>
+                  <div><Label className="text-xs">Notas</Label><Input value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} /></div>
+                  <Button size="sm" onClick={registerPayment}>Registrar pago</Button>
+                </div>
+              )}
+
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wider text-secondary mb-2">Historial de pagos</div>
+                <div className="rounded-md border border-border max-h-60 overflow-auto">
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Importe</TableHead><TableHead>Método</TableHead><TableHead>Notas</TableHead><TableHead></TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {payments.map((pm: any) => (
+                        <TableRow key={pm.id}>
+                          <TableCell className="text-xs">{new Date(pm.paid_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="font-medium">{fmt(pm.amount)}</TableCell>
+                          <TableCell className="text-xs">{pm.method || "—"}</TableCell>
+                          <TableCell className="text-xs">{pm.notes || "—"}</TableCell>
+                          <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => deletePayment(pm.id)}>×</Button></TableCell>
+                        </TableRow>
+                      ))}
+                      {payments.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-4 text-xs">Sin pagos</TableCell></TableRow>)}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter><Button variant="ghost" onClick={() => setPaying(null)}>Cerrar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Editar payout</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Editar payout (override manual)</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Importe</Label><Input type="number" value={editing.amount} onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })} /></div>
+                <div><Label>Importe debido</Label><Input type="number" value={editing.amount} onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })} /></div>
                 <div><Label>% aplicado</Label><Input type="number" value={editing.applied_pct ?? ""} onChange={(e) => setEditing({ ...editing, applied_pct: e.target.value === "" ? null : Number(e.target.value) })} /></div>
               </div>
               <div><Label>Estado</Label>
                 <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="unpaid">Sin pagar</SelectItem>
+                    <SelectItem value="partially_paid">Parcial</SelectItem>
                     <SelectItem value="paid">Pagado</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
                   </SelectContent>
@@ -757,6 +910,77 @@ function PayoutsTab() {
     </div>
   );
 }
+
+// ============== OWNER BALANCES ==============
+function OwnerBalancesTab() {
+  const { data: balances = [] } = useQuery({
+    queryKey: ["finance-owner-balances"],
+    queryFn: async () => (await sb.from("finance_owner_balances").select("*").order("remaining_unpaid", { ascending: false })).data || [],
+  });
+  const { data: assetKpis = [] } = useQuery({
+    queryKey: ["finance-asset-kpis"],
+    queryFn: async () => (await sb.from("finance_asset_kpis").select("*")).data || [],
+  });
+
+  const kpisByOwner = useMemo(() => {
+    const m = new Map<string, any[]>();
+    (assetKpis as any[]).forEach((k) => {
+      if (!k.owner_id) return;
+      if (!m.has(k.owner_id)) m.set(k.owner_id, []);
+      m.get(k.owner_id)!.push(k);
+    });
+    return m;
+  }, [assetKpis]);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-medium">Balances por owner</h2>
+        <p className="text-xs text-secondary">Total generado, debido, pagado y pendiente. El "Restante" es la liability real.</p>
+      </div>
+      <div className="space-y-3">
+        {balances.map((b: any) => {
+          const assets = kpisByOwner.get(b.owner_id) || [];
+          return (
+            <div key={b.owner_id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-medium">{b.name}</div>
+                  <div className="text-xs text-secondary">{b.type} {!b.active && "· inactivo"}</div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-sm">
+                  <div className="text-right"><div className="text-[10px] text-secondary">Generado bruto</div><div className="font-medium">{fmt(b.total_generated_gross)}</div></div>
+                  <div className="text-right"><div className="text-[10px] text-secondary">Debido</div><div className="font-medium">{fmt(b.total_owed)}</div></div>
+                  <div className="text-right"><div className="text-[10px] text-secondary">Pagado</div><div className="font-medium text-emerald-600">{fmt(b.total_paid)}</div></div>
+                  <div className="text-right"><div className="text-[10px] text-secondary">Restante</div><div className={`font-medium ${Number(b.remaining_unpaid) > 0.01 ? "text-rose-500" : ""}`}>{fmt(b.remaining_unpaid)}</div></div>
+                </div>
+              </div>
+              {assets.length > 0 && (
+                <div className="border-t border-border pt-3 space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-secondary">Activos del owner</div>
+                  {assets.map((a: any) => (
+                    <div key={a.asset_id} className="text-xs flex items-center justify-between">
+                      <span>{a.name}</span>
+                      <span className="text-secondary">
+                        bruto {fmt(a.gross_revenue)} · empresa {fmt(a.company_revenue)} · recuperado {fmt(a.recovered_value)}
+                        {Number(a.target_recovery_value) > 0 && ` / ${fmt(a.target_recovery_value)} (${a.recovery_pct}%)`}
+                        {a.target_reached && <Badge className="ml-2 bg-emerald-500">target</Badge>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {balances.length === 0 && (
+          <div className="text-center text-secondary py-8">Sin owners registrados</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 // ============== PARTNERS & DEBT ==============
 function PartnersTab() {
@@ -1035,6 +1259,7 @@ export default function AdminFinance() {
           <TabsTrigger value="owners"><UserCircle className="h-4 w-4 mr-1.5" />Owners</TabsTrigger>
           <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1.5" />Activos</TabsTrigger>
           <TabsTrigger value="payouts"><ArrowDownToLine className="h-4 w-4 mr-1.5" />Payouts</TabsTrigger>
+          <TabsTrigger value="balances"><Users className="h-4 w-4 mr-1.5" />Balances</TabsTrigger>
           <TabsTrigger value="partners"><Users className="h-4 w-4 mr-1.5" />Socios & deuda</TabsTrigger>
           <TabsTrigger value="expenses"><Receipt className="h-4 w-4 mr-1.5" />Gastos</TabsTrigger>
           <TabsTrigger value="cash"><Wallet className="h-4 w-4 mr-1.5" />Caja</TabsTrigger>
@@ -1046,6 +1271,7 @@ export default function AdminFinance() {
           <TabsContent value="owners"><OwnersTab /></TabsContent>
           <TabsContent value="assets"><AssetsTab /></TabsContent>
           <TabsContent value="payouts"><PayoutsTab /></TabsContent>
+          <TabsContent value="balances"><OwnerBalancesTab /></TabsContent>
           <TabsContent value="partners"><PartnersTab /></TabsContent>
           <TabsContent value="expenses"><ExpensesTab /></TabsContent>
           <TabsContent value="cash"><CashTab /></TabsContent>
