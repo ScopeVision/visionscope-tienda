@@ -460,6 +460,13 @@ export type Database = {
             foreignKeyName: "finance_assets_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
+          },
+          {
+            foreignKeyName: "finance_assets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
             referencedRelation: "finance_owners"
             referencedColumns: ["id"]
           },
@@ -602,8 +609,22 @@ export type Database = {
             foreignKeyName: "finance_entries_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
+            referencedRelation: "finance_asset_kpis"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
             referencedRelation: "finance_assets"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
           },
           {
             foreignKeyName: "finance_entries_owner_id_fkey"
@@ -778,6 +799,47 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_payout_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string | null
+          notes: string | null
+          paid_at: string
+          payout_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_at?: string
+          payout_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_at?: string
+          payout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payout_payments_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_payouts: {
         Row: {
           amount: number
@@ -790,6 +852,7 @@ export type Database = {
           notes: string | null
           owner_id: string | null
           owner_label: string | null
+          paid_amount: number
           paid_at: string | null
           status: Database["public"]["Enums"]["finance_payout_status"]
           updated_at: string
@@ -805,6 +868,7 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           owner_label?: string | null
+          paid_amount?: number
           paid_at?: string | null
           status?: Database["public"]["Enums"]["finance_payout_status"]
           updated_at?: string
@@ -820,11 +884,19 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           owner_label?: string | null
+          paid_amount?: number
           paid_at?: string | null
           status?: Database["public"]["Enums"]["finance_payout_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_payouts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "finance_asset_kpis"
+            referencedColumns: ["asset_id"]
+          },
           {
             foreignKeyName: "finance_payouts_asset_id_fkey"
             columns: ["asset_id"]
@@ -838,6 +910,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "finance_entries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payouts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
           },
           {
             foreignKeyName: "finance_payouts_owner_id_fkey"
@@ -1539,7 +1618,72 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      finance_asset_kpis: {
+        Row: {
+          asset_id: string | null
+          company_revenue: number | null
+          gross_revenue: number | null
+          name: string | null
+          owner_id: string | null
+          owner_revenue: number | null
+          recovered_value: number | null
+          recovery_pct: number | null
+          target_reached: boolean | null
+          target_recovery_value: number | null
+          transition_status:
+            | Database["public"]["Enums"]["finance_transition_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_assets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
+          },
+          {
+            foreignKeyName: "finance_assets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_owner_balances: {
+        Row: {
+          active: boolean | null
+          name: string | null
+          owner_id: string | null
+          remaining_unpaid: number | null
+          total_generated_gross: number | null
+          total_owed: number | null
+          total_paid: number | null
+          type: Database["public"]["Enums"]["finance_owner_type"] | null
+        }
+        Insert: {
+          active?: boolean | null
+          name?: string | null
+          owner_id?: string | null
+          remaining_unpaid?: never
+          total_generated_gross?: never
+          total_owed?: never
+          total_paid?: never
+          type?: Database["public"]["Enums"]["finance_owner_type"] | null
+        }
+        Update: {
+          active?: boolean | null
+          name?: string | null
+          owner_id?: string | null
+          remaining_unpaid?: never
+          total_generated_gross?: never
+          total_owed?: never
+          total_paid?: never
+          type?: Database["public"]["Enums"]["finance_owner_type"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       available_stock: {
@@ -1568,7 +1712,9 @@ export type Database = {
           debt_repaid: number
           distributable: number
           expenses_total: number
+          owner_liability_open: number
           payouts_paid: number
+          payouts_partial: number
           payouts_pending: number
           rental_income: number
           services_income: number
@@ -1590,6 +1736,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recompute_payout_status: {
+        Args: { _payout_id: string }
+        Returns: undefined
       }
       submit_checkout_request: {
         Args: {
