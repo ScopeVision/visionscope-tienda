@@ -65,10 +65,7 @@ function DashboardTab() {
     },
   });
 
-  const { data: partners = [] } = useQuery({
-    queryKey: ["finance-partners"],
-    queryFn: async () => (await sb.from("finance_partners").select("*").order("sort_order")).data || [],
-  });
+  // Partners query removed: no suggested distribution. Real payouts only.
 
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
@@ -130,21 +127,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Reparto sugerido a socios</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {partners.map((p: any) => {
-            const share = (distributable * Number(p.profit_share_pct)) / 100;
-            return (
-              <div key={p.id} className="p-4 rounded-xl bg-surface border border-border">
-                <div className="text-sm font-medium">{p.name}</div>
-                <div className="text-xs text-secondary">{p.profit_share_pct}% · deuda inicial {fmt(p.initial_debt)}</div>
-                <div className={`mt-2 text-xl font-display ${share >= 0 ? "" : "text-rose-500"}`}>{fmt(share)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* Reparto sugerido eliminado: el sistema solo refleja datos reales registrados, no estimaciones. */}
 
       {transitionAssets.length > 0 && (
         <section>
@@ -163,7 +146,7 @@ function DashboardTab() {
                     <div>{fmt(a.recovered)} / {fmt(a.target)}</div>
                     <div className="text-[10px] text-secondary">recuperado = empresa + owner</div>
                     <Badge variant={a.target_reached ? "default" : "outline"} className={a.target_reached ? "bg-emerald-500" : ""}>
-                      {a.target_reached ? "objetivo alcanzado · sugerir transferir" : `${a.progress.toFixed(0)}%`}
+                      {a.target_reached ? "objetivo alcanzado" : `${a.progress.toFixed(0)}%`}
                     </Badge>
                   </div>
                 </div>
@@ -291,6 +274,30 @@ function OwnersTab() {
   );
 }
 
+// ============== OWNER HISTORY ==============
+function OwnerHistory({ assetId, owners }: { assetId: string; owners: any[] }) {
+  const { data: history = [] } = useQuery({
+    queryKey: ["asset-owner-history", assetId],
+    queryFn: async () => (await sb.from("finance_asset_owner_history")
+      .select("*").eq("asset_id", assetId).order("changed_at", { ascending: false })).data || [],
+  });
+  const nameOf = (id: string | null) => owners.find((o: any) => o.id === id)?.name || (id ? "—" : "sin owner");
+  if (!history.length) return <div className="mt-2 text-[11px] text-secondary">Sin historial de cambios de owner.</div>;
+  return (
+    <div className="mt-2 border border-border rounded-md p-2 bg-background/50">
+      <div className="text-[10px] uppercase tracking-wider text-secondary mb-1">Historial de owner</div>
+      <ul className="space-y-1 max-h-32 overflow-y-auto">
+        {history.map((h: any) => (
+          <li key={h.id} className="text-[11px] flex justify-between gap-2">
+            <span>{nameOf(h.previous_owner_id)} → <strong>{nameOf(h.new_owner_id)}</strong></span>
+            <span className="text-secondary">{new Date(h.changed_at).toLocaleDateString()}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ============== ASSETS ==============
 function AssetsTab() {
   const qc = useQueryClient();
@@ -320,10 +327,12 @@ function AssetsTab() {
 
   const save = async () => {
     if (!editing.name?.trim()) return toast.error("Nombre obligatorio");
-    const { id, owner, ...rest } = editing;
+    const { id, owner, owner_history, ...rest } = editing;
     const payload: any = { ...rest };
     if (payload.product_id === "__none__") payload.product_id = null;
-    if (payload.owner_id === "__none__") payload.owner_id = null;
+    if (payload.owner_id === "__none__" || !payload.owner_id) {
+      return toast.error("Owner obligatorio: asigna un propietario desde el registro");
+    }
     if (payload.revenue_model !== "custom") payload.custom_company_pct = null;
     if (typeof payload.concession_rules === "string") {
       try { payload.concession_rules = JSON.parse(payload.concession_rules || "{}"); }
@@ -412,7 +421,7 @@ function AssetsTab() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Owner (registry)</Label>
+                  <Label>Owner (registry) <span className="text-rose-500">*</span></Label>
                   <Select value={editing.owner_id || "__none__"} onValueChange={(v) => setEditing({ ...editing, owner_id: v === "__none__" ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="Sin owner" /></SelectTrigger>
                     <SelectContent>
@@ -422,6 +431,7 @@ function AssetsTab() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {editing.id && <OwnerHistory assetId={editing.id} owners={owners} />}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
