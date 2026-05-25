@@ -397,6 +397,36 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_asset_owner_history: {
+        Row: {
+          asset_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_owner_id: string | null
+          note: string | null
+          previous_owner_id: string | null
+        }
+        Insert: {
+          asset_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_owner_id?: string | null
+          note?: string | null
+          previous_owner_id?: string | null
+        }
+        Update: {
+          asset_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_owner_id?: string | null
+          note?: string | null
+          previous_owner_id?: string | null
+        }
+        Relationships: []
+      }
       finance_assets: {
         Row: {
           acquisition_value: number
