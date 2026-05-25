@@ -1142,19 +1142,38 @@ function PartnersTab() {
 // ============== EXPENSES ==============
 function ExpensesTab() {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ category: "general", description: "", amount: "" });
+  const [form, setForm] = useState<any>({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
+  const [scopeFilter, setScopeFilter] = useState<string>("__all__");
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ["finance-expenses"],
-    queryFn: async () => (await sb.from("finance_expenses").select("*").order("occurred_at", { ascending: false }).limit(100)).data || [],
+    queryKey: ["finance-expenses", scopeFilter],
+    queryFn: async () => {
+      let q = sb.from("finance_expenses").select("*, asset:finance_assets(name)").order("occurred_at", { ascending: false }).limit(200);
+      if (scopeFilter !== "__all__") q = q.eq("scope", scopeFilter);
+      return (await q).data || [];
+    },
+  });
+
+  const { data: assets = [] } = useQuery({
+    queryKey: ["finance-assets-lookup-exp"],
+    queryFn: async () => (await sb.from("finance_assets").select("id, name").eq("active", true).order("name")).data || [],
   });
 
   const add = async () => {
     const v = Number(form.amount);
     if (!v || v <= 0) return toast.error("Importe inválido");
-    const { error } = await sb.from("finance_expenses").insert({ category: form.category || "general", description: form.description, amount: v });
+    if (form.scope === "asset" && (!form.asset_id || form.asset_id === "__none__")) return toast.error("Selecciona el activo");
+    const payload: any = {
+      scope: form.scope,
+      category: form.category || "general",
+      description: form.description,
+      amount: v,
+      asset_id: form.scope === "asset" ? form.asset_id : null,
+      booking_id: form.scope === "rental" && form.booking_id ? form.booking_id : null,
+    };
+    const { error } = await sb.from("finance_expenses").insert(payload);
     if (error) return toast.error(error.message);
-    setForm({ category: "general", description: "", amount: "" });
+    setForm({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
     qc.invalidateQueries({ queryKey: ["finance-expenses"] });
     qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
@@ -1168,27 +1187,66 @@ function ExpensesTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-medium">Gastos</h2>
-      <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr_auto] gap-2 items-end">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-lg font-medium">Gastos</h2>
+        <Select value={scopeFilter} onValueChange={setScopeFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los ámbitos</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
+            <SelectItem value="asset">Asset</SelectItem>
+            <SelectItem value="rental">Rental</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+        <div>
+          <Label className="text-xs text-secondary">Ámbito</Label>
+          <Select value={form.scope} onValueChange={(v) => setForm({ ...form, scope: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="company">Company</SelectItem>
+              <SelectItem value="asset">Asset</SelectItem>
+              <SelectItem value="rental">Rental</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {form.scope === "asset" && (
+          <div>
+            <Label className="text-xs text-secondary">Activo</Label>
+            <Select value={form.asset_id} onValueChange={(v) => setForm({ ...form, asset_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Activo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">—</SelectItem>
+                {assets.map((a: any) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {form.scope === "rental" && (
+          <div><Label className="text-xs text-secondary">Booking ID (opcional)</Label><Input value={form.booking_id} onChange={(e) => setForm({ ...form, booking_id: e.target.value })} /></div>
+        )}
         <div><Label className="text-xs text-secondary">Categoría</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
-        <div><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+        <div className="md:col-span-2"><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
         <div><Label className="text-xs text-secondary">Importe €</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
         <Button onClick={add} className="gap-2"><Plus className="h-4 w-4" />Añadir</Button>
       </div>
       <div className="rounded-xl bg-surface border border-border overflow-hidden">
         <Table>
-          <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Ámbito</TableHead><TableHead>Asset</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {expenses.map((e: any) => (
               <TableRow key={e.id}>
                 <TableCell className="text-xs">{new Date(e.occurred_at).toLocaleDateString()}</TableCell>
+                <TableCell><Badge variant="outline">{e.scope || "company"}</Badge></TableCell>
+                <TableCell className="text-xs">{e.asset?.name || "—"}</TableCell>
                 <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                 <TableCell>{e.description || "—"}</TableCell>
                 <TableCell className="font-medium">{fmt(e.amount)}</TableCell>
                 <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => remove(e.id)}>Eliminar</Button></TableCell>
               </TableRow>
             ))}
-            {expenses.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
+            {expenses.length === 0 && (<TableRow><TableCell colSpan={7} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
           </TableBody>
         </Table>
       </div>
