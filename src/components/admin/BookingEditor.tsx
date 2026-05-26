@@ -93,11 +93,20 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name_es, price_day, deposit, product_variants(id, name, price_day, deposit)")
+        .select("id, name_es, price_day, price_week, deposit, pricing_model, pricing_multipliers, product_variants(id, name, price_day, deposit)")
         .eq("published", true)
         .order("name_es");
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: pricingSettings } = useQuery({
+    queryKey: ["finance-settings-pricing"],
+    queryFn: async () => {
+      const { data } = await supabase.from("finance_settings").select("pricing_presets, aggressive_day7_multiplier").maybeSingle();
+      if (!data) return null;
+      return { presets: (data as any).pricing_presets, aggressive_day7_multiplier: (data as any).aggressive_day7_multiplier };
     },
   });
 
