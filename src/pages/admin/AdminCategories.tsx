@@ -32,10 +32,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { SiteImageUploader } from "@/components/admin/SiteImageUploader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
 
 type Category = {
   id: string;
@@ -47,6 +49,7 @@ type Category = {
   name_fr?: string | null;
   image_url?: string | null;
   link_url?: string | null;
+  default_pricing_model?: PricingModel | null;
 };
 
 const AdminCategories = () => {
