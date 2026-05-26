@@ -160,6 +160,7 @@ export type Database = {
       }
       booking_items: {
         Row: {
+          auto_subtotal: number | null
           booking_id: string
           created_at: string
           days: number
@@ -167,9 +168,13 @@ export type Database = {
           discount_type: string
           discount_value: number
           id: string
+          overridden_at: string | null
+          overridden_by: string | null
+          override_reason: string | null
           price_day: number
           price_override: number | null
           price_week: number | null
+          pricing_model: string | null
           product_id: string | null
           product_name: string
           quantity: number
@@ -177,6 +182,7 @@ export type Database = {
           variant_id: string | null
         }
         Insert: {
+          auto_subtotal?: number | null
           booking_id: string
           created_at?: string
           days?: number
@@ -184,9 +190,13 @@ export type Database = {
           discount_type?: string
           discount_value?: number
           id?: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           price_day?: number
           price_override?: number | null
           price_week?: number | null
+          pricing_model?: string | null
           product_id?: string | null
           product_name: string
           quantity?: number
@@ -194,6 +204,7 @@ export type Database = {
           variant_id?: string | null
         }
         Update: {
+          auto_subtotal?: number | null
           booking_id?: string
           created_at?: string
           days?: number
@@ -201,9 +212,13 @@ export type Database = {
           discount_type?: string
           discount_value?: number
           id?: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           price_day?: number
           price_override?: number | null
           price_week?: number | null
+          pricing_model?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
@@ -307,6 +322,7 @@ export type Database = {
       categories: {
         Row: {
           created_at: string
+          default_pricing_model: Database["public"]["Enums"]["pricing_model"]
           id: string
           image_url: string | null
           link_url: string | null
@@ -320,6 +336,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_pricing_model?: Database["public"]["Enums"]["pricing_model"]
           id?: string
           image_url?: string | null
           link_url?: string | null
@@ -333,6 +350,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_pricing_model?: Database["public"]["Enums"]["pricing_model"]
           id?: string
           image_url?: string | null
           link_url?: string | null
@@ -1002,24 +1020,30 @@ export type Database = {
       }
       finance_settings: {
         Row: {
+          aggressive_day7_multiplier: number
           default_currency: string
           default_split_company_pct: number
           id: boolean
           notes: string | null
+          pricing_presets: Json
           updated_at: string
         }
         Insert: {
+          aggressive_day7_multiplier?: number
           default_currency?: string
           default_split_company_pct?: number
           id?: boolean
           notes?: string | null
+          pricing_presets?: Json
           updated_at?: string
         }
         Update: {
+          aggressive_day7_multiplier?: number
           default_currency?: string
           default_split_company_pct?: number
           id?: boolean
           notes?: string | null
+          pricing_presets?: Json
           updated_at?: string
         }
         Relationships: []
@@ -1262,6 +1286,8 @@ export type Database = {
           name_fr: string | null
           price_day: number
           price_week: number | null
+          pricing_model: Database["public"]["Enums"]["pricing_model"]
+          pricing_multipliers: Json | null
           published: boolean
           sensor_type: string | null
           series: string | null
@@ -1300,6 +1326,8 @@ export type Database = {
           name_fr?: string | null
           price_day?: number
           price_week?: number | null
+          pricing_model?: Database["public"]["Enums"]["pricing_model"]
+          pricing_multipliers?: Json | null
           published?: boolean
           sensor_type?: string | null
           series?: string | null
@@ -1338,6 +1366,8 @@ export type Database = {
           name_fr?: string | null
           price_day?: number
           price_week?: number | null
+          pricing_model?: Database["public"]["Enums"]["pricing_model"]
+          pricing_multipliers?: Json | null
           published?: boolean
           sensor_type?: string | null
           series?: string | null
@@ -1774,6 +1804,16 @@ export type Database = {
         Returns: number
       }
       bootstrap_first_admin: { Args: { _user_id: string }; Returns: undefined }
+      calc_rental_unit_total: {
+        Args: {
+          _custom: Json
+          _days: number
+          _model: Database["public"]["Enums"]["pricing_model"]
+          _price_day: number
+          _price_week: number
+        }
+        Returns: number
+      }
       create_booking_with_items: {
         Args: {
           _customer_id: string
@@ -1803,6 +1843,15 @@ export type Database = {
           services_income: number
           store_income: number
         }[]
+      }
+      get_pricing_multipliers: {
+        Args: {
+          _custom: Json
+          _model: Database["public"]["Enums"]["pricing_model"]
+          _price_day: number
+          _price_week: number
+        }
+        Returns: number[]
       }
       get_public_contact: {
         Args: never
@@ -1891,6 +1940,7 @@ export type Database = {
         | "partially_paid"
         | "paid"
         | "refunded"
+      pricing_model: "premium" | "aggressive" | "weekly_flat" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2066,6 +2116,7 @@ export const Constants = {
         "paid",
         "refunded",
       ],
+      pricing_model: ["premium", "aggressive", "weekly_flat", "custom"],
     },
   },
 } as const

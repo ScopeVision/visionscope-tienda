@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { calcItemPrice, daysBetween } from "@/lib/rental";
+import { calcItemPrice, daysBetween, type PricingModel } from "@/lib/rental";
 
 export type CartItem = {
   productId: string;
@@ -10,6 +10,8 @@ export type CartItem = {
   priceWeek?: number | null;
   deposit: number;
   quantity: number;
+  pricingModel?: PricingModel | null;
+  customMultipliers?: number[] | null;
 };
 
 type CartCtx = {
@@ -76,6 +78,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             priceWeek: it.priceWeek,
             days,
             quantity: it.quantity,
+            model: it.pricingModel ?? "premium",
+            customMultipliers: it.customMultipliers ?? null,
           }).subtotal,
         0
       ),

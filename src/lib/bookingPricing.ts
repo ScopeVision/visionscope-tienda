@@ -1,4 +1,6 @@
-import { calcItemPrice } from "./rental";
+import { calcItemPrice, type PricingModel, type PricingSettings } from "./rental";
+
+
 
 export type DiscountType = "none" | "fixed" | "percent";
 
@@ -15,10 +17,14 @@ export interface EditableItem {
   quantity: number;
   days: number;
   price_day: number;
+  price_week?: number | null;
   deposit: number;
   discount_type: DiscountType;
   discount_value: number;
   price_override?: number | null;
+  pricing_model?: PricingModel | null;
+  pricing_multipliers?: number[] | null;
+  override_reason?: string | null;
 }
 
 export interface EditableBooking {
@@ -28,6 +34,7 @@ export interface EditableBooking {
   extra_fees: ExtraFee[];
   subtotal_override?: number | null;
   total_override?: number | null;
+  pricing_settings?: PricingSettings | null;
 }
 
 export interface ItemBreakdown {
@@ -35,6 +42,7 @@ export interface ItemBreakdown {
   discount_amount: number;
   final_subtotal: number;
   deposit_total: number;
+  is_overridden: boolean;
 }
 
 export interface BookingBreakdown {
@@ -58,22 +66,29 @@ function applyDiscount(base: number, type: DiscountType, value: number): number 
   return 0;
 }
 
-export function computeItemBreakdown(item: EditableItem): ItemBreakdown {
+export function computeItemBreakdown(item: EditableItem, settings?: PricingSettings | null): ItemBreakdown {
   const { subtotal } = calcItemPrice({
     priceDay: item.price_day,
+    priceWeek: item.price_week ?? null,
     days: item.days,
     quantity: item.quantity,
+    model: item.pricing_model ?? "premium",
+    customMultipliers: item.pricing_multipliers ?? null,
+    settings: settings ?? null,
   });
   const auto_subtotal = subtotal;
   let final_subtotal: number;
   let discount_amount = 0;
+  let is_overridden = false;
 
   if (item.price_override != null && !Number.isNaN(item.price_override)) {
     final_subtotal = Math.max(0, Number(item.price_override));
     discount_amount = Math.max(0, auto_subtotal - final_subtotal);
+    is_overridden = true;
   } else {
     discount_amount = applyDiscount(auto_subtotal, item.discount_type, item.discount_value);
     final_subtotal = Math.max(0, auto_subtotal - discount_amount);
+    is_overridden = discount_amount > 0;
   }
 
   return {
@@ -81,11 +96,12 @@ export function computeItemBreakdown(item: EditableItem): ItemBreakdown {
     discount_amount,
     final_subtotal,
     deposit_total: (Number(item.deposit) || 0) * Math.max(1, item.quantity),
+    is_overridden,
   };
 }
 
 export function computeBookingBreakdown(b: EditableBooking): BookingBreakdown {
-  const items = b.items.map(computeItemBreakdown);
+  const items = b.items.map((it) => computeItemBreakdown(it, b.pricing_settings));
   const auto_subtotal = items.reduce((s, i) => s + i.auto_subtotal, 0);
   const items_discount_total = items.reduce((s, i) => s + i.discount_amount, 0);
   const subtotal_after_item_discounts = items.reduce((s, i) => s + i.final_subtotal, 0);

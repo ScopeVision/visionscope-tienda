@@ -1,23 +1,34 @@
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
-import { calcWeeklyBreakdown, formatCurrency } from "@/lib/rental";
+import { calcWeeklyBreakdown, formatCurrency, type PricingModel } from "@/lib/rental";
 import { cn } from "@/lib/utils";
 
 type Props = {
   priceDay: number;
+  priceWeek?: number | null;
+  pricingModel?: PricingModel | null;
+  customMultipliers?: number[] | null;
   variant?: "pill" | "block" | "inline";
   className?: string;
 };
 
 /**
  * Communicates the progressive daily discount applied to weekly rentals.
- * - "pill"   → tiny tag, fits inside cards.
- * - "inline" → one-line caption with the weekly price + savings.
- * - "block"  → full breakdown: list price, real weekly, savings.
  */
-export const WeeklyDiscountBadge = ({ priceDay, variant = "pill", className }: Props) => {
+export const WeeklyDiscountBadge = ({
+  priceDay,
+  priceWeek,
+  pricingModel,
+  customMultipliers,
+  variant = "pill",
+  className,
+}: Props) => {
   const { t, i18n } = useTranslation();
-  const { weekly, listPrice, savings, savingsPct } = calcWeeklyBreakdown(priceDay);
+  const { weekly, listPrice, savings, savingsPct } = calcWeeklyBreakdown(priceDay, {
+    model: pricingModel ?? "premium",
+    customMultipliers: customMultipliers ?? null,
+    priceWeek: priceWeek ?? null,
+  });
   if (!priceDay || savings <= 0) return null;
 
   if (variant === "pill") {
