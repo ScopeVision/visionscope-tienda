@@ -295,6 +295,8 @@ const ProductDetail = () => {
           priceWeek: child.price_week ? Number(child.price_week) : null,
           deposit: Number(child.deposit ?? 0),
           quantity: c.quantity ?? 1,
+          pricingModel: (child.pricing_model ?? "premium") as PricingModel,
+          customMultipliers: child.pricing_multipliers ?? null,
         });
       });
       toast.success(t("product.added"));
@@ -318,6 +320,8 @@ const ProductDetail = () => {
           priceWeek: child.price_week ? Number(child.price_week) : null,
           deposit: Number(child.deposit ?? 0),
           quantity: c.quantity ?? 1,
+          pricingModel: (child.pricing_model ?? "premium") as PricingModel,
+          customMultipliers: child.pricing_multipliers ?? null,
         });
       });
       toast.success(t("product.added"));
@@ -333,6 +337,8 @@ const ProductDetail = () => {
       priceWeek: effectivePriceWeek,
       deposit: effectiveDeposit,
       quantity: 1,
+      pricingModel: productModel,
+      customMultipliers: productMultipliers,
     });
     toast.success(t("product.added"));
   };
