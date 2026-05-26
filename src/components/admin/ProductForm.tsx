@@ -42,6 +42,8 @@ const schema = z.object({
   published: z.boolean(),
   images: z.array(z.string().url()),
   tag_ids: z.array(z.string().uuid()),
+  pricing_model: z.enum(["premium", "aggressive", "weekly_flat", "custom"]).default("premium"),
+  pricing_multipliers_csv: z.string().optional().or(z.literal("")),
   // structured fields
   brand: optStr,
   model: optStr,
@@ -130,6 +132,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       accessory_type: product?.accessory_type ?? "",
       kit_type: product?.kit_type ?? "",
       kit_mode: (product?.kit_mode as any) ?? "individual",
+      pricing_model: (product?.pricing_model as any) ?? "premium",
+      pricing_multipliers_csv: Array.isArray(product?.pricing_multipliers)
+        ? product.pricing_multipliers.join(",")
+        : "",
     }),
     [product]
   );
@@ -224,6 +230,14 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         accessory_type: values.accessory_type || null,
         kit_type: values.kit_type || null,
         kit_mode: values.kit_mode ?? "individual",
+        pricing_model: values.pricing_model ?? "premium",
+        pricing_multipliers:
+          values.pricing_model === "custom" && values.pricing_multipliers_csv
+            ? values.pricing_multipliers_csv
+                .split(",")
+                .map((s) => Number(s.trim()))
+                .filter((n) => !Number.isNaN(n) && n > 0)
+            : null,
       };
 
       let productId: string;
