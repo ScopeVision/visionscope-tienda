@@ -32,10 +32,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { SiteImageUploader } from "@/components/admin/SiteImageUploader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
 
 type Category = {
   id: string;
@@ -47,6 +49,7 @@ type Category = {
   name_fr?: string | null;
   image_url?: string | null;
   link_url?: string | null;
+  default_pricing_model?: PricingModel | null;
 };
 
 const AdminCategories = () => {
@@ -113,6 +116,7 @@ const AdminCategories = () => {
             <TableRow>
               <TableHead>Slug</TableHead>
               <TableHead>{t("common.name")}</TableHead>
+              <TableHead className="w-32">Pricing</TableHead>
               <TableHead className="w-20 text-right">{t("admin.order")}</TableHead>
               <TableHead className="text-right">{t("common.actions")}</TableHead>
             </TableRow>
@@ -120,7 +124,7 @@ const AdminCategories = () => {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-secondary py-10">
+                <TableCell colSpan={5} className="text-center text-secondary py-10">
                   —
                 </TableCell>
               </TableRow>
@@ -131,9 +135,30 @@ const AdminCategories = () => {
                   <TableCell className="font-medium">
                     {localized(c, "name", i18n.language)}
                   </TableCell>
+                  <TableCell className="text-xs text-secondary">
+                    {PRICING_MODEL_LABELS[(c.default_pricing_model ?? "premium") as PricingModel]}
+                  </TableCell>
                   <TableCell className="text-right text-secondary">{c.sort_order}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          const model = (c.default_pricing_model ?? "premium") as PricingModel;
+                          if (!confirm(`Aplicar pricing "${PRICING_MODEL_LABELS[model]}" a TODOS los productos de "${localized(c, "name", i18n.language)}"?`)) return;
+                          const { error, count } = await supabase
+                            .from("products")
+                            .update({ pricing_model: model }, { count: "exact" })
+                            .eq("category_id", c.id);
+                          if (error) return toast.error(error.message);
+                          toast.success(`Aplicado a ${count ?? 0} producto(s)`);
+                        }}
+                        aria-label="Aplicar a productos"
+                        title="Aplicar pricing model a productos de esta categoría"
+                      >
+                        <Wand2 className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -222,6 +247,7 @@ const CategoryDialog = ({
     sort_order: category?.sort_order ?? nextSortOrder,
     image_url: category?.image_url ?? "",
     link_url: category?.link_url ?? "",
+    default_pricing_model: (category?.default_pricing_model ?? "premium") as PricingModel,
   });
 
   const set = (k: keyof typeof form, v: string | number) =>
@@ -252,6 +278,7 @@ const CategoryDialog = ({
       sort_order: Number(form.sort_order) || 0,
       image_url: form.image_url || null,
       link_url: form.link_url || null,
+      default_pricing_model: form.default_pricing_model,
     };
     const { error } = category
       ? await supabase.from("categories").update(payload).eq("id", category.id)
@@ -324,6 +351,21 @@ const CategoryDialog = ({
               onChange={(url) => set("image_url" as any, url)}
               recommendation="Recomendado: 1200×900 px (4:3), máx 8 MB."
             />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Pricing model por defecto</Label>
+            <Select
+              value={form.default_pricing_model}
+              onValueChange={(v) => set("default_pricing_model" as any, v as any)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
+                  <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-secondary mt-1">Se sugiere a productos nuevos. Usa el botón ✨ en la lista para aplicar a productos existentes.</p>
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Enlace personalizado (opcional)</Label>

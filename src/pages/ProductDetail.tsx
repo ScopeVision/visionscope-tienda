@@ -575,7 +575,7 @@ const ProductDetail = () => {
                     <tbody>
                       {pricingTable.map((row) => (
                         <tr key={row.day} className={cn("border-t border-border", row.isWeek && "bg-accent-soft/40")}>
-                          <td className="px-3 py-1.5 text-secondary">{row.day} {row.day === 1 ? "day" : "days"}</td>
+                          <td className="px-3 py-1.5 text-secondary">{row.day} {t(row.day === 1 ? "common.day" : "common.days")}</td>
                           <td className="px-3 py-1.5 text-right text-secondary">×{row.multiplier.toFixed(2)}</td>
                           <td className="px-3 py-1.5 text-right font-medium">{formatCurrency(row.price, i18n.language)}</td>
                           <td className="px-3 py-1.5 text-right text-accent">{row.savings > 0 ? `−${Math.round(row.savingsPct*100)}%` : ""}</td>

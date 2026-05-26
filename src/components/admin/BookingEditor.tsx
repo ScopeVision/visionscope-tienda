@@ -13,7 +13,7 @@ import { Plus, Trash2, History, Save } from "lucide-react";
 import BookingCommunications from "./BookingCommunications";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCurrency, daysBetween } from "@/lib/rental";
+import { formatCurrency, daysBetween, PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
 import {
   computeBookingBreakdown,
   type EditableBooking,
@@ -93,11 +93,20 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name_es, price_day, deposit, product_variants(id, name, price_day, deposit)")
+        .select("id, name_es, price_day, price_week, deposit, pricing_model, pricing_multipliers, product_variants(id, name, price_day, deposit)")
         .eq("published", true)
         .order("name_es");
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: pricingSettings } = useQuery({
+    queryKey: ["finance-settings-pricing"],
+    queryFn: async () => {
+      const { data } = await supabase.from("finance_settings").select("pricing_presets, aggressive_day7_multiplier").maybeSingle();
+      if (!data) return null;
+      return { presets: (data as any).pricing_presets, aggressive_day7_multiplier: (data as any).aggressive_day7_multiplier };
     },
   });
 
@@ -140,10 +149,14 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       quantity: it.quantity,
       days: it.days || days,
       price_day: Number(it.price_day),
+      price_week: it.price_week != null ? Number(it.price_week) : null,
       deposit: Number(it.deposit),
       discount_type: (it.discount_type as DiscountType) || "none",
       discount_value: Number(it.discount_value) || 0,
       price_override: it.price_override != null ? Number(it.price_override) : null,
+      pricing_model: (it.pricing_model as PricingModel) || null,
+      pricing_multipliers: null,
+      override_reason: it.override_reason ?? null,
     }));
     setDraft({
       items,
@@ -152,6 +165,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       extra_fees: Array.isArray(booking.extra_fees) ? (booking.extra_fees as unknown as ExtraFee[]) : [],
       subtotal_override: booking.subtotal_override != null ? Number(booking.subtotal_override) : null,
       total_override: booking.total_override != null ? Number(booking.total_override) : null,
+      pricing_settings: pricingSettings ?? null,
       status: booking.status,
       payment_status: booking.payment_status || "unpaid",
       start_date: booking.start_date,
@@ -159,7 +173,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking]);
+  }, [booking, pricingSettings]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
@@ -191,10 +205,14 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           quantity: 1,
           days,
           price_day: 0,
+          price_week: null,
           deposit: 0,
           discount_type: "none",
           discount_value: 0,
           price_override: null,
+          pricing_model: null,
+          pricing_multipliers: null,
+          override_reason: null,
         },
       ],
     });
@@ -212,7 +230,10 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       variant_id: null,
       product_name: p.name_es,
       price_day: Number(p.price_day),
+      price_week: p.price_week != null ? Number(p.price_week) : null,
       deposit: Number(p.deposit),
+      pricing_model: (p.pricing_model as PricingModel) ?? "premium",
+      pricing_multipliers: Array.isArray(p.pricing_multipliers) ? p.pricing_multipliers : null,
     });
   };
 
@@ -284,10 +305,22 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
         if (error) throw error;
       }
 
-      // Upsert items
+      // Upsert items + audit overrides
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
       const days = daysBetween(draft.start_date, draft.end_date);
+      const originalItemsById: Record<string, any> = {};
+      for (const i of (booking.items ?? []) as any[]) originalItemsById[i.id] = i;
+      const overrideEvents: any[] = [];
+
       for (const item of draft.items) {
         const br = computeBookingBreakdown({ ...draft, items: [item] });
+        const auto = br.items[0].auto_subtotal;
+        const isOverride =
+          item.price_override != null ||
+          (item.discount_type !== "none" && (item.discount_value ?? 0) > 0) ||
+          (item.override_reason ?? "").trim().length > 0;
+
         const payload: any = {
           booking_id: booking.id,
           product_id: item.product_id,
@@ -296,31 +329,76 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           quantity: item.quantity,
           days: item.days || days,
           price_day: item.price_day,
+          price_week: item.price_week ?? null,
           deposit: item.deposit,
           discount_type: item.discount_type,
           discount_value: item.discount_value,
           price_override: item.price_override,
+          pricing_model: item.pricing_model ?? null,
+          auto_subtotal: auto,
+          override_reason: item.override_reason || null,
+          overridden_by: isOverride ? userId : null,
+          overridden_at: isOverride ? new Date().toISOString() : null,
           subtotal: br.items[0].final_subtotal,
         };
         if (item.id) {
+          const prev = originalItemsById[item.id];
+          const changedOverride =
+            (prev?.price_override ?? null) !== (item.price_override ?? null) ||
+            (prev?.discount_type ?? "none") !== item.discount_type ||
+            Number(prev?.discount_value ?? 0) !== Number(item.discount_value ?? 0) ||
+            (prev?.pricing_model ?? null) !== (item.pricing_model ?? null) ||
+            (prev?.override_reason ?? null) !== (item.override_reason ?? null);
+          if (changedOverride) {
+            overrideEvents.push({
+              item_id: item.id,
+              product: item.product_name,
+              before: {
+                price_override: prev?.price_override ?? null,
+                discount_type: prev?.discount_type ?? "none",
+                discount_value: Number(prev?.discount_value ?? 0),
+                pricing_model: prev?.pricing_model ?? null,
+                override_reason: prev?.override_reason ?? null,
+              },
+              after: {
+                price_override: item.price_override,
+                discount_type: item.discount_type,
+                discount_value: item.discount_value,
+                pricing_model: item.pricing_model,
+                override_reason: item.override_reason,
+              },
+            });
+          }
           const { error } = await supabase.from("booking_items").update(payload).eq("id", item.id);
           if (error) throw error;
         } else {
           const { error } = await supabase.from("booking_items").insert(payload);
           if (error) throw error;
+          if (isOverride) {
+            overrideEvents.push({ item_id: null, product: item.product_name, before: null, after: payload });
+          }
         }
       }
 
       // Audit log
-      const { data: userData } = await supabase.auth.getUser();
       const itemsCountDelta = draft.items.length - (booking.items?.length ?? 0);
       if (itemsCountDelta !== 0) changes.items_count = [booking.items?.length ?? 0, draft.items.length];
       if (Object.keys(changes).length > 0) {
         await supabase.from("booking_audit_log").insert({
           booking_id: booking.id,
-          actor_user_id: userData.user?.id ?? null,
+          actor_user_id: userId,
           action: "update",
           changes,
+        });
+      }
+      for (const ev of overrideEvents) {
+        await supabase.from("booking_audit_log").insert({
+          booking_id: booking.id,
+          actor_user_id: userId,
+          action: "line_override",
+          entity_type: "booking_items",
+          entity_id: ev.item_id,
+          changes: ev,
         });
       }
 
@@ -490,6 +568,30 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                           <div className="col-span-12 md:col-span-4 text-right text-sm">
                             <div className="text-secondary text-xs">Auto: {fmt(br.auto_subtotal)}</div>
                             <div className="font-medium">Total línea: {fmt(br.final_subtotal)}</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-12 gap-2 items-end">
+                          <div className="col-span-6 md:col-span-3">
+                            <Label className="text-xs">Pricing model</Label>
+                            <Select
+                              value={(item.pricing_model ?? "premium") as string}
+                              onValueChange={(v) => updateItem(idx, { pricing_model: v as PricingModel })}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
+                                  <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-12 md:col-span-9">
+                            <Label className="text-xs">Motivo de override</Label>
+                            <Input
+                              placeholder="Ej: cliente recurrente, ampliación, prueba…"
+                              value={item.override_reason ?? ""}
+                              onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
+                            />
                           </div>
                         </div>
                       </div>
