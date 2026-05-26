@@ -247,6 +247,7 @@ const CategoryDialog = ({
     sort_order: category?.sort_order ?? nextSortOrder,
     image_url: category?.image_url ?? "",
     link_url: category?.link_url ?? "",
+    default_pricing_model: (category?.default_pricing_model ?? "premium") as PricingModel,
   });
 
   const set = (k: keyof typeof form, v: string | number) =>
