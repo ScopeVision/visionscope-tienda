@@ -278,6 +278,7 @@ const CategoryDialog = ({
       sort_order: Number(form.sort_order) || 0,
       image_url: form.image_url || null,
       link_url: form.link_url || null,
+      default_pricing_model: form.default_pricing_model,
     };
     const { error } = category
       ? await supabase.from("categories").update(payload).eq("id", category.id)
