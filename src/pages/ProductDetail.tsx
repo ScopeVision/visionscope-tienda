@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { calcItemPrice, daysBetween, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { calcItemPrice, calcPricingTable, daysBetween, formatCurrency, MAX_AUTO_DAYS, type PricingModel } from "@/lib/rental";
 import { useCart } from "@/contexts/CartContext";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
@@ -179,6 +179,9 @@ const ProductDetail = () => {
 
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
+  const productModel = ((product as any)?.pricing_model ?? "premium") as PricingModel;
+  const productMultipliers = (product as any)?.pricing_multipliers ?? null;
+
   const kitCalc = useMemo(() => {
     if (!product) return { subtotal: 0, weeklyApplied: false, contactRequired: false, avgPerDay: 0 };
     return calcItemPrice({
@@ -186,8 +189,10 @@ const ProductDetail = () => {
       priceWeek: effectivePriceWeek,
       days,
       quantity: 1,
+      model: productModel,
+      customMultipliers: productMultipliers,
     });
-  }, [product, days, effectivePriceDay, effectivePriceWeek]);
+  }, [product, days, effectivePriceDay, effectivePriceWeek, productModel, productMultipliers]);
 
   const individualCalc = useMemo(() => {
     let total = 0;
@@ -198,11 +203,15 @@ const ProductDetail = () => {
     visibleComponents.forEach((c: any) => {
       if (!selectedComponents.has(c.child_product_id)) return;
       const priceDay = c.price_day_override ?? Number(c.child?.price_day ?? 0);
+      const childModel = (c.child?.pricing_model ?? "premium") as PricingModel;
+      const childMults = c.child?.pricing_multipliers ?? null;
       const r = calcItemPrice({
         priceDay,
         priceWeek: c.child?.price_week ? Number(c.child.price_week) : null,
         days,
         quantity: c.quantity ?? 1,
+        model: childModel,
+        customMultipliers: childMults,
       });
       total += r.subtotal;
       any = any || r.weeklyApplied;
@@ -217,6 +226,13 @@ const ProductDetail = () => {
       avgPerDay: count > 0 ? avgSum / count : 0,
     };
   }, [visibleComponents, selectedComponents, days]);
+
+  const pricingTable = useMemo(() => calcPricingTable({
+    priceDay: effectivePriceDay,
+    priceWeek: effectivePriceWeek,
+    model: productModel,
+    customMultipliers: productMultipliers,
+  }), [effectivePriceDay, effectivePriceWeek, productModel, productMultipliers]);
 
   const allSelected =
     visibleComponents.length > 0 &&
