@@ -13,7 +13,7 @@ import { Plus, Trash2, History, Save } from "lucide-react";
 import BookingCommunications from "./BookingCommunications";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCurrency, daysBetween } from "@/lib/rental";
+import { formatCurrency, daysBetween, PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
 import {
   computeBookingBreakdown,
   type EditableBooking,
