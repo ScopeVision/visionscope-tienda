@@ -401,7 +401,6 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           changes: ev,
         });
       }
-      }
 
       toast.success("Pedido guardado");
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
