@@ -149,10 +149,14 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       quantity: it.quantity,
       days: it.days || days,
       price_day: Number(it.price_day),
+      price_week: it.price_week != null ? Number(it.price_week) : null,
       deposit: Number(it.deposit),
       discount_type: (it.discount_type as DiscountType) || "none",
       discount_value: Number(it.discount_value) || 0,
       price_override: it.price_override != null ? Number(it.price_override) : null,
+      pricing_model: (it.pricing_model as PricingModel) || null,
+      pricing_multipliers: null,
+      override_reason: it.override_reason ?? null,
     }));
     setDraft({
       items,
@@ -161,6 +165,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       extra_fees: Array.isArray(booking.extra_fees) ? (booking.extra_fees as unknown as ExtraFee[]) : [],
       subtotal_override: booking.subtotal_override != null ? Number(booking.subtotal_override) : null,
       total_override: booking.total_override != null ? Number(booking.total_override) : null,
+      pricing_settings: pricingSettings ?? null,
       status: booking.status,
       payment_status: booking.payment_status || "unpaid",
       start_date: booking.start_date,
@@ -168,7 +173,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking]);
+  }, [booking, pricingSettings]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
