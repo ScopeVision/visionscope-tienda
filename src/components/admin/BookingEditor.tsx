@@ -305,10 +305,22 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
         if (error) throw error;
       }
 
-      // Upsert items
+      // Upsert items + audit overrides
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
       const days = daysBetween(draft.start_date, draft.end_date);
+      const originalItemsById: Record<string, any> = {};
+      for (const i of (booking.items ?? []) as any[]) originalItemsById[i.id] = i;
+      const overrideEvents: any[] = [];
+
       for (const item of draft.items) {
         const br = computeBookingBreakdown({ ...draft, items: [item] });
+        const auto = br.items[0].auto_subtotal;
+        const isOverride =
+          item.price_override != null ||
+          (item.discount_type !== "none" && (item.discount_value ?? 0) > 0) ||
+          (item.override_reason ?? "").trim().length > 0;
+
         const payload: any = {
           booking_id: booking.id,
           product_id: item.product_id,
@@ -317,32 +329,78 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           quantity: item.quantity,
           days: item.days || days,
           price_day: item.price_day,
+          price_week: item.price_week ?? null,
           deposit: item.deposit,
           discount_type: item.discount_type,
           discount_value: item.discount_value,
           price_override: item.price_override,
+          pricing_model: item.pricing_model ?? null,
+          auto_subtotal: auto,
+          override_reason: item.override_reason || null,
+          overridden_by: isOverride ? userId : null,
+          overridden_at: isOverride ? new Date().toISOString() : null,
           subtotal: br.items[0].final_subtotal,
         };
         if (item.id) {
+          const prev = originalItemsById[item.id];
+          const changedOverride =
+            (prev?.price_override ?? null) !== (item.price_override ?? null) ||
+            (prev?.discount_type ?? "none") !== item.discount_type ||
+            Number(prev?.discount_value ?? 0) !== Number(item.discount_value ?? 0) ||
+            (prev?.pricing_model ?? null) !== (item.pricing_model ?? null) ||
+            (prev?.override_reason ?? null) !== (item.override_reason ?? null);
+          if (changedOverride) {
+            overrideEvents.push({
+              item_id: item.id,
+              product: item.product_name,
+              before: {
+                price_override: prev?.price_override ?? null,
+                discount_type: prev?.discount_type ?? "none",
+                discount_value: Number(prev?.discount_value ?? 0),
+                pricing_model: prev?.pricing_model ?? null,
+                override_reason: prev?.override_reason ?? null,
+              },
+              after: {
+                price_override: item.price_override,
+                discount_type: item.discount_type,
+                discount_value: item.discount_value,
+                pricing_model: item.pricing_model,
+                override_reason: item.override_reason,
+              },
+            });
+          }
           const { error } = await supabase.from("booking_items").update(payload).eq("id", item.id);
           if (error) throw error;
         } else {
           const { error } = await supabase.from("booking_items").insert(payload);
           if (error) throw error;
+          if (isOverride) {
+            overrideEvents.push({ item_id: null, product: item.product_name, before: null, after: payload });
+          }
         }
       }
 
       // Audit log
-      const { data: userData } = await supabase.auth.getUser();
       const itemsCountDelta = draft.items.length - (booking.items?.length ?? 0);
       if (itemsCountDelta !== 0) changes.items_count = [booking.items?.length ?? 0, draft.items.length];
       if (Object.keys(changes).length > 0) {
         await supabase.from("booking_audit_log").insert({
           booking_id: booking.id,
-          actor_user_id: userData.user?.id ?? null,
+          actor_user_id: userId,
           action: "update",
           changes,
         });
+      }
+      for (const ev of overrideEvents) {
+        await supabase.from("booking_audit_log").insert({
+          booking_id: booking.id,
+          actor_user_id: userId,
+          action: "line_override",
+          entity_type: "booking_items",
+          entity_id: ev.item_id,
+          changes: ev,
+        });
+      }
       }
 
       toast.success("Pedido guardado");
