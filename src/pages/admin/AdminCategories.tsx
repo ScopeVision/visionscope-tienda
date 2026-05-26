@@ -116,6 +116,7 @@ const AdminCategories = () => {
             <TableRow>
               <TableHead>Slug</TableHead>
               <TableHead>{t("common.name")}</TableHead>
+              <TableHead className="w-32">Pricing</TableHead>
               <TableHead className="w-20 text-right">{t("admin.order")}</TableHead>
               <TableHead className="text-right">{t("common.actions")}</TableHead>
             </TableRow>
@@ -123,7 +124,7 @@ const AdminCategories = () => {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-secondary py-10">
+                <TableCell colSpan={5} className="text-center text-secondary py-10">
                   —
                 </TableCell>
               </TableRow>
@@ -134,9 +135,30 @@ const AdminCategories = () => {
                   <TableCell className="font-medium">
                     {localized(c, "name", i18n.language)}
                   </TableCell>
+                  <TableCell className="text-xs text-secondary">
+                    {PRICING_MODEL_LABELS[(c.default_pricing_model ?? "premium") as PricingModel]}
+                  </TableCell>
                   <TableCell className="text-right text-secondary">{c.sort_order}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          const model = (c.default_pricing_model ?? "premium") as PricingModel;
+                          if (!confirm(`Aplicar pricing "${PRICING_MODEL_LABELS[model]}" a TODOS los productos de "${localized(c, "name", i18n.language)}"?`)) return;
+                          const { error, count } = await supabase
+                            .from("products")
+                            .update({ pricing_model: model }, { count: "exact" })
+                            .eq("category_id", c.id);
+                          if (error) return toast.error(error.message);
+                          toast.success(`Aplicado a ${count ?? 0} producto(s)`);
+                        }}
+                        aria-label="Aplicar a productos"
+                        title="Aplicar pricing model a productos de esta categoría"
+                      >
+                        <Wand2 className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
