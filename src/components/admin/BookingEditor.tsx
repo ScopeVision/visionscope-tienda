@@ -570,6 +570,30 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                             <div className="font-medium">Total línea: {fmt(br.final_subtotal)}</div>
                           </div>
                         </div>
+                        <div className="grid grid-cols-12 gap-2 items-end">
+                          <div className="col-span-6 md:col-span-3">
+                            <Label className="text-xs">Pricing model</Label>
+                            <Select
+                              value={(item.pricing_model ?? "premium") as string}
+                              onValueChange={(v) => updateItem(idx, { pricing_model: v as PricingModel })}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
+                                  <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-12 md:col-span-9">
+                            <Label className="text-xs">Motivo de override</Label>
+                            <Input
+                              placeholder="Ej: cliente recurrente, ampliación, prueba…"
+                              value={item.override_reason ?? ""}
+                              onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
+                            />
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
