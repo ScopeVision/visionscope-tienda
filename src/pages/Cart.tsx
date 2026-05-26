@@ -58,6 +58,8 @@ const Cart = () => {
               priceWeek: item.priceWeek,
               days: cart.days,
               quantity: item.quantity,
+              model: item.pricingModel ?? "premium",
+              customMultipliers: item.customMultipliers ?? null,
             });
             return (
               <div
