@@ -1383,6 +1383,18 @@ function SettingsTab() {
   });
   const [pct, setPct] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [premiumCsv, setPremiumCsv] = useState<string>("");
+  const [aggressiveCsv, setAggressiveCsv] = useState<string>("");
+  const [day7, setDay7] = useState<string>("");
+
+  const presets = (settings as any)?.pricing_presets ?? { premium: [1, 1.6, 2.25, 2.8, 3.3, 3.7, 4], aggressive: [1, 1.5, 2, 2.4, 2.8, 3.2, 3.5] };
+  const currentDay7 = (settings as any)?.aggressive_day7_multiplier ?? 3.5;
+
+  const parseCsv = (s: string): number[] | null => {
+    const arr = s.split(/[,\s]+/).filter(Boolean).map(Number);
+    if (arr.length !== 7 || arr.some((n) => isNaN(n) || n <= 0)) return null;
+    return arr;
+  };
 
   const save = async () => {
     const payload: any = { updated_at: new Date().toISOString() };
@@ -1392,21 +1404,65 @@ function SettingsTab() {
       payload.default_split_company_pct = v;
     }
     if (notes) payload.notes = notes;
+
+    const nextPresets = { ...presets };
+    if (premiumCsv) {
+      const p = parseCsv(premiumCsv);
+      if (!p) return toast.error("Premium: 7 multiplicadores válidos requeridos");
+      nextPresets.premium = p;
+    }
+    if (aggressiveCsv) {
+      const p = parseCsv(aggressiveCsv);
+      if (!p) return toast.error("Aggressive: 7 multiplicadores válidos requeridos");
+      nextPresets.aggressive = p;
+    }
+    if (premiumCsv || aggressiveCsv) payload.pricing_presets = nextPresets;
+
+    if (day7) {
+      const v = Number(day7);
+      if (isNaN(v) || v <= 0) return toast.error("Día 7 inválido");
+      payload.aggressive_day7_multiplier = v;
+    }
+
     const { error } = await sb.from("finance_settings").update(payload).eq("id", true);
     if (error) return toast.error(error.message);
     toast.success("Settings actualizados");
-    setPct(""); setNotes("");
+    setPct(""); setNotes(""); setPremiumCsv(""); setAggressiveCsv(""); setDay7("");
     qc.invalidateQueries({ queryKey: ["finance-settings"] });
   };
 
   return (
-    <div className="space-y-4 max-w-md">
+    <div className="space-y-4 max-w-2xl">
       <h2 className="text-lg font-medium">Settings financieros</h2>
       <div className="p-5 rounded-xl bg-surface border border-border space-y-3">
         <div><div className="text-xs text-secondary">% empresa por defecto (si producto no tiene asset)</div><div className="text-2xl font-display">{(settings as any)?.default_split_company_pct ?? 30}%</div></div>
         <div><Label>Nuevo % default</Label><Input type="number" min={0} max={100} value={pct} placeholder={String((settings as any)?.default_split_company_pct ?? 30)} onChange={(e) => setPct(e.target.value)} /></div>
-        <div><Label>Notas internas</Label><Textarea value={notes} placeholder={(settings as any)?.notes || ""} onChange={(e) => setNotes(e.target.value)} /></div>
-        <Button onClick={save}>Guardar</Button>
+      </div>
+
+      <div className="p-5 rounded-xl bg-surface border border-border space-y-3">
+        <h3 className="font-medium">Pricing presets (rental)</h3>
+        <p className="text-xs text-secondary">Multiplicadores día 1..7 separados por coma. Ej: <code>1, 1.6, 2.25, 2.8, 3.3, 3.7, 4</code></p>
+        <div>
+          <Label>Premium actual</Label>
+          <div className="font-mono text-xs text-secondary mb-1">[{(presets.premium ?? []).join(", ")}]</div>
+          <Input value={premiumCsv} placeholder="1, 1.6, 2.25, 2.8, 3.3, 3.7, 4" onChange={(e) => setPremiumCsv(e.target.value)} />
+        </div>
+        <div>
+          <Label>Aggressive actual</Label>
+          <div className="font-mono text-xs text-secondary mb-1">[{(presets.aggressive ?? []).join(", ")}]</div>
+          <Input value={aggressiveCsv} placeholder="1, 1.5, 2, 2.4, 2.8, 3.2, 3.5" onChange={(e) => setAggressiveCsv(e.target.value)} />
+        </div>
+        <div>
+          <Label>Multiplicador día 7 (Aggressive) — actual: {currentDay7}</Label>
+          <Input type="number" step="0.01" min={1} value={day7} placeholder={String(currentDay7)} onChange={(e) => setDay7(e.target.value)} />
+          <p className="text-xs text-secondary mt-1">Sobrescribe el último valor del preset Aggressive en runtime.</p>
+        </div>
+      </div>
+
+      <div className="p-5 rounded-xl bg-surface border border-border space-y-3">
+        <Label>Notas internas</Label>
+        <Textarea value={notes} placeholder={(settings as any)?.notes || ""} onChange={(e) => setNotes(e.target.value)} />
+        <Button onClick={save}>Guardar todo</Button>
         <p className="text-xs text-secondary">Moneda: {(settings as any)?.default_currency || "EUR"}</p>
       </div>
     </div>
