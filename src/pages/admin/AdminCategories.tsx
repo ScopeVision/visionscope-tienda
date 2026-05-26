@@ -353,6 +353,21 @@ const CategoryDialog = ({
             />
           </div>
           <div>
+            <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Pricing model por defecto</Label>
+            <Select
+              value={form.default_pricing_model}
+              onValueChange={(v) => set("default_pricing_model" as any, v as any)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
+                  <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-secondary mt-1">Se sugiere a productos nuevos. Usa el botón ✨ en la lista para aplicar a productos existentes.</p>
+          </div>
+          <div>
             <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">Enlace personalizado (opcional)</Label>
             <Input
               value={form.link_url}
