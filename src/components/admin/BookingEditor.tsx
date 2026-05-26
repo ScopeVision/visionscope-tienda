@@ -230,7 +230,10 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       variant_id: null,
       product_name: p.name_es,
       price_day: Number(p.price_day),
+      price_week: p.price_week != null ? Number(p.price_week) : null,
       deposit: Number(p.deposit),
+      pricing_model: (p.pricing_model as PricingModel) ?? "premium",
+      pricing_multipliers: Array.isArray(p.pricing_multipliers) ? p.pricing_multipliers : null,
     });
   };
 
