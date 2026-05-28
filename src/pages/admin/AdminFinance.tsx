@@ -221,7 +221,8 @@ function OwnersTab() {
 
   const save = async () => {
     if (!editing.name?.trim()) return toast.error("Nombre obligatorio");
-    const { id, assets, ...payload } = editing;
+    const { id, assets, partner, ...payload } = editing;
+    if (payload.partner_id === "__none__") payload.partner_id = null;
     const res = id
       ? await sb.from("finance_owners").update(payload).eq("id", id)
       : await sb.from("finance_owners").insert(payload);
@@ -229,7 +230,9 @@ function OwnersTab() {
     toast.success("Owner guardado");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["finance-owners"] });
+    qc.invalidateQueries({ queryKey: ["finance-owner-balances"] });
   };
+
 
   return (
     <div className="space-y-4">
