@@ -356,6 +356,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </div>
 
+            <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
+
+
+
 
             <div className="grid sm:grid-cols-3 gap-4">
               <Field label={t("admin.products.fields.priceDay") + " *"} error={form.formState.errors.price_day?.message}>
