@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
+import { ProductOwnerDeal } from "./ProductOwnerDeal";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
@@ -354,6 +355,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 Premium: 1·1.6·2.25·2.8·3.3·3.7·4 · Aggressive: 1·1.5·2·2.4·2.8·3.2·3.5 · Weekly flat: lineal hasta día 6, semana plana día 7.
               </p>
             </div>
+
+            <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
+
+
 
 
             <div className="grid sm:grid-cols-3 gap-4">
