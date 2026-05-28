@@ -259,7 +259,14 @@ function OwnersTab() {
           <TableBody>
             {owners.map((o: any) => (
               <TableRow key={o.id}>
-                <TableCell className="font-medium">{o.name}</TableCell>
+                <TableCell className="font-medium">
+                  {o.name}
+                  {o.partner && (
+                    <Badge variant="outline" className="ml-2 border-accent text-accent text-[10px]">
+                      socio · {o.partner.profit_share_pct}% equity
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell><Badge variant="outline">{o.type}</Badge></TableCell>
                 <TableCell>{o.default_company_pct}%</TableCell>
                 <TableCell className="text-xs text-secondary">{o.contact_email || o.contact_phone || "—"}</TableCell>
@@ -270,6 +277,7 @@ function OwnersTab() {
                 </TableCell>
               </TableRow>
             ))}
+
             {owners.length === 0 && (
               <TableRow><TableCell colSpan={7} className="text-center text-secondary py-8">Sin owners</TableCell></TableRow>
             )}
