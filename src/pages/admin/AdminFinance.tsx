@@ -208,10 +208,16 @@ function OwnersTab() {
 
   const { data: owners = [] } = useQuery({
     queryKey: ["finance-owners"],
-    queryFn: async () => (await sb.from("finance_owners").select("*, assets:finance_assets(id, name)").order("sort_order")).data || [],
+    queryFn: async () => (await sb.from("finance_owners").select("*, assets:finance_assets(id, name), partner:finance_partners(id, name, profit_share_pct)").order("sort_order")).data || [],
   });
 
-  const blank = { name: "", type: "external", default_company_pct: 30, contact_email: "", contact_phone: "", notes: "", active: true, sort_order: 0 };
+  const { data: partners = [] } = useQuery({
+    queryKey: ["finance-partners-lookup"],
+    queryFn: async () => (await sb.from("finance_partners").select("id, name, profit_share_pct").order("name")).data || [],
+  });
+
+  const blank = { name: "", type: "external", default_company_pct: 30, contact_email: "", contact_phone: "", notes: "", active: true, sort_order: 0, partner_id: null };
+
 
   const save = async () => {
     if (!editing.name?.trim()) return toast.error("Nombre obligatorio");
