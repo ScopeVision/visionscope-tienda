@@ -315,6 +315,30 @@ function OwnersTab() {
                 <div><Label>Teléfono</Label><Input value={editing.contact_phone || ""} onChange={(e) => setEditing({ ...editing, contact_phone: e.target.value })} /></div>
               </div>
               <div><Label>Notas internas</Label><Textarea value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} /></div>
+
+              <div className="rounded-md border border-border p-3 bg-background/40 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-secondary">
+                  Equity link (opcional)
+                </div>
+                <Label className="text-xs">Vincular a socio (equity de empresa)</Label>
+                <Select
+                  value={editing.partner_id ?? "__none__"}
+                  onValueChange={(v) => setEditing({ ...editing, partner_id: v === "__none__" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="No vinculado" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin vínculo (solo payouts) —</SelectItem>
+                    {partners.map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} · {p.profit_share_pct}% equity</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-secondary">
+                  Vincular indica que esta misma persona también recibe profit share de la empresa.
+                  El equity NUNCA se usa para calcular payouts de assets.
+                </p>
+              </div>
+
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={!!editing.active} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} />
                 Owner activo
@@ -326,6 +350,7 @@ function OwnersTab() {
             <Button onClick={save}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
+
       </Dialog>
     </div>
   );
