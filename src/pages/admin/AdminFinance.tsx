@@ -1027,6 +1027,15 @@ function OwnerBalancesTab() {
     queryKey: ["finance-asset-kpis"],
     queryFn: async () => (await sb.from("finance_asset_kpis").select("*")).data || [],
   });
+  const { data: owners = [] } = useQuery({
+    queryKey: ["finance-owners-with-partner"],
+    queryFn: async () => (await sb.from("finance_owners")
+      .select("id, partner_id, partner:finance_partners(id, name, profit_share_pct)")).data || [],
+  });
+  const { data: equityDist = [] } = useQuery({
+    queryKey: ["finance-equity-distribution"],
+    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
+  });
 
   const kpisByOwner = useMemo(() => {
     const m = new Map<string, any[]>();
@@ -1038,42 +1047,96 @@ function OwnerBalancesTab() {
     return m;
   }, [assetKpis]);
 
+  const partnerByOwner = useMemo(() => {
+    const m = new Map<string, any>();
+    (owners as any[]).forEach((o) => { if (o.partner) m.set(o.id, o.partner); });
+    return m;
+  }, [owners]);
+
+  const equityByPartner = useMemo(() => {
+    const m = new Map<string, any>();
+    (equityDist as any[]).forEach((d) => m.set(d.partner_id, d));
+    return m;
+  }, [equityDist]);
+
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-medium">Balances por owner</h2>
-        <p className="text-xs text-secondary">Total generado, debido, pagado y pendiente. El "Restante" es la liability real.</p>
+        <p className="text-xs text-secondary">
+          Asset payouts (deals operativos) y equity profit share (beneficio empresa) son flujos
+          completamente separados. Una persona puede cobrar ambos.
+        </p>
       </div>
       <div className="space-y-3">
         {balances.map((b: any) => {
           const assets = kpisByOwner.get(b.owner_id) || [];
+          const partner = partnerByOwner.get(b.owner_id);
+          const equity = partner ? equityByPartner.get(partner.id) : null;
           return (
             <div key={b.owner_id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <div className="font-medium">{b.name}</div>
+                  <div className="font-medium flex items-center gap-2">
+                    {b.name}
+                    {partner && (
+                      <Badge variant="outline" className="border-accent text-accent text-[10px]">
+                        + socio · {partner.profit_share_pct}% equity
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-secondary">{b.type} {!b.active && "· inactivo"}</div>
+                </div>
+              </div>
+
+              {/* SECTION A: OWNER PAYOUTS (operativo) */}
+              <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-accent font-medium">
+                  A · Owner payouts (deals por equipos)
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-sm">
                   <div className="text-right"><div className="text-[10px] text-secondary">Generado bruto</div><div className="font-medium">{fmt(b.total_generated_gross)}</div></div>
                   <div className="text-right"><div className="text-[10px] text-secondary">Debido</div><div className="font-medium">{fmt(b.total_owed)}</div></div>
                   <div className="text-right"><div className="text-[10px] text-secondary">Pagado</div><div className="font-medium text-emerald-600">{fmt(b.total_paid)}</div></div>
-                  <div className="text-right"><div className="text-[10px] text-secondary">Restante</div><div className={`font-medium ${Number(b.remaining_unpaid) > 0.01 ? "text-rose-500" : ""}`}>{fmt(b.remaining_unpaid)}</div></div>
+                  <div className="text-right"><div className="text-[10px] text-secondary">Pendiente</div><div className={`font-medium ${Number(b.remaining_unpaid) > 0.01 ? "text-rose-500" : ""}`}>{fmt(b.remaining_unpaid)}</div></div>
                 </div>
+                {assets.length > 0 && (
+                  <div className="pt-2 space-y-1">
+                    <div className="text-[10px] uppercase tracking-wider text-secondary">Activos del owner</div>
+                    {assets.map((a: any) => (
+                      <div key={a.asset_id} className="text-xs flex items-center justify-between">
+                        <span>{a.name}</span>
+                        <span className="text-secondary">
+                          bruto {fmt(a.gross_revenue)} · empresa {fmt(a.company_revenue)} · recuperado {fmt(a.recovered_value)}
+                          {Number(a.target_recovery_value) > 0 && ` / ${fmt(a.target_recovery_value)} (${a.recovery_pct}%)`}
+                          {a.target_reached && <Badge className="ml-2 bg-emerald-500">target</Badge>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {assets.length > 0 && (
-                <div className="border-t border-border pt-3 space-y-1">
-                  <div className="text-[10px] uppercase tracking-wider text-secondary">Activos del owner</div>
-                  {assets.map((a: any) => (
-                    <div key={a.asset_id} className="text-xs flex items-center justify-between">
-                      <span>{a.name}</span>
-                      <span className="text-secondary">
-                        bruto {fmt(a.gross_revenue)} · empresa {fmt(a.company_revenue)} · recuperado {fmt(a.recovered_value)}
-                        {Number(a.target_recovery_value) > 0 && ` / ${fmt(a.target_recovery_value)} (${a.recovery_pct}%)`}
-                        {a.target_reached && <Badge className="ml-2 bg-emerald-500">target</Badge>}
-                      </span>
+
+              {/* SECTION B: EQUITY PROFIT SHARE (solo si vinculado a socio) */}
+              {partner && (
+                <div className="rounded-md border border-accent/40 bg-accent/5 p-3 space-y-2">
+                  <div className="text-[10px] uppercase tracking-wider text-accent font-medium">
+                    B · Equity profit share (beneficio empresa)
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <div className="text-[10px] text-secondary">% equity</div>
+                      <div className="font-medium">{partner.profit_share_pct}%</div>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <div className="text-[10px] text-secondary">Le correspondería ahora</div>
+                      <div className="font-medium">{fmt(equity?.would_receive)}</div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-secondary">
+                    Calculado sobre el beneficio distribuible (income − gastos − reserva).
+                    Independiente de los payouts operativos de arriba.
+                  </p>
                 </div>
               )}
             </div>
@@ -1086,6 +1149,7 @@ function OwnerBalancesTab() {
     </div>
   );
 }
+
 
 
 // ============== EQUITY (SOCIOS) ==============
