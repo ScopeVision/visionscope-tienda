@@ -101,6 +101,19 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
     },
   });
 
+  const { data: inventoryUnits = [] } = useQuery({
+    queryKey: ["admin-inventory-units-mini"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("inventory_units")
+        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active")
+        .eq("active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: pricingSettings } = useQuery({
     queryKey: ["finance-settings-pricing"],
     queryFn: async () => {
@@ -157,6 +170,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       pricing_model: (it.pricing_model as PricingModel) || null,
       pricing_multipliers: null,
       override_reason: it.override_reason ?? null,
+      inventory_unit_id: it.inventory_unit_id ?? null,
     }));
     setDraft({
       items,
@@ -213,6 +227,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           pricing_model: null,
           pricing_multipliers: null,
           override_reason: null,
+          inventory_unit_id: null,
         },
       ],
     });
@@ -337,6 +352,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           pricing_model: item.pricing_model ?? null,
           auto_subtotal: auto,
           override_reason: item.override_reason || null,
+          inventory_unit_id: item.inventory_unit_id ?? null,
           overridden_by: isOverride ? userId : null,
           overridden_at: isOverride ? new Date().toISOString() : null,
           subtotal: br.items[0].final_subtotal,
@@ -348,7 +364,8 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
             (prev?.discount_type ?? "none") !== item.discount_type ||
             Number(prev?.discount_value ?? 0) !== Number(item.discount_value ?? 0) ||
             (prev?.pricing_model ?? null) !== (item.pricing_model ?? null) ||
-            (prev?.override_reason ?? null) !== (item.override_reason ?? null);
+            (prev?.override_reason ?? null) !== (item.override_reason ?? null) ||
+            (prev?.inventory_unit_id ?? null) !== (item.inventory_unit_id ?? null);
           if (changedOverride) {
             overrideEvents.push({
               item_id: item.id,
@@ -359,6 +376,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 discount_value: Number(prev?.discount_value ?? 0),
                 pricing_model: prev?.pricing_model ?? null,
                 override_reason: prev?.override_reason ?? null,
+                inventory_unit_id: prev?.inventory_unit_id ?? null,
               },
               after: {
                 price_override: item.price_override,
@@ -366,6 +384,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 discount_value: item.discount_value,
                 pricing_model: item.pricing_model,
                 override_reason: item.override_reason,
+                inventory_unit_id: item.inventory_unit_id ?? null,
               },
             });
           }
