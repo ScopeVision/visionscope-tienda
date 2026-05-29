@@ -1041,6 +1041,12 @@ function OwnerBalancesTab() {
     queryKey: ["finance-equity-distribution"],
     queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
   });
+  const { data: unitsAll = [] } = useQuery({
+    queryKey: ["finance-owner-units"],
+    queryFn: async () => (await sb.from("inventory_units")
+      .select("id, owner_id, serial, internal_code, agreement_type, owner_split_pct, status, active, product:products(name_es)")
+      .eq("active", true)).data || [],
+  });
 
   const kpisByOwner = useMemo(() => {
     const m = new Map<string, any[]>();
@@ -1051,6 +1057,16 @@ function OwnerBalancesTab() {
     });
     return m;
   }, [assetKpis]);
+
+  const unitsByOwner = useMemo(() => {
+    const m = new Map<string, any[]>();
+    (unitsAll as any[]).forEach((u) => {
+      if (!u.owner_id) return;
+      if (!m.has(u.owner_id)) m.set(u.owner_id, []);
+      m.get(u.owner_id)!.push(u);
+    });
+    return m;
+  }, [unitsAll]);
 
   const partnerByOwner = useMemo(() => {
     const m = new Map<string, any>();
@@ -1076,6 +1092,7 @@ function OwnerBalancesTab() {
       <div className="space-y-3">
         {balances.map((b: any) => {
           const assets = kpisByOwner.get(b.owner_id) || [];
+          const ownerUnits = unitsByOwner.get(b.owner_id) || [];
           const partner = partnerByOwner.get(b.owner_id);
           const equity = partner ? equityByPartner.get(partner.id) : null;
           return (
