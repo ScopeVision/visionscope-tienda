@@ -1137,6 +1137,19 @@ function OwnerBalancesTab() {
                     ))}
                   </div>
                 )}
+                {ownerUnits.length > 0 && (
+                  <div className="pt-2 space-y-1">
+                    <div className="text-[10px] uppercase tracking-wider text-secondary">Unidades de inventario asignadas</div>
+                    {ownerUnits.map((u: any) => (
+                      <div key={u.id} className="text-xs flex items-center justify-between">
+                        <span className="font-mono">{u.serial || u.internal_code || u.id.slice(0,8)}</span>
+                        <span className="text-secondary">
+                          {u.product?.name_es || "—"} · {u.agreement_type} · owner {Number(u.owner_split_pct)}% · {u.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* SECTION B: EQUITY PROFIT SHARE (solo si vinculado a socio) */}
