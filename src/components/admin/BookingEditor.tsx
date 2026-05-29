@@ -612,8 +612,8 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                               onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
                             />
                           </div>
-                          </div>
                         </div>
+
                         {(() => {
                           const productUnits = inventoryUnits.filter((u: any) => u.product_id === item.product_id);
                           return (
