@@ -21,6 +21,7 @@ import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
 import { ProductOwnerDeal } from "./ProductOwnerDeal";
+import { ProductInventoryUnits } from "./ProductInventoryUnits";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
@@ -356,7 +357,15 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </div>
 
-            <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
+            <ProductInventoryUnits productId={product?.id} />
+            <details className="text-xs">
+              <summary className="cursor-pointer text-secondary hover:text-foreground">
+                Legacy: deal por defecto a nivel producto (deprecado — usar unidades)
+              </summary>
+              <div className="mt-2">
+                <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
+              </div>
+            </details>
 
 
 

@@ -25,6 +25,7 @@ export interface EditableItem {
   pricing_model?: PricingModel | null;
   pricing_multipliers?: number[] | null;
   override_reason?: string | null;
+  inventory_unit_id?: string | null;
 }
 
 export interface EditableBooking {

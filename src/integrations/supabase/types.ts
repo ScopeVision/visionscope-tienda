@@ -168,6 +168,7 @@ export type Database = {
           discount_type: string
           discount_value: number
           id: string
+          inventory_unit_id: string | null
           overridden_at: string | null
           overridden_by: string | null
           override_reason: string | null
@@ -190,6 +191,7 @@ export type Database = {
           discount_type?: string
           discount_value?: number
           id?: string
+          inventory_unit_id?: string | null
           overridden_at?: string | null
           overridden_by?: string | null
           override_reason?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           discount_type?: string
           discount_value?: number
           id?: string
+          inventory_unit_id?: string | null
           overridden_at?: string | null
           overridden_by?: string | null
           override_reason?: string | null
@@ -604,6 +607,7 @@ export type Database = {
           currency: string
           gross_amount: number
           id: string
+          inventory_unit_id: string | null
           is_manual_override: boolean
           is_reversed: boolean
           notes: string | null
@@ -628,6 +632,7 @@ export type Database = {
           currency?: string
           gross_amount?: number
           id?: string
+          inventory_unit_id?: string | null
           is_manual_override?: boolean
           is_reversed?: boolean
           notes?: string | null
@@ -652,6 +657,7 @@ export type Database = {
           currency?: string
           gross_amount?: number
           id?: string
+          inventory_unit_id?: string | null
           is_manual_override?: boolean
           is_reversed?: boolean
           notes?: string | null
@@ -939,12 +945,14 @@ export type Database = {
           created_at: string
           entry_id: string | null
           id: string
+          inventory_unit_id: string | null
           is_manual_override: boolean
           notes: string | null
           owner_id: string | null
           owner_label: string | null
           paid_amount: number
           paid_at: string | null
+          product_name: string | null
           status: Database["public"]["Enums"]["finance_payout_status"]
           updated_at: string
         }
@@ -955,12 +963,14 @@ export type Database = {
           created_at?: string
           entry_id?: string | null
           id?: string
+          inventory_unit_id?: string | null
           is_manual_override?: boolean
           notes?: string | null
           owner_id?: string | null
           owner_label?: string | null
           paid_amount?: number
           paid_at?: string | null
+          product_name?: string | null
           status?: Database["public"]["Enums"]["finance_payout_status"]
           updated_at?: string
         }
@@ -971,12 +981,14 @@ export type Database = {
           created_at?: string
           entry_id?: string | null
           id?: string
+          inventory_unit_id?: string | null
           is_manual_override?: boolean
           notes?: string | null
           owner_id?: string | null
           owner_label?: string | null
           paid_amount?: number
           paid_at?: string | null
+          product_name?: string | null
           status?: Database["public"]["Enums"]["finance_payout_status"]
           updated_at?: string
         }
@@ -1117,6 +1129,60 @@ export type Database = {
           url?: string
           zoom?: number
           zoom_mobile?: number | null
+        }
+        Relationships: []
+      }
+      inventory_units: {
+        Row: {
+          acquisition_value: number
+          active: boolean
+          agreement_type: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at: string
+          id: string
+          internal_code: string | null
+          maintenance_notes: string | null
+          notes: string | null
+          owner_id: string | null
+          owner_split_pct: number
+          product_id: string
+          serial: string | null
+          status: Database["public"]["Enums"]["inventory_unit_status"]
+          target_recovery_value: number
+          updated_at: string
+        }
+        Insert: {
+          acquisition_value?: number
+          active?: boolean
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at?: string
+          id?: string
+          internal_code?: string | null
+          maintenance_notes?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          owner_split_pct?: number
+          product_id: string
+          serial?: string | null
+          status?: Database["public"]["Enums"]["inventory_unit_status"]
+          target_recovery_value?: number
+          updated_at?: string
+        }
+        Update: {
+          acquisition_value?: number
+          active?: boolean
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at?: string
+          id?: string
+          internal_code?: string | null
+          maintenance_notes?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          owner_split_pct?: number
+          product_id?: string
+          serial?: string | null
+          status?: Database["public"]["Enums"]["inventory_unit_status"]
+          target_recovery_value?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1934,6 +2000,7 @@ export type Database = {
         | "debt_repayment"
         | "payout"
       finance_transition_status: "normal" | "in_transition" | "transferred"
+      inventory_unit_status: "active" | "maintenance" | "retired" | "lost"
       payment_status:
         | "unpaid"
         | "deposit_pending"
@@ -2109,6 +2176,7 @@ export const Constants = {
         "payout",
       ],
       finance_transition_status: ["normal", "in_transition", "transferred"],
+      inventory_unit_status: ["active", "maintenance", "retired", "lost"],
       payment_status: [
         "unpaid",
         "deposit_pending",

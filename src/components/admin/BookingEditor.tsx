@@ -101,6 +101,19 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
     },
   });
 
+  const { data: inventoryUnits = [] } = useQuery({
+    queryKey: ["admin-inventory-units-mini"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("inventory_units")
+        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active")
+        .eq("active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: pricingSettings } = useQuery({
     queryKey: ["finance-settings-pricing"],
     queryFn: async () => {
@@ -157,6 +170,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       pricing_model: (it.pricing_model as PricingModel) || null,
       pricing_multipliers: null,
       override_reason: it.override_reason ?? null,
+      inventory_unit_id: it.inventory_unit_id ?? null,
     }));
     setDraft({
       items,
@@ -213,6 +227,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           pricing_model: null,
           pricing_multipliers: null,
           override_reason: null,
+          inventory_unit_id: null,
         },
       ],
     });
@@ -337,6 +352,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
           pricing_model: item.pricing_model ?? null,
           auto_subtotal: auto,
           override_reason: item.override_reason || null,
+          inventory_unit_id: item.inventory_unit_id ?? null,
           overridden_by: isOverride ? userId : null,
           overridden_at: isOverride ? new Date().toISOString() : null,
           subtotal: br.items[0].final_subtotal,
@@ -348,7 +364,8 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
             (prev?.discount_type ?? "none") !== item.discount_type ||
             Number(prev?.discount_value ?? 0) !== Number(item.discount_value ?? 0) ||
             (prev?.pricing_model ?? null) !== (item.pricing_model ?? null) ||
-            (prev?.override_reason ?? null) !== (item.override_reason ?? null);
+            (prev?.override_reason ?? null) !== (item.override_reason ?? null) ||
+            (prev?.inventory_unit_id ?? null) !== (item.inventory_unit_id ?? null);
           if (changedOverride) {
             overrideEvents.push({
               item_id: item.id,
@@ -359,6 +376,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 discount_value: Number(prev?.discount_value ?? 0),
                 pricing_model: prev?.pricing_model ?? null,
                 override_reason: prev?.override_reason ?? null,
+                inventory_unit_id: prev?.inventory_unit_id ?? null,
               },
               after: {
                 price_override: item.price_override,
@@ -366,6 +384,7 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 discount_value: item.discount_value,
                 pricing_model: item.pricing_model,
                 override_reason: item.override_reason,
+                inventory_unit_id: item.inventory_unit_id ?? null,
               },
             });
           }
@@ -594,6 +613,39 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                             />
                           </div>
                         </div>
+
+                        {(() => {
+                          const productUnits = inventoryUnits.filter((u: any) => u.product_id === item.product_id);
+                          return (
+                            <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
+                              <div className="col-span-12 md:col-span-6">
+                                <Label className="text-xs">Unidad de inventario asignada</Label>
+                                <Select
+                                  value={item.inventory_unit_id ?? "__none__"}
+                                  onValueChange={(v) => updateItem(idx, { inventory_unit_id: v === "__none__" ? null : v })}
+                                  disabled={!item.product_id}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={productUnits.length ? "Auto-asignar al pagar" : "Sin unidades definidas"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">— Auto / sin unidad —</SelectItem>
+                                    {productUnits.map((u: any) => (
+                                      <SelectItem key={u.id} value={u.id}>
+                                        {u.serial || u.internal_code || u.id.slice(0, 8)} · {u.agreement_type} · {u.owner_split_pct}% owner
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-12 md:col-span-6 text-[11px] text-secondary">
+                                {productUnits.length === 0
+                                  ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
+                                  : "El payout y owner se resuelven desde la unidad seleccionada."}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}

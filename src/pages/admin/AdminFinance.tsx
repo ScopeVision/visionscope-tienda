@@ -788,7 +788,7 @@ function PayoutsTab() {
     queryKey: ["finance-payouts", statusFilter, ownerFilter],
     queryFn: async () => {
       let q = sb.from("finance_payouts")
-        .select("*, asset:finance_assets(name), owner:finance_owners(name)")
+        .select("*, asset:finance_assets(name), owner:finance_owners(name), inventory_unit:inventory_units(id, serial, internal_code), entry:finance_entries(id, booking_id, applied_company_pct, booking:bookings(reference))")
         .order("created_at", { ascending: false }).limit(500);
       if (statusFilter === "__open__") q = q.in("status", ["unpaid", "partially_paid", "pending"]);
       else if (statusFilter !== "__all__") q = q.eq("status", statusFilter);
@@ -886,13 +886,15 @@ function PayoutsTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Activo</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Unidad</TableHead>
               <TableHead>Owner</TableHead>
+              <TableHead>Booking</TableHead>
+              <TableHead>%</TableHead>
               <TableHead>Debido</TableHead>
               <TableHead>Pagado</TableHead>
               <TableHead>Restante</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Creado</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -900,10 +902,14 @@ function PayoutsTab() {
             {payouts.map((p: any) => {
               const paid = Number(p.paid_amount || 0);
               const remaining = Number(p.amount) - paid;
+              const unitLabel = p.inventory_unit?.serial || p.inventory_unit?.internal_code || (p.inventory_unit?.id ? p.inventory_unit.id.slice(0,8) : "—");
               return (
                 <TableRow key={p.id}>
-                  <TableCell className="text-xs">{p.asset?.name || "—"}</TableCell>
+                  <TableCell className="text-xs">{p.product_name || p.asset?.name || "—"}</TableCell>
+                  <TableCell className="text-xs font-mono">{unitLabel}</TableCell>
                   <TableCell>{p.owner?.name || p.owner_label || "—"}</TableCell>
+                  <TableCell className="text-xs font-mono">{p.entry?.booking?.reference || "—"}</TableCell>
+                  <TableCell className="text-xs">{p.applied_pct != null ? `${Number(p.applied_pct)}%` : "—"}</TableCell>
                   <TableCell className="font-medium">{fmt(p.amount)}</TableCell>
                   <TableCell className="text-emerald-600">{fmt(paid)}</TableCell>
                   <TableCell className={remaining > 0.01 ? "text-rose-500 font-medium" : "text-secondary"}>{fmt(remaining)}</TableCell>
@@ -913,7 +919,6 @@ function PayoutsTab() {
                       {p.is_manual_override && <Badge variant="outline" className="text-amber-500"><AlertTriangle className="h-3 w-3" /></Badge>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-secondary">{new Date(p.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
                     {p.status !== "cancelled" && p.status !== "paid" && (
                       <Button size="sm" variant="outline" onClick={() => { setPaying(p); setPayForm({ amount: String(remaining.toFixed(2)), method: "", notes: "" }); }}>Pagar</Button>
@@ -927,7 +932,7 @@ function PayoutsTab() {
               );
             })}
             {payouts.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-secondary py-8">Sin payouts</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center text-secondary py-8">Sin payouts</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -1036,6 +1041,12 @@ function OwnerBalancesTab() {
     queryKey: ["finance-equity-distribution"],
     queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
   });
+  const { data: unitsAll = [] } = useQuery({
+    queryKey: ["finance-owner-units"],
+    queryFn: async () => (await sb.from("inventory_units")
+      .select("id, owner_id, serial, internal_code, agreement_type, owner_split_pct, status, active, product:products(name_es)")
+      .eq("active", true)).data || [],
+  });
 
   const kpisByOwner = useMemo(() => {
     const m = new Map<string, any[]>();
@@ -1046,6 +1057,16 @@ function OwnerBalancesTab() {
     });
     return m;
   }, [assetKpis]);
+
+  const unitsByOwner = useMemo(() => {
+    const m = new Map<string, any[]>();
+    (unitsAll as any[]).forEach((u) => {
+      if (!u.owner_id) return;
+      if (!m.has(u.owner_id)) m.set(u.owner_id, []);
+      m.get(u.owner_id)!.push(u);
+    });
+    return m;
+  }, [unitsAll]);
 
   const partnerByOwner = useMemo(() => {
     const m = new Map<string, any>();
@@ -1071,6 +1092,7 @@ function OwnerBalancesTab() {
       <div className="space-y-3">
         {balances.map((b: any) => {
           const assets = kpisByOwner.get(b.owner_id) || [];
+          const ownerUnits = unitsByOwner.get(b.owner_id) || [];
           const partner = partnerByOwner.get(b.owner_id);
           const equity = partner ? equityByPartner.get(partner.id) : null;
           return (
@@ -1110,6 +1132,19 @@ function OwnerBalancesTab() {
                           bruto {fmt(a.gross_revenue)} · empresa {fmt(a.company_revenue)} · recuperado {fmt(a.recovered_value)}
                           {Number(a.target_recovery_value) > 0 && ` / ${fmt(a.target_recovery_value)} (${a.recovery_pct}%)`}
                           {a.target_reached && <Badge className="ml-2 bg-emerald-500">target</Badge>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ownerUnits.length > 0 && (
+                  <div className="pt-2 space-y-1">
+                    <div className="text-[10px] uppercase tracking-wider text-secondary">Unidades de inventario asignadas</div>
+                    {ownerUnits.map((u: any) => (
+                      <div key={u.id} className="text-xs flex items-center justify-between">
+                        <span className="font-mono">{u.serial || u.internal_code || u.id.slice(0,8)}</span>
+                        <span className="text-secondary">
+                          {u.product?.name_es || "—"} · {u.agreement_type} · owner {Number(u.owner_split_pct)}% · {u.status}
                         </span>
                       </div>
                     ))}
