@@ -612,7 +612,40 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                               onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
                             />
                           </div>
+                          </div>
                         </div>
+                        {(() => {
+                          const productUnits = inventoryUnits.filter((u: any) => u.product_id === item.product_id);
+                          return (
+                            <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
+                              <div className="col-span-12 md:col-span-6">
+                                <Label className="text-xs">Unidad de inventario asignada</Label>
+                                <Select
+                                  value={item.inventory_unit_id ?? "__none__"}
+                                  onValueChange={(v) => updateItem(idx, { inventory_unit_id: v === "__none__" ? null : v })}
+                                  disabled={!item.product_id}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={productUnits.length ? "Auto-asignar al pagar" : "Sin unidades definidas"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">— Auto / sin unidad —</SelectItem>
+                                    {productUnits.map((u: any) => (
+                                      <SelectItem key={u.id} value={u.id}>
+                                        {u.serial || u.internal_code || u.id.slice(0, 8)} · {u.agreement_type} · {u.owner_split_pct}% owner
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-12 md:col-span-6 text-[11px] text-secondary">
+                                {productUnits.length === 0
+                                  ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
+                                  : "El payout y owner se resuelven desde la unidad seleccionada."}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
