@@ -88,6 +88,13 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
     : Number(d.owner_split_pct || 0);
 
   const save = async (draft: UnitDraft) => {
+    // Coherence: if owner selected but agreement is company_owned, refuse
+    if (draft.owner_id && draft.agreement_type === "company_owned") {
+      toast.error(
+        "Has seleccionado un owner pero el agreement es 'company_owned' (0% para el owner). Cambia el agreement a split/custom/concession/external."
+      );
+      return;
+    }
     if (draft.agreement_type !== "company_owned" && !draft.owner_id) {
       toast.error("Selecciona un owner para este acuerdo");
       return;
@@ -111,17 +118,25 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
         active: draft.active,
       };
       const res = draft.id
-        ? await sb.from("inventory_units").update(payload).eq("id", draft.id)
-        : await sb.from("inventory_units").insert(payload);
-      if (res.error) throw res.error;
-      toast.success(draft.id ? "Unidad actualizada" : "Unidad creada");
+        ? await sb.from("inventory_units").update(payload).eq("id", draft.id).select().single()
+        : await sb.from("inventory_units").insert(payload).select().single();
+      if (res.error) {
+        console.error("[inventory_units save] error", res.error, "payload:", payload);
+        throw res.error;
+      }
+      console.info("[inventory_units save] ok", res.data);
+      toast.success(
+        `${draft.id ? "Unidad actualizada" : "Unidad creada"} · owner: ${
+          res.data?.owner_id ? ownerName(res.data.owner_id) : "Empresa"
+        }`
+      );
       setSavedId(id);
       setEditing(null);
       await refetch();
       qc.invalidateQueries({ queryKey: ["inventory-units"] });
       setTimeout(() => setSavedId(null), 1500);
     } catch (e: any) {
-      toast.error(e?.message ?? "Error guardando la unidad");
+      toast.error(`Error guardando: ${e?.message ?? "desconocido"}${e?.code ? ` (${e.code})` : ""}`);
     } finally {
       setSavingId(null);
     }
@@ -232,7 +247,13 @@ function UnitForm({
           <Label className="text-xs">Owner</Label>
           <Select
             value={draft.owner_id ?? "__none__"}
-            onValueChange={(v) => onChange({ ...draft, owner_id: v === "__none__" ? null : v })}
+            onValueChange={(v) => {
+              const nextOwner = v === "__none__" ? null : v;
+              // Auto-bump agreement so the owner isn't silently stripped on save
+              const nextAgreement =
+                nextOwner && draft.agreement_type === "company_owned" ? "split_70_30" : draft.agreement_type;
+              onChange({ ...draft, owner_id: nextOwner, agreement_type: nextAgreement });
+            }}
           >
             <SelectTrigger><SelectValue placeholder="Sin owner (empresa)" /></SelectTrigger>
             <SelectContent>
@@ -242,6 +263,11 @@ function UnitForm({
               ))}
             </SelectContent>
           </Select>
+          {draft.owner_id && draft.agreement_type === "company_owned" && (
+            <p className="text-[11px] text-amber-500 mt-1">
+              ⚠ Con owner seleccionado el agreement no puede ser company_owned.
+            </p>
+          )}
         </div>
         <div>
           <Label className="text-xs">Agreement</Label>
