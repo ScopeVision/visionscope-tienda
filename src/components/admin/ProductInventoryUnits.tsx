@@ -88,6 +88,13 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
     : Number(d.owner_split_pct || 0);
 
   const save = async (draft: UnitDraft) => {
+    // Coherence: if owner selected but agreement is company_owned, refuse
+    if (draft.owner_id && draft.agreement_type === "company_owned") {
+      toast.error(
+        "Has seleccionado un owner pero el agreement es 'company_owned' (0% para el owner). Cambia el agreement a split/custom/concession/external."
+      );
+      return;
+    }
     if (draft.agreement_type !== "company_owned" && !draft.owner_id) {
       toast.error("Selecciona un owner para este acuerdo");
       return;
@@ -111,17 +118,25 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
         active: draft.active,
       };
       const res = draft.id
-        ? await sb.from("inventory_units").update(payload).eq("id", draft.id)
-        : await sb.from("inventory_units").insert(payload);
-      if (res.error) throw res.error;
-      toast.success(draft.id ? "Unidad actualizada" : "Unidad creada");
+        ? await sb.from("inventory_units").update(payload).eq("id", draft.id).select().single()
+        : await sb.from("inventory_units").insert(payload).select().single();
+      if (res.error) {
+        console.error("[inventory_units save] error", res.error, "payload:", payload);
+        throw res.error;
+      }
+      console.info("[inventory_units save] ok", res.data);
+      toast.success(
+        `${draft.id ? "Unidad actualizada" : "Unidad creada"} · owner: ${
+          res.data?.owner_id ? ownerName(res.data.owner_id) : "Empresa"
+        }`
+      );
       setSavedId(id);
       setEditing(null);
       await refetch();
       qc.invalidateQueries({ queryKey: ["inventory-units"] });
       setTimeout(() => setSavedId(null), 1500);
     } catch (e: any) {
-      toast.error(e?.message ?? "Error guardando la unidad");
+      toast.error(`Error guardando: ${e?.message ?? "desconocido"}${e?.code ? ` (${e.code})` : ""}`);
     } finally {
       setSavingId(null);
     }
