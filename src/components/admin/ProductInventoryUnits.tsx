@@ -247,7 +247,13 @@ function UnitForm({
           <Label className="text-xs">Owner</Label>
           <Select
             value={draft.owner_id ?? "__none__"}
-            onValueChange={(v) => onChange({ ...draft, owner_id: v === "__none__" ? null : v })}
+            onValueChange={(v) => {
+              const nextOwner = v === "__none__" ? null : v;
+              // Auto-bump agreement so the owner isn't silently stripped on save
+              const nextAgreement =
+                nextOwner && draft.agreement_type === "company_owned" ? "split_70_30" : draft.agreement_type;
+              onChange({ ...draft, owner_id: nextOwner, agreement_type: nextAgreement });
+            }}
           >
             <SelectTrigger><SelectValue placeholder="Sin owner (empresa)" /></SelectTrigger>
             <SelectContent>
@@ -257,6 +263,11 @@ function UnitForm({
               ))}
             </SelectContent>
           </Select>
+          {draft.owner_id && draft.agreement_type === "company_owned" && (
+            <p className="text-[11px] text-amber-500 mt-1">
+              ⚠ Con owner seleccionado el agreement no puede ser company_owned.
+            </p>
+          )}
         </div>
         <div>
           <Label className="text-xs">Agreement</Label>
