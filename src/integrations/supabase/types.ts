@@ -257,6 +257,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           notes: string | null
+          paid_at: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           reference: string
           refunded_at: string | null
@@ -279,6 +280,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           notes?: string | null
+          paid_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
           refunded_at?: string | null
@@ -301,6 +303,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           notes?: string | null
+          paid_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
           refunded_at?: string | null
@@ -597,6 +600,9 @@ export type Database = {
       }
       finance_entries: {
         Row: {
+          agreement_type_snapshot:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           applied_company_pct: number | null
           asset_id: string | null
           booking_id: string | null
@@ -620,8 +626,12 @@ export type Database = {
           source_type: Database["public"]["Enums"]["finance_source_type"]
           status: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id: string | null
+          subtotal_snapshot: number | null
         }
         Insert: {
+          agreement_type_snapshot?:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           applied_company_pct?: number | null
           asset_id?: string | null
           booking_id?: string | null
@@ -645,8 +655,12 @@ export type Database = {
           source_type: Database["public"]["Enums"]["finance_source_type"]
           status?: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id?: string | null
+          subtotal_snapshot?: number | null
         }
         Update: {
+          agreement_type_snapshot?:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           applied_company_pct?: number | null
           asset_id?: string | null
           booking_id?: string | null
@@ -670,6 +684,7 @@ export type Database = {
           source_type?: Database["public"]["Enums"]["finance_source_type"]
           status?: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id?: string | null
+          subtotal_snapshot?: number | null
         }
         Relationships: [
           {
@@ -720,36 +735,42 @@ export type Database = {
         Row: {
           amount: number
           asset_id: string | null
+          asset_id_created: string | null
           booking_id: string | null
           category: string
           created_at: string
           created_by: string | null
           description: string | null
           id: string
+          kind: Database["public"]["Enums"]["finance_expense_kind"]
           occurred_at: string
           scope: Database["public"]["Enums"]["finance_expense_scope"]
         }
         Insert: {
           amount: number
           asset_id?: string | null
+          asset_id_created?: string | null
           booking_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["finance_expense_kind"]
           occurred_at?: string
           scope?: Database["public"]["Enums"]["finance_expense_scope"]
         }
         Update: {
           amount?: number
           asset_id?: string | null
+          asset_id_created?: string | null
           booking_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["finance_expense_kind"]
           occurred_at?: string
           scope?: Database["public"]["Enums"]["finance_expense_scope"]
         }
@@ -939,6 +960,9 @@ export type Database = {
       }
       finance_payouts: {
         Row: {
+          agreement_type_snapshot:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           amount: number
           applied_pct: number | null
           asset_id: string | null
@@ -957,6 +981,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agreement_type_snapshot?:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           amount?: number
           applied_pct?: number | null
           asset_id?: string | null
@@ -975,6 +1002,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agreement_type_snapshot?:
+            | Database["public"]["Enums"]["finance_agreement_type"]
+            | null
           amount?: number
           applied_pct?: number | null
           asset_id?: string | null
@@ -1182,6 +1212,39 @@ export type Database = {
           serial?: string | null
           status?: Database["public"]["Enums"]["inventory_unit_status"]
           target_recovery_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      owner_product_agreements: {
+        Row: {
+          agreement_type: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at: string
+          id: string
+          notes: string | null
+          owner_id: string
+          owner_split_pct: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          owner_split_pct?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          agreement_type?: Database["public"]["Enums"]["finance_agreement_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          owner_split_pct?: number
+          product_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -1896,6 +1959,7 @@ export type Database = {
       finance_summary: {
         Args: { _end: string; _start: string }
         Returns: {
+          asset_purchases_total: number
           cash_balance: number
           cash_reserve_target: number
           debt_repaid: number
@@ -1981,6 +2045,7 @@ export type Database = {
         | "custom_split"
         | "concession"
       finance_entry_status: "active" | "reversed" | "void"
+      finance_expense_kind: "operational" | "asset_purchase"
       finance_expense_scope: "company" | "asset" | "rental"
       finance_origin_system: "rental" | "store" | "services"
       finance_origin_type: "socio" | "concession" | "external" | "company"
@@ -2155,6 +2220,7 @@ export const Constants = {
         "concession",
       ],
       finance_entry_status: ["active", "reversed", "void"],
+      finance_expense_kind: ["operational", "asset_purchase"],
       finance_expense_scope: ["company", "asset", "rental"],
       finance_origin_system: ["rental", "store", "services"],
       finance_origin_type: ["socio", "concession", "external", "company"],
