@@ -1,0 +1,1 @@
+ALTER VIEW public.finance_equity_distribution SET (security_invoker = true);
