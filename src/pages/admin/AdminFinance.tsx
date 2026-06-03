@@ -23,7 +23,7 @@ import { currentMonthKey, getMonthRange, parseMonthKey } from "@/lib/monthRange"
 import { formatCurrency } from "@/lib/rental";
 import {
   TrendingUp, Wallet, Users, Package, Receipt, ArrowDownToLine, PiggyBank, Plus,
-  UserCircle, Settings as SettingsIcon, AlertTriangle,
+  UserCircle, Settings as SettingsIcon, AlertTriangle, ListChecks, CheckCircle2,
 } from "lucide-react";
 
 const fmt = (n: number | null | undefined) => formatCurrency(Number(n || 0), "es");
@@ -1610,6 +1610,182 @@ function SettingsTab() {
   );
 }
 
+// ============== RECONCILIATION ==============
+function ReconciliationTab() {
+  const [monthVal, setMonthVal] = useState(currentMonthKey());
+  const [onlyMismatches, setOnlyMismatches] = useState(false);
+  const { year, month } = parseMonthKey(monthVal);
+  const range = useMemo(() => getMonthRange(year, month), [year, month]);
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["finance-reconciliation", range.startISO],
+    queryFn: async () => {
+      const startISO = `${range.startISO}T00:00:00Z`;
+      const endISO = new Date(Date.UTC(year, month + 1, 1)).toISOString();
+
+      // Bookings paid (or refunded) whose paid_at is in this month
+      const { data: bookings, error } = await sb
+        .from("bookings")
+        .select("id, reference, status, payment_status, total, paid_at, refunded_at, customer:customers(full_name, email)")
+        .not("paid_at", "is", null)
+        .gte("paid_at", startISO)
+        .lt("paid_at", endISO)
+        .order("paid_at", { ascending: false });
+      if (error) throw error;
+
+      const ids = (bookings || []).map((b: any) => b.id);
+      if (ids.length === 0) return [];
+
+      const { data: entries } = await sb
+        .from("finance_entries")
+        .select("booking_id, gross_amount, company_amount, payout_amount, source_type, status, is_reversed, booking_item_id")
+        .in("booking_id", ids)
+        .eq("status", "active");
+
+      const byBooking = new Map<string, any>();
+      for (const e of (entries || []) as any[]) {
+        const cur = byBooking.get(e.booking_id) || {
+          gross: 0, company: 0, payout: 0, count: 0, items: new Set<string>(), refunds: 0,
+        };
+        cur.gross += Number(e.gross_amount || 0);
+        cur.company += Number(e.company_amount || 0);
+        cur.payout += Number(e.payout_amount || 0);
+        cur.count += 1;
+        if (e.source_type === "refund") cur.refunds += 1;
+        if (e.booking_item_id) cur.items.add(e.booking_item_id);
+        byBooking.set(e.booking_id, cur);
+      }
+
+      // count items per booking to detect missing entries
+      const { data: items } = await sb.from("booking_items").select("id, booking_id").in("booking_id", ids);
+      const itemsCount = new Map<string, number>();
+      for (const it of (items || []) as any[]) {
+        itemsCount.set(it.booking_id, (itemsCount.get(it.booking_id) || 0) + 1);
+      }
+
+      return (bookings || []).map((b: any) => {
+        const agg = byBooking.get(b.id) || { gross: 0, company: 0, payout: 0, count: 0, items: new Set(), refunds: 0 };
+        const total = Number(b.total || 0);
+        const diff = Math.round((agg.gross - total) * 100) / 100;
+        const expectedItems = itemsCount.get(b.id) || 0;
+        const coveredItems = agg.items.size;
+        const missingEntries = expectedItems - coveredItems;
+        const ok = Math.abs(diff) < 0.01 && missingEntries === 0 && agg.count > 0;
+        return { ...b, agg, total, diff, expectedItems, coveredItems, missingEntries, ok };
+      });
+    },
+  });
+
+  const filtered = onlyMismatches ? rows.filter((r: any) => !r.ok) : rows;
+
+  const totals = useMemo(() => {
+    return rows.reduce(
+      (a: any, r: any) => ({
+        bookingTotal: a.bookingTotal + r.total,
+        entriesGross: a.entriesGross + r.agg.gross,
+        mismatches: a.mismatches + (r.ok ? 0 : 1),
+      }),
+      { bookingTotal: 0, entriesGross: 0, mismatches: 0 },
+    );
+  }, [rows]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-medium">Conciliación bookings ↔ finance entries</h2>
+        <MonthNavigator value={monthVal} onChange={setMonthVal} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card icon={ListChecks} label="Bookings PAID" value={rows.length} />
+        <Card icon={TrendingUp} label="Total bookings" value={fmt(totals.bookingTotal)} />
+        <Card icon={Receipt} label="Σ entries (gross)" value={fmt(totals.entriesGross)} tone="accent" />
+        <Card
+          icon={AlertTriangle}
+          label="Discrepancias"
+          value={totals.mismatches}
+          tone={totals.mismatches === 0 ? "positive" : "negative"}
+        />
+      </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={onlyMismatches} onChange={(e) => setOnlyMismatches(e.target.checked)} />
+        Mostrar solo discrepancias
+      </label>
+
+      <div className="rounded-xl bg-surface border border-border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Referencia</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Paid at</TableHead>
+              <TableHead className="text-right">Booking total</TableHead>
+              <TableHead className="text-right">Σ entries</TableHead>
+              <TableHead className="text-right">Δ</TableHead>
+              <TableHead className="text-center">Items</TableHead>
+              <TableHead>Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow><TableCell colSpan={8} className="text-center text-secondary py-6">Cargando…</TableCell></TableRow>
+            )}
+            {!isLoading && filtered.length === 0 && (
+              <TableRow><TableCell colSpan={8} className="text-center text-secondary py-6">Sin resultados</TableCell></TableRow>
+            )}
+            {filtered.map((r: any) => {
+              const diffBad = Math.abs(r.diff) >= 0.01;
+              const missing = r.missingEntries > 0;
+              const refunded = r.payment_status === "refunded";
+              return (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-xs">
+                    <a href={`/admin/bookings?id=${r.id}`} className="hover:underline">{r.reference}</a>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <div className="font-medium">{r.customer?.full_name || "—"}</div>
+                    <div className="text-secondary">{r.customer?.email || ""}</div>
+                  </TableCell>
+                  <TableCell className="text-xs">{r.paid_at ? new Date(r.paid_at).toLocaleString() : "—"}</TableCell>
+                  <TableCell className="text-right">{fmt(r.total)}</TableCell>
+                  <TableCell className="text-right">{fmt(r.agg.gross)}</TableCell>
+                  <TableCell className={`text-right font-medium ${diffBad ? "text-rose-500" : "text-emerald-600"}`}>
+                    {r.diff > 0 ? "+" : ""}{fmt(r.diff)}
+                  </TableCell>
+                  <TableCell className="text-center text-xs">
+                    <span className={missing ? "text-rose-500 font-medium" : ""}>
+                      {r.coveredItems}/{r.expectedItems}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {r.ok ? (
+                      <Badge className="bg-emerald-500 gap-1"><CheckCircle2 className="h-3 w-3" />OK</Badge>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {diffBad && <Badge variant="destructive">Δ total</Badge>}
+                        {missing && <Badge variant="destructive">faltan {r.missingEntries}</Badge>}
+                        {r.agg.count === 0 && <Badge variant="destructive">sin entries</Badge>}
+                        {refunded && <Badge variant="outline">refunded</Badge>}
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <p className="text-xs text-secondary">
+        Compara <code>bookings.total</code> contra la suma de <code>finance_entries.gross_amount</code> (status active)
+        por <code>booking_id</code>. La columna Items verifica que cada <code>booking_item</code> tenga al menos una entry asociada.
+      </p>
+    </div>
+  );
+}
+
+
 // ============== ROOT ==============
 export default function AdminFinance() {
   return (
@@ -1623,6 +1799,7 @@ export default function AdminFinance() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="dashboard"><TrendingUp className="h-4 w-4 mr-1.5" />Dashboard</TabsTrigger>
           <TabsTrigger value="entries"><Receipt className="h-4 w-4 mr-1.5" />Ledger</TabsTrigger>
+          <TabsTrigger value="reconciliation"><ListChecks className="h-4 w-4 mr-1.5" />Conciliación</TabsTrigger>
           <TabsTrigger value="owners"><UserCircle className="h-4 w-4 mr-1.5" />Owners</TabsTrigger>
           <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1.5" />Activos</TabsTrigger>
           <TabsTrigger value="payouts"><ArrowDownToLine className="h-4 w-4 mr-1.5" />Payouts</TabsTrigger>
@@ -1635,6 +1812,7 @@ export default function AdminFinance() {
         <div className="mt-6">
           <TabsContent value="dashboard"><DashboardTab /></TabsContent>
           <TabsContent value="entries"><EntriesTab /></TabsContent>
+          <TabsContent value="reconciliation"><ReconciliationTab /></TabsContent>
           <TabsContent value="owners"><OwnersTab /></TabsContent>
           <TabsContent value="assets"><AssetsTab /></TabsContent>
           <TabsContent value="payouts"><PayoutsTab /></TabsContent>
