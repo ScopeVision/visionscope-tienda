@@ -1799,6 +1799,7 @@ export default function AdminFinance() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="dashboard"><TrendingUp className="h-4 w-4 mr-1.5" />Dashboard</TabsTrigger>
           <TabsTrigger value="entries"><Receipt className="h-4 w-4 mr-1.5" />Ledger</TabsTrigger>
+          <TabsTrigger value="reconciliation"><ListChecks className="h-4 w-4 mr-1.5" />Conciliación</TabsTrigger>
           <TabsTrigger value="owners"><UserCircle className="h-4 w-4 mr-1.5" />Owners</TabsTrigger>
           <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1.5" />Activos</TabsTrigger>
           <TabsTrigger value="payouts"><ArrowDownToLine className="h-4 w-4 mr-1.5" />Payouts</TabsTrigger>
@@ -1811,6 +1812,7 @@ export default function AdminFinance() {
         <div className="mt-6">
           <TabsContent value="dashboard"><DashboardTab /></TabsContent>
           <TabsContent value="entries"><EntriesTab /></TabsContent>
+          <TabsContent value="reconciliation"><ReconciliationTab /></TabsContent>
           <TabsContent value="owners"><OwnersTab /></TabsContent>
           <TabsContent value="assets"><AssetsTab /></TabsContent>
           <TabsContent value="payouts"><PayoutsTab /></TabsContent>
