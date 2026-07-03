@@ -357,15 +357,17 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </div>
 
-            <ProductInventoryUnits productId={product?.id} />
-            <details className="text-xs">
-              <summary className="cursor-pointer text-secondary hover:text-foreground">
-                Legacy: deal por defecto a nivel producto (deprecado — usar unidades)
-              </summary>
-              <div className="mt-2">
-                <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
-              </div>
-            </details>
+            <div id="product-inventory-units">
+              <ProductInventoryUnits productId={product?.id} />
+            </div>
+            <ProductOwnerSummary
+              productId={product?.id}
+              onGoToUnits={() =>
+                document
+                  .getElementById("product-inventory-units")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
 
 
 
