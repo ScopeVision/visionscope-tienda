@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
-import { ProductOwnerDeal } from "./ProductOwnerDeal";
 import { ProductInventoryUnits } from "./ProductInventoryUnits";
+import { ProductOwnerSummary } from "./ProductOwnerSummary";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
