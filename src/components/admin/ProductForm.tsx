@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
-import { ProductOwnerDeal } from "./ProductOwnerDeal";
 import { ProductInventoryUnits } from "./ProductInventoryUnits";
+import { ProductOwnerSummary } from "./ProductOwnerSummary";
 
 const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable();
 
@@ -357,15 +357,17 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </div>
 
-            <ProductInventoryUnits productId={product?.id} />
-            <details className="text-xs">
-              <summary className="cursor-pointer text-secondary hover:text-foreground">
-                Legacy: deal por defecto a nivel producto (deprecado — usar unidades)
-              </summary>
-              <div className="mt-2">
-                <ProductOwnerDeal productId={product?.id} productName={form.watch("name_es")} />
-              </div>
-            </details>
+            <div id="product-inventory-units">
+              <ProductInventoryUnits productId={product?.id} />
+            </div>
+            <ProductOwnerSummary
+              productId={product?.id}
+              onGoToUnits={() =>
+                document
+                  .getElementById("product-inventory-units")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
 
 
 
