@@ -173,8 +173,16 @@ const Checkout = () => {
       if (!ok) return;
       setStep(2);
     } else if (step === 2) {
-      const ok = await form.trigger(["tax_id", "address_line1", "city", "postal_code", "country"]);
+      const ok = await form.trigger(["tax_id", "address_line1", "city", "postal_code", "country", "region"]);
       if (!ok) return;
+      const countryVal = form.getValues("country").toLowerCase();
+      const regionVal = (form.getValues("region") ?? "").toLowerCase();
+      if (countryVal && !["españa", "spain", "espanya", "es"].some(v => countryVal.includes(v))) {
+        toast.warning("Nota: habitualmente operamos en España. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+      }
+      if (regionVal && !["cataluña", "catalonia", "catalunya", "cat"].some(v => regionVal.includes(v))) {
+        toast.warning("Nota: habitualmente servimos pedidos en Cataluña. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+      }
       setStep(3);
     }
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
