@@ -433,24 +433,24 @@ const Checkout = () => {
                 <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
                   Dirección & facturación
                 </h2>
-                <p className="mt-2 text-[11px] text-secondary normal-case tracking-normal">
-                  Opcional — útil para la factura. Puedes dejarlo en blanco y completar después.
-                </p>
               </header>
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="NIF/CIF">
+                <Field label="NIF/CIF *" error={form.formState.errors.tax_id?.message}>
                   <Input {...form.register("tax_id")} />
                 </Field>
-                <Field label={t("common.address")}>
+                <Field label="Dirección *" error={form.formState.errors.address_line1?.message}>
                   <Input autoComplete="street-address" {...form.register("address_line1")} />
                 </Field>
-                <Field label="Ciudad / Ville">
+                <Field label="Ciudad *" error={form.formState.errors.city?.message}>
                   <Input autoComplete="address-level2" {...form.register("city")} />
                 </Field>
-                <Field label="CP">
+                <Field label="Provincia *" error={form.formState.errors.region?.message}>
+                  <Input {...form.register("region")} placeholder="Ej: Cataluña" />
+                </Field>
+                <Field label="CP *" error={form.formState.errors.postal_code?.message}>
                   <Input autoComplete="postal-code" {...form.register("postal_code")} />
                 </Field>
-                <Field label="País / Country">
+                <Field label="País *" error={form.formState.errors.country?.message}>
                   <Input autoComplete="country-name" {...form.register("country")} />
                 </Field>
               </div>
