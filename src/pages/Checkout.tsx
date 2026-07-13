@@ -194,8 +194,31 @@ const Checkout = () => {
   };
 
   const onSubmit = async (values: FormValues) => {
+    if (!addressConfirmed) {
+      toast.error("Por favor, confirma que la dirección es correcta antes de enviar.");
+      return;
+    }
     setSubmitting(true);
     try {
+      // Check which items are still published
+      const productIds = cart.items.map(it => it.productId);
+      const { data: publishedCheck } = await supabase
+        .from('products')
+        .select('id, name_es, published')
+        .in('id', productIds);
+      const unavailable = cart.items.filter(it => {
+        const found = (publishedCheck ?? []).find((p: any) => p.id === it.productId);
+        return !found || !found.published;
+      });
+      if (unavailable.length > 0) {
+        unavailable.forEach(it => {
+          cart.remove(it.productId);
+          toast.error(`"${it.name}" ya no está disponible y ha sido eliminado del carrito.`, { duration: 8000 });
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const fullName = values.full_name.trim();
       const email = values.email.trim().toLowerCase();
       if (fullName.length < 1) return toast.error("El nombre es obligatorio.");
