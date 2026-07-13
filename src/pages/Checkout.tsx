@@ -126,6 +126,47 @@ const Checkout = () => {
     return err?.message || t("checkout.error");
   };
 
+  const handleEmailLookup = async () => {
+    const email = lookupEmail.trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error("Introduce un email válido para buscar tus datos.");
+      return;
+    }
+    setLookupLoading(true);
+    try {
+      const { data } = await supabase
+        .from("customers")
+        .select("full_name, email, phone, company, tax_id, address_line1, city, postal_code, country")
+        .eq("email", email)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        form.setValue("full_name", data.full_name ?? "");
+        form.setValue("email", data.email ?? "");
+        form.setValue("phone", data.phone ?? "");
+        form.setValue("company", data.company ?? "");
+        form.setValue("tax_id", data.tax_id ?? "");
+        form.setValue("address_line1", data.address_line1 ?? "");
+        form.setValue("city", data.city ?? "");
+        form.setValue("postal_code", data.postal_code ?? "");
+        form.setValue("country", data.country ?? "");
+        setLookupResult("found");
+        toast.success("¡Bienvenido/a de vuelta! Hemos prellenado tus datos anteriores.");
+      } else {
+        setLookupResult("not_found");
+      }
+    } catch {
+      toast.error("No se pudo buscar el cliente. Rellena el formulario manualmente.");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    toast.info("Google OAuth pendiente de configurar. Por favor, introduce tus datos manualmente.", { duration: 5000 });
+  };
+
   const goNext = async () => {
     if (step === 1) {
       const ok = await form.trigger(["full_name", "email", "phone", "company"]);
