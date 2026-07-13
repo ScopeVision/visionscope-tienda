@@ -85,6 +85,7 @@ const Checkout = () => {
       tax_id: "",
       address_line1: "",
       city: "",
+      region: "",
       postal_code: "",
       country: "",
       notes: "",
