@@ -18,6 +18,7 @@ const RentalHouse = () => {
   const { t, i18n } = useTranslation();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const selectedCategory = params.get("category") ?? "";
 
