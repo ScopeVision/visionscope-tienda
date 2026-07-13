@@ -136,16 +136,101 @@ const RentalHouse = () => {
         </p>
       </header>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-        <Input
-          placeholder={t("rental.searchPlaceholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-surface border-border focus-visible:ring-accent h-11"
-        />
+      {/* Mobile filter bar */}
+      <div className="flex md:hidden items-center gap-2 mb-4 sticky top-16 z-20 bg-background/95 backdrop-blur-sm py-2 -mx-4 px-4">
+        <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2 h-10 border-border shrink-0">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filtros
+              {activeCount > 0 && (
+                <span className="bg-accent text-accent-foreground text-[10px] font-medium rounded-full h-4 w-4 grid place-items-center leading-none">
+                  {activeCount}
+                </span>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-xl">
+            <SheetHeader className="mb-5">
+              <SheetTitle className="text-left text-[11px] uppercase tracking-[0.28em]">Filtros</SheetTitle>
+            </SheetHeader>
+            <div className="mb-5">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">Categoría</div>
+              <div className="flex flex-wrap gap-2">
+                <CategoryPill active={!selectedCategory} label={t("common.all")} onClick={() => setCategory("")} />
+                {categories.map((c: any) => (
+                  <CategoryPill key={c.id} active={selectedCategory === c.slug}
+                    label={localized(c, "name", i18n.language)} onClick={() => setCategory(c.slug)} />
+                ))}
+              </div>
+            </div>
+            {dynamicSpecs.length > 0 && (
+              <div className="space-y-4 mb-5">
+                {dynamicSpecs.map((spec) => {
+                  const active = dynFilters[spec.key] ?? [];
+                  if (spec.kind === "boolean") {
+                    return (
+                      <div key={spec.key}>
+                        <button type="button" onClick={() => toggleDynValue(spec.key, "1")}
+                          className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                            active.length > 0 ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border")}>
+                          {t(spec.labelKey)}
+                        </button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={spec.key}>
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">{t(spec.labelKey)}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {spec.options.map((opt) => {
+                          const isActive = active.includes(opt.value);
+                          const label = opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey;
+                          return (
+                            <button key={opt.value} type="button" onClick={() => toggleDynValue(spec.key, opt.value)}
+                              className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                                isActive ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border")}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {activeCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => { clearFilters(); }}
+                className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px] mb-3 w-full justify-start">
+                <X className="h-3 w-3" /> Limpiar filtros
+              </Button>
+            )}
+            <Button className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 uppercase tracking-[0.2em] text-xs rounded-sm"
+              onClick={() => setFilterOpen(false)}>
+              Ver {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+            </Button>
+          </SheetContent>
+        </Sheet>
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary pointer-events-none" />
+          <Input placeholder={t("rental.searchPlaceholder")} value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-surface border-border h-10 focus-visible:ring-accent" />
+        </div>
       </div>
+
+      <div className="hidden md:block">
+        {/* Search */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+          <Input
+            placeholder={t("rental.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-surface border-border focus-visible:ring-accent h-11"
+          />
+        </div>
 
       {/* Category pills (always visible, single-select) */}
       <div className="flex flex-wrap gap-2 mb-4">
