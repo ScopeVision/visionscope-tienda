@@ -69,6 +69,10 @@ const Checkout = () => {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessSnapshot | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<"found" | "not_found" | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
