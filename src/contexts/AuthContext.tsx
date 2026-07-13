@@ -8,6 +8,8 @@ type AuthCtx = {
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
+  googleProfile: { name: string; email: string; picture?: string } | null;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
 };
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -17,6 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [googleProfile, setGoogleProfile] = useState<{ name: string; email: string; picture?: string } | null>(null);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -62,10 +65,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setGoogleProfile(null);
+  };
+
+  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return {
+        success: false,
+        error: "Google OAuth no configurado. Contacta al administrador o sigue los pasos en GOOGLE_OAUTH_SETUP.md.",
+      };
+    }
+    // Full implementation activates once VITE_GOOGLE_CLIENT_ID is set
+    // and Supabase Google provider is enabled in the dashboard.
+    return { success: false, error: "Google OAuth pendiente de activación." };
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdmin, loading, signOut, googleProfile, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );
