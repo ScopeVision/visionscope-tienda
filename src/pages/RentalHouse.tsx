@@ -307,6 +307,7 @@ const RentalHouse = () => {
           })}
         </div>
       )}
+      </div>{/* /desktop filters */}
 
       {/* Active filter summary / clear */}
       {activeCount > 0 && (
