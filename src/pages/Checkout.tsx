@@ -31,11 +31,12 @@ const schema = z.object({
   email: z.string().trim().email("Email no válido").max(255),
   phone: z.string().trim().min(6, "Teléfono obligatorio").max(40),
   company: z.string().trim().max(200).optional().or(z.literal("")),
-  tax_id: z.string().trim().max(40).optional().or(z.literal("")),
-  address_line1: z.string().trim().max(200).optional().or(z.literal("")),
-  city: z.string().trim().max(100).optional().or(z.literal("")),
-  postal_code: z.string().trim().max(20).optional().or(z.literal("")),
-  country: z.string().trim().max(100).optional().or(z.literal("")),
+  tax_id: z.string().trim().min(1, "NIF/CIF obligatorio").max(40),
+  address_line1: z.string().trim().min(5, "Dirección obligatoria (mín. 5 caracteres)").max(200),
+  city: z.string().trim().min(2, "Ciudad obligatoria").max(100),
+  region: z.string().trim().max(100).optional().or(z.literal("")),
+  postal_code: z.string().trim().min(4, "Código postal obligatorio").max(20),
+  country: z.string().trim().min(2, "País obligatorio").max(100),
   notes: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
