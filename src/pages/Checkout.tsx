@@ -483,15 +483,28 @@ const Checkout = () => {
                 {v.company && <ReviewRow label="Empresa" value={v.company} />}
               </ReviewBlock>
 
-              {(v.address_line1 || v.city || v.postal_code || v.country || v.tax_id) && (
+              {(v.address_line1 || v.city || v.postal_code || v.country || v.tax_id || v.region) && (
                 <ReviewBlock title="Dirección">
                   {v.tax_id && <ReviewRow label="NIF/CIF" value={v.tax_id} />}
                   {v.address_line1 && <ReviewRow label="Dirección" value={v.address_line1} />}
                   {v.city && <ReviewRow label="Ciudad" value={v.city} />}
+                  {v.region && <ReviewRow label="Provincia" value={v.region} />}
                   {v.postal_code && <ReviewRow label="CP" value={v.postal_code} />}
                   {v.country && <ReviewRow label="País" value={v.country} />}
                 </ReviewBlock>
               )}
+
+              <label className="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-border">
+                <input
+                  type="checkbox"
+                  checked={addressConfirmed}
+                  onChange={e => setAddressConfirmed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-accent shrink-0"
+                />
+                <span className="text-sm text-secondary leading-snug">
+                  Confirmo que la dirección indicada es correcta y está actualizada.
+                </span>
+              </label>
 
               {v.notes && (
                 <ReviewBlock title="Notas">
