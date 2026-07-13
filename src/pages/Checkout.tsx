@@ -544,7 +544,7 @@ const Checkout = () => {
               <Button
                 type="submit"
                 size="lg"
-                disabled={submitting}
+                disabled={submitting || !addressConfirmed}
                 className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-12 rounded-sm"
               >
                 {submitting ? t("common.loading") : t("checkout.submit")}
