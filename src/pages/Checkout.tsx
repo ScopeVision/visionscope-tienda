@@ -123,6 +123,9 @@ const Checkout = () => {
     if (code === "23505") return "Ya existe un cliente con esos datos.";
     if (raw.includes("violates check constraint"))
       return "Algún dato no cumple las reglas de validación. Revisa nombre y email.";
+    if (raw.includes("product not found or not published")) {
+      return "Uno o más productos de tu carrito ya no están disponibles. Hemos actualizado tu carrito — revísalo antes de continuar.";
+    }
     return err?.message || t("checkout.error");
   };
 
