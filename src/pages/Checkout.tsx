@@ -31,11 +31,12 @@ const schema = z.object({
   email: z.string().trim().email("Email no válido").max(255),
   phone: z.string().trim().min(6, "Teléfono obligatorio").max(40),
   company: z.string().trim().max(200).optional().or(z.literal("")),
-  tax_id: z.string().trim().max(40).optional().or(z.literal("")),
-  address_line1: z.string().trim().max(200).optional().or(z.literal("")),
-  city: z.string().trim().max(100).optional().or(z.literal("")),
-  postal_code: z.string().trim().max(20).optional().or(z.literal("")),
-  country: z.string().trim().max(100).optional().or(z.literal("")),
+  tax_id: z.string().trim().min(1, "NIF/CIF obligatorio").max(40),
+  address_line1: z.string().trim().min(5, "Dirección obligatoria (mín. 5 caracteres)").max(200),
+  city: z.string().trim().min(2, "Ciudad obligatoria").max(100),
+  region: z.string().trim().max(100).optional().or(z.literal("")),
+  postal_code: z.string().trim().min(4, "Código postal obligatorio").max(20),
+  country: z.string().trim().min(2, "País obligatorio").max(100),
   notes: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
@@ -68,6 +69,10 @@ const Checkout = () => {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessSnapshot | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<"found" | "not_found" | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -80,6 +85,7 @@ const Checkout = () => {
       tax_id: "",
       address_line1: "",
       city: "",
+      region: "",
       postal_code: "",
       country: "",
       notes: "",
@@ -117,7 +123,51 @@ const Checkout = () => {
     if (code === "23505") return "Ya existe un cliente con esos datos.";
     if (raw.includes("violates check constraint"))
       return "Algún dato no cumple las reglas de validación. Revisa nombre y email.";
+    if (raw.includes("product not found or not published")) {
+      return "Uno o más productos de tu carrito ya no están disponibles. Hemos actualizado tu carrito — revísalo antes de continuar.";
+    }
     return err?.message || t("checkout.error");
+  };
+
+  const handleEmailLookup = async () => {
+    const email = lookupEmail.trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error("Introduce un email válido para buscar tus datos.");
+      return;
+    }
+    setLookupLoading(true);
+    try {
+      const { data } = await supabase
+        .from("customers")
+        .select("full_name, email, phone, company, tax_id, address_line1, city, postal_code, country")
+        .eq("email", email)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        form.setValue("full_name", data.full_name ?? "");
+        form.setValue("email", data.email ?? "");
+        form.setValue("phone", data.phone ?? "");
+        form.setValue("company", data.company ?? "");
+        form.setValue("tax_id", data.tax_id ?? "");
+        form.setValue("address_line1", data.address_line1 ?? "");
+        form.setValue("city", data.city ?? "");
+        form.setValue("postal_code", data.postal_code ?? "");
+        form.setValue("country", data.country ?? "");
+        setLookupResult("found");
+        toast.success("¡Bienvenido/a de vuelta! Hemos prellenado tus datos anteriores.");
+      } else {
+        setLookupResult("not_found");
+      }
+    } catch {
+      toast.error("No se pudo buscar el cliente. Rellena el formulario manualmente.");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    toast.info("Google OAuth pendiente de configurar. Por favor, introduce tus datos manualmente.", { duration: 5000 });
   };
 
   const goNext = async () => {
@@ -126,8 +176,16 @@ const Checkout = () => {
       if (!ok) return;
       setStep(2);
     } else if (step === 2) {
-      const ok = await form.trigger(["tax_id", "address_line1", "city", "postal_code", "country"]);
+      const ok = await form.trigger(["tax_id", "address_line1", "city", "postal_code", "country", "region"]);
       if (!ok) return;
+      const countryVal = form.getValues("country").toLowerCase();
+      const regionVal = (form.getValues("region") ?? "").toLowerCase();
+      if (countryVal && !["españa", "spain", "espanya", "es"].some(v => countryVal.includes(v))) {
+        toast.warning("Nota: habitualmente operamos en España. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+      }
+      if (regionVal && !["cataluña", "catalonia", "catalunya", "cat"].some(v => regionVal.includes(v))) {
+        toast.warning("Nota: habitualmente servimos pedidos en Cataluña. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+      }
       setStep(3);
     }
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -139,8 +197,31 @@ const Checkout = () => {
   };
 
   const onSubmit = async (values: FormValues) => {
+    if (!addressConfirmed) {
+      toast.error("Por favor, confirma que la dirección es correcta antes de enviar.");
+      return;
+    }
     setSubmitting(true);
     try {
+      // Check which items are still published
+      const productIds = cart.items.map(it => it.productId);
+      const { data: publishedCheck } = await supabase
+        .from('products')
+        .select('id, name_es, published')
+        .in('id', productIds);
+      const unavailable = cart.items.filter(it => {
+        const found = (publishedCheck ?? []).find((p: any) => p.id === it.productId);
+        return !found || !found.published;
+      });
+      if (unavailable.length > 0) {
+        unavailable.forEach(it => {
+          cart.remove(it.productId);
+          toast.error(`"${it.name}" ya no está disponible y ha sido eliminado del carrito.`, { duration: 8000 });
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const fullName = values.full_name.trim();
       const email = values.email.trim().toLowerCase();
       if (fullName.length < 1) return toast.error("El nombre es obligatorio.");
@@ -262,28 +343,86 @@ const Checkout = () => {
 
           {/* STEP 1 - Data */}
           {step === 1 && (
-            <section className="p-6 md:p-7 rounded-sm bg-surface border border-border">
-              <header className="mb-5 pb-4 border-b border-border">
-                <div className="text-[10px] uppercase tracking-[0.28em] text-accent">01</div>
-                <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
-                  {t("checkout.yourData")}
-                </h2>
-              </header>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label={t("common.name") + " *"} error={form.formState.errors.full_name?.message}>
-                  <Input autoComplete="name" {...form.register("full_name")} />
-                </Field>
-                <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
-                  <Input type="email" autoComplete="email" {...form.register("email")} />
-                </Field>
-                <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
-                  <Input autoComplete="tel" {...form.register("phone")} />
-                </Field>
-                <Field label={t("common.company")}>
-                  <Input autoComplete="organization" {...form.register("company")} />
-                </Field>
+            <>
+              {/* Customer identification */}
+              <div className="p-5 rounded-sm bg-surface border border-border space-y-4">
+                <div className="text-[10px] uppercase tracking-[0.28em] text-accent mb-1">¿Ya has alquilado antes?</div>
+                <div className="grid md:grid-cols-2 gap-4 items-start">
+                  <div className="space-y-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGoogleLogin}
+                      className="w-full h-11 gap-3 border-border hover:border-accent justify-center"
+                    >
+                      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      </svg>
+                      Continuar con Google
+                    </Button>
+                    <p className="text-[10px] text-secondary text-center">Pre-rellena tus datos automáticamente</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={lookupEmail}
+                        onChange={e => setLookupEmail(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleEmailLookup(); } }}
+                        className="h-11 flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleEmailLookup}
+                        disabled={lookupLoading}
+                        className="h-11 px-4 shrink-0"
+                      >
+                        {lookupLoading ? "…" : "Buscar"}
+                      </Button>
+                    </div>
+                    {lookupResult === "found" && (
+                      <p className="text-xs text-green-500">✓ Datos prellenados — revísalos abajo</p>
+                    )}
+                    {lookupResult === "not_found" && (
+                      <p className="text-xs text-secondary">No encontrado — rellena el formulario</p>
+                    )}
+                  </div>
+                </div>
+                <div className="relative flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[10px] uppercase tracking-[0.22em] text-secondary shrink-0">O rellena manualmente</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
               </div>
-            </section>
+
+              <section className="p-6 md:p-7 rounded-sm bg-surface border border-border">
+                <header className="mb-5 pb-4 border-b border-border">
+                  <div className="text-[10px] uppercase tracking-[0.28em] text-accent">01</div>
+                  <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
+                    {t("checkout.yourData")}
+                  </h2>
+                </header>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label={t("common.name") + " *"} error={form.formState.errors.full_name?.message}>
+                    <Input autoComplete="name" {...form.register("full_name")} />
+                  </Field>
+                  <Field label={t("common.email") + " *"} error={form.formState.errors.email?.message}>
+                    <Input type="email" autoComplete="email" {...form.register("email")} />
+                  </Field>
+                  <Field label={t("common.phone") + " *"} error={form.formState.errors.phone?.message}>
+                    <Input autoComplete="tel" {...form.register("phone")} />
+                  </Field>
+                  <Field label={t("common.company")}>
+                    <Input autoComplete="organization" {...form.register("company")} />
+                  </Field>
+                </div>
+              </section>
+            </>
           )}
 
           {/* STEP 2 - Address */}
@@ -294,24 +433,24 @@ const Checkout = () => {
                 <h2 className="mt-1.5 text-base font-medium uppercase tracking-[0.06em]">
                   Dirección & facturación
                 </h2>
-                <p className="mt-2 text-[11px] text-secondary normal-case tracking-normal">
-                  Opcional — útil para la factura. Puedes dejarlo en blanco y completar después.
-                </p>
               </header>
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="NIF/CIF">
+                <Field label="NIF/CIF *" error={form.formState.errors.tax_id?.message}>
                   <Input {...form.register("tax_id")} />
                 </Field>
-                <Field label={t("common.address")}>
+                <Field label="Dirección *" error={form.formState.errors.address_line1?.message}>
                   <Input autoComplete="street-address" {...form.register("address_line1")} />
                 </Field>
-                <Field label="Ciudad / Ville">
+                <Field label="Ciudad *" error={form.formState.errors.city?.message}>
                   <Input autoComplete="address-level2" {...form.register("city")} />
                 </Field>
-                <Field label="CP">
+                <Field label="Provincia *" error={form.formState.errors.region?.message}>
+                  <Input {...form.register("region")} placeholder="Ej: Cataluña" />
+                </Field>
+                <Field label="CP *" error={form.formState.errors.postal_code?.message}>
                   <Input autoComplete="postal-code" {...form.register("postal_code")} />
                 </Field>
-                <Field label="País / Country">
+                <Field label="País *" error={form.formState.errors.country?.message}>
                   <Input autoComplete="country-name" {...form.register("country")} />
                 </Field>
               </div>
@@ -344,15 +483,28 @@ const Checkout = () => {
                 {v.company && <ReviewRow label="Empresa" value={v.company} />}
               </ReviewBlock>
 
-              {(v.address_line1 || v.city || v.postal_code || v.country || v.tax_id) && (
+              {(v.address_line1 || v.city || v.postal_code || v.country || v.tax_id || v.region) && (
                 <ReviewBlock title="Dirección">
                   {v.tax_id && <ReviewRow label="NIF/CIF" value={v.tax_id} />}
                   {v.address_line1 && <ReviewRow label="Dirección" value={v.address_line1} />}
                   {v.city && <ReviewRow label="Ciudad" value={v.city} />}
+                  {v.region && <ReviewRow label="Provincia" value={v.region} />}
                   {v.postal_code && <ReviewRow label="CP" value={v.postal_code} />}
                   {v.country && <ReviewRow label="País" value={v.country} />}
                 </ReviewBlock>
               )}
+
+              <label className="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-border">
+                <input
+                  type="checkbox"
+                  checked={addressConfirmed}
+                  onChange={e => setAddressConfirmed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-accent shrink-0"
+                />
+                <span className="text-sm text-secondary leading-snug">
+                  Confirmo que la dirección indicada es correcta y está actualizada.
+                </span>
+              </label>
 
               {v.notes && (
                 <ReviewBlock title="Notas">
@@ -392,7 +544,7 @@ const Checkout = () => {
               <Button
                 type="submit"
                 size="lg"
-                disabled={submitting}
+                disabled={submitting || !addressConfirmed}
                 className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-12 rounded-sm"
               >
                 {submitting ? t("common.loading") : t("checkout.submit")}
