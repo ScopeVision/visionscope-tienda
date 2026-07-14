@@ -108,6 +108,9 @@ const AdminBookings = () => {
           <Button variant="outline" size="sm" onClick={exportCsv} className="gap-2">
             <Download className="h-4 w-4" /> {t("admin.export")}
           </Button>
+          <Button size="sm" onClick={() => setCreatingNew(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Nueva reserva
+          </Button>
         </div>
       </div>
 
