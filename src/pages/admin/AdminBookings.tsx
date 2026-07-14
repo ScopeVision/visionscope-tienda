@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/rental";
-import { Download, Eye, Search } from "lucide-react";
+import { Download, Eye, Plus, Search } from "lucide-react";
 
 import BookingEditor, {
   BOOKING_STATUSES,
@@ -31,6 +31,7 @@ const AdminBookings = () => {
   const [paymentFilter, setPaymentFilter] = useState<string>("__all__");
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
 
   const { year, month } = parseMonthKey(monthVal);
   const range = useMemo(() => getMonthRange(year, month, i18n.language), [year, month, i18n.language]);
@@ -106,6 +107,9 @@ const AdminBookings = () => {
           <MonthNavigator value={monthVal} onChange={setMonthVal} />
           <Button variant="outline" size="sm" onClick={exportCsv} className="gap-2">
             <Download className="h-4 w-4" /> {t("admin.export")}
+          </Button>
+          <Button size="sm" onClick={() => setCreatingNew(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Nueva reserva
           </Button>
         </div>
       </div>
@@ -221,8 +225,10 @@ const AdminBookings = () => {
 
       <BookingEditor
         bookingId={editingId}
+        isCreatingNew={creatingNew}
         onClose={() => {
           setEditingId(null);
+          setCreatingNew(false);
           qc.invalidateQueries({ queryKey: ["admin-bookings-month"] });
           qc.invalidateQueries({ queryKey: ["admin-audit-month"] });
         }}

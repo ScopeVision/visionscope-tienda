@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, History, Save } from "lucide-react";
 import BookingCommunications from "./BookingCommunications";
+import CustomerPicker from "./CustomerPicker";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency, daysBetween, PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
@@ -66,13 +68,16 @@ export const PAYMENT_LABELS: Record<string, string> = {
 
 type Props = {
   bookingId: string | null;
+  isCreatingNew?: boolean;
   onClose: () => void;
 };
 
-export default function BookingEditor({ bookingId, onClose }: Props) {
+export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Props) {
   const { i18n } = useTranslation();
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; full_name: string; email: string; phone?: string | null } | null>(null);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["admin-booking-edit", bookingId],
@@ -148,7 +153,33 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
 
   const [showLog, setShowLog] = useState(false);
 
+  // Create mode: initialize fresh draft when dialog opens
   useEffect(() => {
+    if (!isCreatingNew || bookingId) {
+      setSelectedCustomer(null);
+      setAlreadyCompleted(false);
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    setDraft({
+      items: [],
+      discount_type: "none",
+      discount_value: 0,
+      extra_fees: [],
+      subtotal_override: null,
+      total_override: null,
+      pricing_settings: null,
+      status: "nuevo",
+      payment_status: "unpaid",
+      start_date: today,
+      end_date: today,
+      notes: "",
+      internal_notes: "",
+    });
+  }, [isCreatingNew, bookingId]);
+
+  useEffect(() => {
+    if (isCreatingNew && !bookingId) return; // handled by create-mode effect above
     if (!booking) {
       setDraft(null);
       return;
@@ -187,14 +218,14 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking, pricingSettings]);
+  }, [booking, pricingSettings, isCreatingNew, bookingId]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
     return computeBookingBreakdown(draft);
   }, [draft]);
 
-  if (!bookingId) return null;
+
 
   const updateItem = (idx: number, patch: Partial<EditableItem>) => {
     setDraft((d) => {
@@ -275,7 +306,116 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
   };
 
   const save = async () => {
-    if (!draft || !booking || !breakdown) return;
+    if (!draft || !breakdown) return;
+
+    // ── CREATE MODE ──────────────────────────────────────────────────────────
+    if (isCreatingNew && !bookingId) {
+      if (!selectedCustomer) {
+        toast.error("Selecciona un cliente antes de guardar");
+        return;
+      }
+      if (draft.items.length === 0) {
+        toast.error("Añade al menos un producto");
+        return;
+      }
+      if (draft.items.some((i) => !i.product_id)) {
+        toast.error("Hay productos sin seleccionar");
+        return;
+      }
+      setSaving(true);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id ?? null;
+        const days = daysBetween(draft.start_date, draft.end_date);
+        const today = new Date().toISOString().split('T')[0];
+        const isRetroactive = draft.start_date < today;
+
+        const { data: newBooking, error: bErr } = await supabase
+          .from("bookings")
+          .insert({
+            customer_id: selectedCustomer.id,
+            start_date: draft.start_date,
+            end_date: draft.end_date,
+            status: draft.status as any,
+            payment_status: draft.payment_status as any,
+            subtotal: breakdown.effective_subtotal,
+            deposit_total: breakdown.deposit_total,
+            total: breakdown.total,
+            discount_type: draft.discount_type,
+            discount_value: draft.discount_value,
+            extra_fees: draft.extra_fees as any,
+            subtotal_override: draft.subtotal_override,
+            total_override: draft.total_override,
+            notes: draft.notes || null,
+            internal_notes: draft.internal_notes || null,
+          })
+          .select()
+          .single();
+        if (bErr) throw bErr;
+
+        for (const item of draft.items) {
+          const br = computeBookingBreakdown({ ...draft, items: [item] });
+          const auto = br.items[0].auto_subtotal;
+          const isOverride =
+            item.price_override != null ||
+            (item.discount_type !== "none" && (item.discount_value ?? 0) > 0);
+          const { error: iErr } = await supabase.from("booking_items").insert({
+            booking_id: newBooking.id,
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            days: item.days || days,
+            price_day: item.price_day,
+            price_week: item.price_week ?? null,
+            deposit: item.deposit,
+            discount_type: item.discount_type,
+            discount_value: item.discount_value,
+            price_override: item.price_override,
+            pricing_model: item.pricing_model ?? null,
+            auto_subtotal: auto,
+            override_reason: item.override_reason || null,
+            inventory_unit_id: item.inventory_unit_id ?? null,
+            overridden_by: isOverride ? userId : null,
+            overridden_at: isOverride ? new Date().toISOString() : null,
+            subtotal: br.items[0].final_subtotal,
+          });
+          if (iErr) throw iErr;
+        }
+
+        await supabase.from("booking_audit_log").insert({
+          booking_id: newBooking.id,
+          actor_user_id: userId,
+          action: "create",
+          changes: {
+            retroactive: isRetroactive,
+            logged_on: new Date().toISOString(),
+            start_date: draft.start_date,
+            end_date: draft.end_date,
+            customer_id: selectedCustomer.id,
+            customer_name: selectedCustomer.full_name,
+            items_count: draft.items.length,
+            total: breakdown.total,
+            ...(isRetroactive
+              ? { note: "Reserva retroactiva registrada manualmente por el administrador" }
+              : {}),
+          },
+        });
+
+        toast.success("Reserva creada correctamente");
+        qc.invalidateQueries({ queryKey: ["admin-bookings"] });
+        qc.invalidateQueries({ queryKey: ["admin-stats"] });
+        onClose();
+      } catch (e: any) {
+        toast.error(e.message || "Error al crear la reserva");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // ── EDIT MODE ────────────────────────────────────────────────────────────
+    if (!booking) return;
     if (draft.items.some((i) => !i.product_id)) {
       toast.error("Hay productos sin seleccionar");
       return;
@@ -437,15 +577,15 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
   const fmt = (n: number) => formatCurrency(n, i18n.language);
 
   return (
-    <Dialog open={!!bookingId} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={!!bookingId || !!isCreatingNew} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
-        {isLoading || !draft || !booking ? (
+        {(!draft || (!!bookingId && (isLoading || !booking))) ? (
           <div className="py-10 text-center text-secondary">Cargando…</div>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle className="font-mono flex items-center gap-3">
-                {booking.reference}
+                {isCreatingNew ? "Nueva reserva" : booking?.reference}
                 <Badge variant="secondary">{STATUS_LABELS[draft.status] ?? draft.status}</Badge>
                 <Badge variant="outline">{PAYMENT_LABELS[draft.payment_status] ?? draft.payment_status}</Badge>
               </DialogTitle>
@@ -479,10 +619,17 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
               </div>
 
               {/* Customer */}
-              <div className="rounded-md border border-border p-3 text-sm">
-                <div className="font-medium">{(booking as any).customer?.full_name}</div>
-                <div className="text-secondary">{(booking as any).customer?.email} · {(booking as any).customer?.phone ?? "—"}</div>
-              </div>
+              {isCreatingNew ? (
+                <CustomerPicker
+                  value={selectedCustomer?.id ?? null}
+                  onChange={(c) => setSelectedCustomer(c)}
+                />
+              ) : (
+                <div className="rounded-md border border-border p-3 text-sm">
+                  <div className="font-medium">{(booking as any).customer?.full_name}</div>
+                  <div className="text-secondary">{(booking as any).customer?.email} · {(booking as any).customer?.phone ?? "—"}</div>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
@@ -496,7 +643,40 @@ export default function BookingEditor({ bookingId, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Items */}
+              {/* Retroactive warning */}
+              {draft.start_date < new Date().toISOString().split('T')[0] && (
+                <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                  ⚠ La fecha de inicio es anterior a hoy. Se registrará como reserva retroactiva en el historial.
+                </div>
+              )}
+
+              {/* "Already completed" shortcut — create mode only */}
+              {isCreatingNew && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="already-completed"
+                    checked={alreadyCompleted}
+                    onCheckedChange={(v) => {
+                      const checked = !!v;
+                      setAlreadyCompleted(checked);
+                      setDraft((d) =>
+                        d
+                          ? {
+                              ...d,
+                              status: checked ? "finalizado" : "nuevo",
+                              payment_status: checked ? "paid" : "unpaid",
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                  <label htmlFor="already-completed" className="text-sm cursor-pointer select-none">
+                    Reserva ya completada (marcar como finalizada y pagada)
+                  </label>
+                </div>
+              )}
+
+
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium">Productos</h3>
