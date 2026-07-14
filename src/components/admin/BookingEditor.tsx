@@ -725,9 +725,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                     const br = breakdown!.items[idx];
                     const isExpanded = expandedItems.has(idx);
 
-                    const hasDiscount =
-                      (item.discount_type !== "none" && (item.discount_value ?? 0) > 0) ||
-                      (draft.discount_type !== "none" && (draft.discount_value ?? 0) > 0);
+                    const hasDiscount = item.discount_type !== "none" && (item.discount_value ?? 0) > 0;
                     const hasOverride = item.price_override != null || (item.override_reason ?? "").trim().length > 0;
 
                     const variantName = item.variant_id
