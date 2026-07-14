@@ -626,8 +626,8 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                 />
               ) : (
                 <div className="rounded-md border border-border p-3 text-sm">
-                  <div className="font-medium">{(booking as any).customer?.full_name}</div>
-                  <div className="text-secondary">{(booking as any).customer?.email} · {(booking as any).customer?.phone ?? "—"}</div>
+                  <div className="font-medium">{(booking as any)?.customer?.full_name}</div>
+                  <div className="text-secondary">{(booking as any)?.customer?.email} · {(booking as any)?.customer?.phone ?? "—"}</div>
                 </div>
               )}
 
