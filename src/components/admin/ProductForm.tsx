@@ -189,6 +189,45 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const kitMode = form.watch("kit_mode");
   const isLensesCategory = selectedCategorySlug === "lenses";
 
+  // Auto-fill internal_code when creating and selecting a category
+  useEffect(() => {
+    if (product) return; // only in create mode
+    if (form.getValues("internal_code")) return;
+    (async () => {
+      const { data, error } = await supabase.rpc("generate_internal_code" as any, {
+        p_category_id: selectedCategoryId ?? null,
+      });
+      if (!error && data) {
+        form.setValue("internal_code", data as any, { shouldDirty: false });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId, product]);
+
+  const attemptUnlock = async () => {
+    setPinError(null);
+    const { data, error } = await supabase
+      .from("site_settings" as any)
+      .select("internal_code_pin")
+      .maybeSingle();
+    if (error) {
+      setPinError(error.message);
+      return;
+    }
+    const pin = (data as any)?.internal_code_pin;
+    if (!pin) {
+      setPinError("No hay PIN configurado. Configúralo en Ajustes primero.");
+      return;
+    }
+    if (pinInput === pin) {
+      setCodeUnlocked(true);
+      setPinDialogOpen(false);
+      setPinInput("");
+    } else {
+      setPinError("PIN incorrecto");
+    }
+  };
+
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
     form.setValue("tag_ids", next, { shouldDirty: true });
