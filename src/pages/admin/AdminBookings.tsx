@@ -31,6 +31,7 @@ const AdminBookings = () => {
   const [paymentFilter, setPaymentFilter] = useState<string>("__all__");
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
 
   const { year, month } = parseMonthKey(monthVal);
   const range = useMemo(() => getMonthRange(year, month, i18n.language), [year, month, i18n.language]);
