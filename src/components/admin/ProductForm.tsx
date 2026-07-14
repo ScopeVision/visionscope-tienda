@@ -35,6 +35,12 @@ const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable()
 const schema = z.object({
   kit_mode: z.enum(["individual", "lens_kit", "camera_kit", "pack"]).default("individual"),
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
+  internal_code: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{3}-\d{4}$/, "Formato: PREFIJO-NNNN (ej. OPT-0007)")
+    .optional()
+    .or(z.literal("")),
   category_id: z.string().uuid().nullable().optional(),
   name_es: z.string().trim().min(1).max(200),
   name_ca: z.string().trim().max(200).optional().or(z.literal("")),
