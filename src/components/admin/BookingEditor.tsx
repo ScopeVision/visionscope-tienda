@@ -153,7 +153,33 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
 
   const [showLog, setShowLog] = useState(false);
 
+  // Create mode: initialize fresh draft when dialog opens
   useEffect(() => {
+    if (!isCreatingNew || bookingId) {
+      setSelectedCustomer(null);
+      setAlreadyCompleted(false);
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    setDraft({
+      items: [],
+      discount_type: "none",
+      discount_value: 0,
+      extra_fees: [],
+      subtotal_override: null,
+      total_override: null,
+      pricing_settings: null,
+      status: "nuevo",
+      payment_status: "unpaid",
+      start_date: today,
+      end_date: today,
+      notes: "",
+      internal_notes: "",
+    });
+  }, [isCreatingNew, bookingId]);
+
+  useEffect(() => {
+    if (isCreatingNew && !bookingId) return; // handled by create-mode effect above
     if (!booking) {
       setDraft(null);
       return;
@@ -192,14 +218,14 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking, pricingSettings]);
+  }, [booking, pricingSettings, isCreatingNew, bookingId]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
     return computeBookingBreakdown(draft);
   }, [draft]);
 
-  if (!bookingId) return null;
+
 
   const updateItem = (idx: number, patch: Partial<EditableItem>) => {
     setDraft((d) => {
