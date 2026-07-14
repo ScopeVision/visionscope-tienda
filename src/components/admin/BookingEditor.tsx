@@ -577,15 +577,15 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   const fmt = (n: number) => formatCurrency(n, i18n.language);
 
   return (
-    <Dialog open={!!bookingId} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={!!bookingId || !!isCreatingNew} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
-        {isLoading || !draft || !booking ? (
+        {(!draft || (!!bookingId && (isLoading || !booking))) ? (
           <div className="py-10 text-center text-secondary">Cargando…</div>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle className="font-mono flex items-center gap-3">
-                {booking.reference}
+                {isCreatingNew ? "Nueva reserva" : booking?.reference}
                 <Badge variant="secondary">{STATUS_LABELS[draft.status] ?? draft.status}</Badge>
                 <Badge variant="outline">{PAYMENT_LABELS[draft.payment_status] ?? draft.payment_status}</Badge>
               </DialogTitle>
@@ -619,10 +619,17 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
               </div>
 
               {/* Customer */}
-              <div className="rounded-md border border-border p-3 text-sm">
-                <div className="font-medium">{(booking as any).customer?.full_name}</div>
-                <div className="text-secondary">{(booking as any).customer?.email} · {(booking as any).customer?.phone ?? "—"}</div>
-              </div>
+              {isCreatingNew ? (
+                <CustomerPicker
+                  value={selectedCustomer?.id ?? null}
+                  onChange={(c) => setSelectedCustomer(c)}
+                />
+              ) : (
+                <div className="rounded-md border border-border p-3 text-sm">
+                  <div className="font-medium">{(booking as any).customer?.full_name}</div>
+                  <div className="text-secondary">{(booking as any).customer?.email} · {(booking as any).customer?.phone ?? "—"}</div>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
@@ -636,7 +643,40 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                 </div>
               </div>
 
-              {/* Items */}
+              {/* Retroactive warning */}
+              {draft.start_date < new Date().toISOString().split('T')[0] && (
+                <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                  ⚠ La fecha de inicio es anterior a hoy. Se registrará como reserva retroactiva en el historial.
+                </div>
+              )}
+
+              {/* "Already completed" shortcut — create mode only */}
+              {isCreatingNew && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="already-completed"
+                    checked={alreadyCompleted}
+                    onCheckedChange={(v) => {
+                      const checked = !!v;
+                      setAlreadyCompleted(checked);
+                      setDraft((d) =>
+                        d
+                          ? {
+                              ...d,
+                              status: checked ? "finalizado" : "nuevo",
+                              payment_status: checked ? "paid" : "unpaid",
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                  <label htmlFor="already-completed" className="text-sm cursor-pointer select-none">
+                    Reserva ya completada (marcar como finalizada y pagada)
+                  </label>
+                </div>
+              )}
+
+
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium">Productos</h3>
