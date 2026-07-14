@@ -1449,6 +1449,7 @@ export type Database = {
           grip_type: string | null
           id: string
           images: string[]
+          internal_code: string | null
           is_anamorphic: boolean
           is_rehoused: boolean
           is_vintage: boolean
@@ -1489,6 +1490,7 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          internal_code?: string | null
           is_anamorphic?: boolean
           is_rehoused?: boolean
           is_vintage?: boolean
@@ -1529,6 +1531,7 @@ export type Database = {
           grip_type?: string | null
           id?: string
           images?: string[]
+          internal_code?: string | null
           is_anamorphic?: boolean
           is_rehoused?: boolean
           is_vintage?: boolean
@@ -1620,6 +1623,7 @@ export type Database = {
           contact_email: string
           id: boolean
           instagram_url: string
+          internal_code_pin: string | null
           orders_email: string
           updated_at: string
           whatsapp_url: string
@@ -1628,6 +1632,7 @@ export type Database = {
           contact_email?: string
           id?: boolean
           instagram_url?: string
+          internal_code_pin?: string | null
           orders_email?: string
           updated_at?: string
           whatsapp_url?: string
@@ -1636,6 +1641,7 @@ export type Database = {
           contact_email?: string
           id?: boolean
           instagram_url?: string
+          internal_code_pin?: string | null
           orders_email?: string
           updated_at?: string
           whatsapp_url?: string
@@ -2068,6 +2074,10 @@ export type Database = {
           store_income: number
         }[]
       }
+      generate_internal_code: {
+        Args: { p_category_id: string }
+        Returns: string
+      }
       get_pricing_multipliers: {
         Args: {
           _custom: Json
@@ -2093,6 +2103,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      internal_code_prefix: { Args: { p_category_id: string }; Returns: string }
       recompute_payout_status: {
         Args: { _payout_id: string }
         Returns: undefined

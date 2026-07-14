@@ -14,7 +14,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageUploader } from "./ImageUploader";
 import { slugify } from "@/lib/slugify";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Lock, LockOpen } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
@@ -28,6 +35,12 @@ const optStr = z.string().trim().max(80).optional().or(z.literal("")).nullable()
 const schema = z.object({
   kit_mode: z.enum(["individual", "lens_kit", "camera_kit", "pack"]).default("individual"),
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
+  internal_code: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{3}-\d{4}$/, "Formato: PREFIJO-NNNN (ej. OPT-0007)")
+    .optional()
+    .or(z.literal("")),
   category_id: z.string().uuid().nullable().optional(),
   name_es: z.string().trim().min(1).max(200),
   name_ca: z.string().trim().max(200).optional().or(z.literal("")),
@@ -79,6 +92,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [tempId] = useState(() => crypto.randomUUID());
   const [newTagInput, setNewTagInput] = useState("");
+  const [codeUnlocked, setCodeUnlocked] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState<string | null>(null);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["form-categories"],
@@ -101,6 +118,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const defaults: ProductFormValues = useMemo(
     () => ({
       slug: product?.slug ?? "",
+      internal_code: product?.internal_code ?? "",
       category_id: product?.category_id ?? null,
       name_es: product?.name_es ?? "",
       name_ca: product?.name_ca ?? "",
@@ -171,6 +189,45 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const kitMode = form.watch("kit_mode");
   const isLensesCategory = selectedCategorySlug === "lenses";
 
+  // Auto-fill internal_code when creating and selecting a category
+  useEffect(() => {
+    if (product) return; // only in create mode
+    if (form.getValues("internal_code")) return;
+    (async () => {
+      const { data, error } = await supabase.rpc("generate_internal_code" as any, {
+        p_category_id: selectedCategoryId ?? null,
+      });
+      if (!error && data) {
+        form.setValue("internal_code", data as any, { shouldDirty: false });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId, product]);
+
+  const attemptUnlock = async () => {
+    setPinError(null);
+    const { data, error } = await supabase
+      .from("site_settings" as any)
+      .select("internal_code_pin")
+      .maybeSingle();
+    if (error) {
+      setPinError(error.message);
+      return;
+    }
+    const pin = (data as any)?.internal_code_pin;
+    if (!pin) {
+      setPinError("No hay PIN configurado. Configúralo en Ajustes primero.");
+      return;
+    }
+    if (pinInput === pin) {
+      setCodeUnlocked(true);
+      setPinDialogOpen(false);
+      setPinInput("");
+    } else {
+      setPinError("PIN incorrecto");
+    }
+  };
+
   const toggleTag = (id: string) => {
     const next = tagIds.includes(id) ? tagIds.filter((x) => x !== id) : [...tagIds, id];
     form.setValue("tag_ids", next, { shouldDirty: true });
@@ -200,6 +257,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
     try {
       const payload = {
         slug: values.slug,
+        internal_code: values.internal_code ? String(values.internal_code).trim().toUpperCase() : null,
         category_id: values.category_id || null,
         name_es: values.name_es,
         name_ca: values.name_ca || null,
@@ -315,6 +373,42 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 </select>
               </Field>
             </div>
+
+            {/* Internal code (admin-only) */}
+            <Field
+              label="Código interno"
+              error={form.formState.errors.internal_code?.message as string | undefined}
+            >
+              <div className="relative">
+                <Input
+                  {...form.register("internal_code")}
+                  placeholder="AUTO"
+                  readOnly={!codeUnlocked}
+                  disabled={!codeUnlocked}
+                  className="pr-10 font-mono uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (codeUnlocked) {
+                      setCodeUnlocked(false);
+                    } else {
+                      setPinError(null);
+                      setPinInput("");
+                      setPinDialogOpen(true);
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary hover:text-foreground"
+                  aria-label={codeUnlocked ? "Bloquear" : "Desbloquear"}
+                >
+                  {codeUnlocked ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-secondary mt-1">
+                Uso interno. Se asigna automáticamente según la categoría.
+              </p>
+            </Field>
+
 
             {/* Pricing model selector */}
             <div className="rounded-md border border-border p-3 space-y-3">
@@ -644,6 +738,36 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
           {t("common.save")}
         </Button>
       </div>
+
+      <Dialog open={pinDialogOpen} onOpenChange={(o) => { setPinDialogOpen(o); if (!o) { setPinInput(""); setPinError(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Desbloquear código interno</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-secondary">PIN (4 dígitos)</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              autoFocus
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); attemptUnlock(); } }}
+              placeholder="••••"
+            />
+            {pinError && <p className="text-xs text-destructive">{pinError}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPinDialogOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" onClick={attemptUnlock} disabled={pinInput.length !== 4}>
+              Desbloquear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };
