@@ -114,6 +114,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const defaults: ProductFormValues = useMemo(
     () => ({
       slug: product?.slug ?? "",
+      internal_code: product?.internal_code ?? "",
       category_id: product?.category_id ?? null,
       name_es: product?.name_es ?? "",
       name_ca: product?.name_ca ?? "",
