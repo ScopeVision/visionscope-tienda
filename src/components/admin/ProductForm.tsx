@@ -373,6 +373,42 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </Field>
             </div>
 
+            {/* Internal code (admin-only) */}
+            <Field
+              label="Código interno"
+              error={form.formState.errors.internal_code?.message as string | undefined}
+            >
+              <div className="relative">
+                <Input
+                  {...form.register("internal_code")}
+                  placeholder="AUTO"
+                  readOnly={!codeUnlocked}
+                  disabled={!codeUnlocked}
+                  className="pr-10 font-mono uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (codeUnlocked) {
+                      setCodeUnlocked(false);
+                    } else {
+                      setPinError(null);
+                      setPinInput("");
+                      setPinDialogOpen(true);
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary hover:text-foreground"
+                  aria-label={codeUnlocked ? "Bloquear" : "Desbloquear"}
+                >
+                  {codeUnlocked ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-secondary mt-1">
+                Uso interno. Se asigna automáticamente según la categoría.
+              </p>
+            </Field>
+
+
             {/* Pricing model selector */}
             <div className="rounded-md border border-border p-3 space-y-3">
               <Label className="text-xs uppercase tracking-wider text-secondary block">
