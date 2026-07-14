@@ -92,13 +92,28 @@ export const Header = () => {
           </Link>
         </div>
 
-        <button
-          className="md:hidden p-2 -mr-2 text-foreground"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center md:hidden">
+          <Link
+            to="/cart"
+            onClick={() => setOpen(false)}
+            className="relative flex h-11 w-11 items-center justify-center text-foreground"
+            aria-label="Cart"
+          >
+            <ShoppingBag className="h-5 w-5" />
+            {itemCount > 0 && (
+              <span className="absolute right-1 top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-xs font-semibold text-accent-foreground">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+          <button
+            className="p-2 -mr-2 text-foreground"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -120,14 +135,8 @@ export const Header = () => {
                 {l.label}
               </NavLink>
             ))}
-            <div className="pt-2 flex items-center justify-between">
+            <div className="pt-2">
               <LanguageSwitcher />
-              <Link to="/cart" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="gap-2 border-accent/40 hover:bg-accent hover:text-accent-foreground uppercase tracking-[0.18em] text-[11px]">
-                  <ShoppingBag className="h-4 w-4" />
-                  {t("nav.cart")} {itemCount > 0 && `(${itemCount})`}
-                </Button>
-              </Link>
             </div>
           </nav>
         </div>
