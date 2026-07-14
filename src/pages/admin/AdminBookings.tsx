@@ -225,8 +225,10 @@ const AdminBookings = () => {
 
       <BookingEditor
         bookingId={editingId}
+        isCreatingNew={creatingNew}
         onClose={() => {
           setEditingId(null);
+          setCreatingNew(false);
           qc.invalidateQueries({ queryKey: ["admin-bookings-month"] });
           qc.invalidateQueries({ queryKey: ["admin-audit-month"] });
         }}
