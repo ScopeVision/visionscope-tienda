@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, History, Save } from "lucide-react";
+import { Plus, Trash2, History, Save, ChevronDown, ChevronUp } from "lucide-react";
 import BookingCommunications from "./BookingCommunications";
 import CustomerPicker from "./CustomerPicker";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -152,14 +152,26 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   } | null>(null);
 
   const [showLog, setShowLog] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+
+  const toggleItem = (idx: number) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
 
   // Create mode: initialize fresh draft when dialog opens
   useEffect(() => {
     if (!isCreatingNew || bookingId) {
       setSelectedCustomer(null);
       setAlreadyCompleted(false);
+      setExpandedItems(new Set());
       return;
     }
+    setExpandedItems(new Set());
     const today = new Date().toISOString().split('T')[0];
     setDraft({
       items: [],
@@ -239,6 +251,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   const addItem = () => {
     if (!draft) return;
     const days = daysBetween(draft.start_date, draft.end_date);
+    const newIdx = draft.items.length;
     setDraft({
       ...draft,
       items: [
@@ -262,6 +275,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         },
       ],
     });
+    setExpandedItems((prev) => new Set([...prev, newIdx]));
   };
 
   const removeItem = (idx: number) => {
