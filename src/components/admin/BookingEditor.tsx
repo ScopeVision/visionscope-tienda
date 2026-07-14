@@ -723,143 +723,200 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                     const product: any = products.find((p: any) => p.id === item.product_id);
                     const variants = product?.product_variants ?? [];
                     const br = breakdown!.items[idx];
+                    const isExpanded = expandedItems.has(idx);
+
+                    const hasDiscount =
+                      (item.discount_type !== "none" && (item.discount_value ?? 0) > 0) ||
+                      (draft.discount_type !== "none" && (draft.discount_value ?? 0) > 0);
+                    const hasOverride = item.price_override != null || (item.override_reason ?? "").trim().length > 0;
+
+                    const variantName = item.variant_id
+                      ? variants.find((v: any) => v.id === item.variant_id)?.name
+                      : null;
+
+                    const displayName = item.product_name
+                      ? variantName
+                        ? `${item.product_name} — ${variantName}`
+                        : item.product_name
+                      : "Sin producto seleccionado";
+
                     return (
-                      <div key={idx} className="rounded-md border border-border p-3 space-y-2">
-                        <div className="grid grid-cols-12 gap-2 items-end">
-                          <div className="col-span-12 md:col-span-5">
-                            <Label className="text-xs">Producto</Label>
-                            <Select value={item.product_id} onValueChange={(v) => onPickProduct(idx, v)}>
-                              <SelectTrigger><SelectValue placeholder="Selecciona…" /></SelectTrigger>
-                              <SelectContent>
-                                {products.map((p: any) => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name_es}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                      <div key={idx} className="rounded-md border border-border">
+                        <div
+                          className="flex items-center gap-3 px-3 py-2.5 cursor-pointer select-none"
+                          onClick={() => toggleItem(idx)}
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 shrink-0 text-secondary transition-transform duration-150 ${isExpanded ? "rotate-180" : ""}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate block">{displayName}</span>
+                            <span className="text-xs text-secondary">
+                              ×{item.quantity} · {item.days}d
+                            </span>
                           </div>
-                          <div className="col-span-12 md:col-span-3">
-                            <Label className="text-xs">Variante</Label>
-                            <Select
-                              value={item.variant_id ?? "__none__"}
-                              onValueChange={(v) => onPickVariant(idx, v)}
-                              disabled={!variants.length}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {hasDiscount && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                                Dto
+                              </Badge>
+                            )}
+                            {hasOverride && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/50 text-amber-500">
+                                Override
+                              </Badge>
+                            )}
+                            <span className="text-sm font-medium tabular-nums">{fmt(br.final_subtotal)}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeItem(idx);
+                              }}
                             >
-                              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">— ninguna —</SelectItem>
-                                {variants.map((v: any) => (
-                                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="col-span-4 md:col-span-1">
-                            <Label className="text-xs">Qty</Label>
-                            <Input type="number" min={1} value={item.quantity}
-                              onChange={(e) => updateItem(idx, { quantity: Math.max(1, +e.target.value || 1) })} />
-                          </div>
-                          <div className="col-span-4 md:col-span-1">
-                            <Label className="text-xs">Días</Label>
-                            <Input type="number" min={1} value={item.days}
-                              onChange={(e) => updateItem(idx, { days: Math.max(1, +e.target.value || 1) })} />
-                          </div>
-                          <div className="col-span-3 md:col-span-1">
-                            <Label className="text-xs">€/día</Label>
-                            <Input type="number" step="0.01" value={item.price_day}
-                              onChange={(e) => updateItem(idx, { price_day: +e.target.value || 0 })} />
-                          </div>
-                          <div className="col-span-1 flex justify-end">
-                            <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}>
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </div>
-                        <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
-                          <div className="col-span-4 md:col-span-3">
-                            <Label className="text-xs">Descuento línea</Label>
-                            <Select value={item.discount_type} onValueChange={(v) => updateItem(idx, { discount_type: v as DiscountType })}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Ninguno</SelectItem>
-                                <SelectItem value="fixed">Fijo €</SelectItem>
-                                <SelectItem value="percent">%</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="col-span-4 md:col-span-2">
-                            <Label className="text-xs">Valor</Label>
-                            <Input type="number" step="0.01" value={item.discount_value}
-                              disabled={item.discount_type === "none"}
-                              onChange={(e) => updateItem(idx, { discount_value: +e.target.value || 0 })} />
-                          </div>
-                          <div className="col-span-4 md:col-span-3">
-                            <Label className="text-xs">Override subtotal</Label>
-                            <Input type="number" step="0.01" placeholder="auto"
-                              value={item.price_override ?? ""}
-                              onChange={(e) => updateItem(idx, { price_override: e.target.value === "" ? null : +e.target.value })} />
-                          </div>
-                          <div className="col-span-12 md:col-span-4 text-right text-sm">
-                            <div className="text-secondary text-xs">Auto: {fmt(br.auto_subtotal)}</div>
-                            <div className="font-medium">Total línea: {fmt(br.final_subtotal)}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-12 gap-2 items-end">
-                          <div className="col-span-6 md:col-span-3">
-                            <Label className="text-xs">Pricing model</Label>
-                            <Select
-                              value={(item.pricing_model ?? "premium") as string}
-                              onValueChange={(v) => updateItem(idx, { pricing_model: v as PricingModel })}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
-                                  <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="col-span-12 md:col-span-9">
-                            <Label className="text-xs">Motivo de override</Label>
-                            <Input
-                              placeholder="Ej: cliente recurrente, ampliación, prueba…"
-                              value={item.override_reason ?? ""}
-                              onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
-                            />
-                          </div>
-                        </div>
 
-                        {(() => {
-                          const productUnits = inventoryUnits.filter((u: any) => u.product_id === item.product_id);
-                          return (
-                            <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
-                              <div className="col-span-12 md:col-span-6">
-                                <Label className="text-xs">Unidad de inventario asignada</Label>
-                                <Select
-                                  value={item.inventory_unit_id ?? "__none__"}
-                                  onValueChange={(v) => updateItem(idx, { inventory_unit_id: v === "__none__" ? null : v })}
-                                  disabled={!item.product_id}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={productUnits.length ? "Auto-asignar al pagar" : "Sin unidades definidas"} />
-                                  </SelectTrigger>
+                        {isExpanded && (
+                          <div className="border-t border-border p-3 space-y-2">
+                            <div className="grid grid-cols-12 gap-2 items-end">
+                              <div className="col-span-12 md:col-span-5">
+                                <Label className="text-xs">Producto</Label>
+                                <Select value={item.product_id} onValueChange={(v) => onPickProduct(idx, v)}>
+                                  <SelectTrigger><SelectValue placeholder="Selecciona…" /></SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="__none__">— Auto / sin unidad —</SelectItem>
-                                    {productUnits.map((u: any) => (
-                                      <SelectItem key={u.id} value={u.id}>
-                                        {u.serial || u.internal_code || u.id.slice(0, 8)} · {u.agreement_type} · {u.owner_split_pct}% owner
-                                      </SelectItem>
+                                    {products.map((p: any) => (
+                                      <SelectItem key={p.id} value={p.id}>{p.name_es}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                               </div>
-                              <div className="col-span-12 md:col-span-6 text-[11px] text-secondary">
-                                {productUnits.length === 0
-                                  ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
-                                  : "El payout y owner se resuelven desde la unidad seleccionada."}
+                              <div className="col-span-12 md:col-span-3">
+                                <Label className="text-xs">Variante</Label>
+                                <Select
+                                  value={item.variant_id ?? "__none__"}
+                                  onValueChange={(v) => onPickVariant(idx, v)}
+                                  disabled={!variants.length}
+                                >
+                                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">— ninguna —</SelectItem>
+                                    {variants.map((v: any) => (
+                                      <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-4 md:col-span-1">
+                                <Label className="text-xs">Qty</Label>
+                                <Input type="number" min={1} value={item.quantity}
+                                  onChange={(e) => updateItem(idx, { quantity: Math.max(1, +e.target.value || 1) })} />
+                              </div>
+                              <div className="col-span-4 md:col-span-1">
+                                <Label className="text-xs">Días</Label>
+                                <Input type="number" min={1} value={item.days}
+                                  onChange={(e) => updateItem(idx, { days: Math.max(1, +e.target.value || 1) })} />
+                              </div>
+                              <div className="col-span-4 md:col-span-2">
+                                <Label className="text-xs">€/día</Label>
+                                <Input type="number" step="0.01" value={item.price_day}
+                                  onChange={(e) => updateItem(idx, { price_day: +e.target.value || 0 })} />
                               </div>
                             </div>
-                          );
-                        })()}
+
+                            <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
+                              <div className="col-span-4 md:col-span-3">
+                                <Label className="text-xs">Descuento línea</Label>
+                                <Select value={item.discount_type} onValueChange={(v) => updateItem(idx, { discount_type: v as DiscountType })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Ninguno</SelectItem>
+                                    <SelectItem value="fixed">Fijo €</SelectItem>
+                                    <SelectItem value="percent">%</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-4 md:col-span-2">
+                                <Label className="text-xs">Valor</Label>
+                                <Input type="number" step="0.01" value={item.discount_value}
+                                  disabled={item.discount_type === "none"}
+                                  onChange={(e) => updateItem(idx, { discount_value: +e.target.value || 0 })} />
+                              </div>
+                              <div className="col-span-4 md:col-span-3">
+                                <Label className="text-xs">Override subtotal</Label>
+                                <Input type="number" step="0.01" placeholder="auto"
+                                  value={item.price_override ?? ""}
+                                  onChange={(e) => updateItem(idx, { price_override: e.target.value === "" ? null : +e.target.value })} />
+                              </div>
+                              <div className="col-span-12 md:col-span-4 text-right text-sm">
+                                <div className="text-secondary text-xs">Auto: {fmt(br.auto_subtotal)}</div>
+                                <div className="font-medium">Total línea: {fmt(br.final_subtotal)}</div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-12 gap-2 items-end">
+                              <div className="col-span-6 md:col-span-3">
+                                <Label className="text-xs">Pricing model</Label>
+                                <Select
+                                  value={(item.pricing_model ?? "premium") as string}
+                                  onValueChange={(v) => updateItem(idx, { pricing_model: v as PricingModel })}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {(Object.keys(PRICING_MODEL_LABELS) as PricingModel[]).map((m) => (
+                                      <SelectItem key={m} value={m}>{PRICING_MODEL_LABELS[m]}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-12 md:col-span-9">
+                                <Label className="text-xs">Motivo de override</Label>
+                                <Input
+                                  placeholder="Ej: cliente recurrente, ampliación, prueba…"
+                                  value={item.override_reason ?? ""}
+                                  onChange={(e) => updateItem(idx, { override_reason: e.target.value || null })}
+                                />
+                              </div>
+                            </div>
+
+                            {(() => {
+                              const productUnits = inventoryUnits.filter((u: any) => u.product_id === item.product_id);
+                              return (
+                                <div className="grid grid-cols-12 gap-2 items-end pt-1 border-t border-border">
+                                  <div className="col-span-12 md:col-span-6">
+                                    <Label className="text-xs">Unidad de inventario asignada</Label>
+                                    <Select
+                                      value={item.inventory_unit_id ?? "__none__"}
+                                      onValueChange={(v) => updateItem(idx, { inventory_unit_id: v === "__none__" ? null : v })}
+                                      disabled={!item.product_id}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder={productUnits.length ? "Auto-asignar al pagar" : "Sin unidades definidas"} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="__none__">— Auto / sin unidad —</SelectItem>
+                                        {productUnits.map((u: any) => (
+                                          <SelectItem key={u.id} value={u.id}>
+                                            {u.serial || u.internal_code || u.id.slice(0, 8)} · {u.agreement_type} · {u.owner_split_pct}% owner
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="col-span-12 md:col-span-6 text-[11px] text-secondary">
+                                    {productUnits.length === 0
+                                      ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
+                                      : "El payout y owner se resuelven desde la unidad seleccionada."}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
