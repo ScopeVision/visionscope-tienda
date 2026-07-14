@@ -92,6 +92,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [tempId] = useState(() => crypto.randomUUID());
   const [newTagInput, setNewTagInput] = useState("");
+  const [codeUnlocked, setCodeUnlocked] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState<string | null>(null);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["form-categories"],
