@@ -14,7 +14,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageUploader } from "./ImageUploader";
 import { slugify } from "@/lib/slugify";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Lock, LockOpen } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
