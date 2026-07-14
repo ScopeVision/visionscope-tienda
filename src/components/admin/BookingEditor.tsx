@@ -68,13 +68,16 @@ export const PAYMENT_LABELS: Record<string, string> = {
 
 type Props = {
   bookingId: string | null;
+  isCreatingNew?: boolean;
   onClose: () => void;
 };
 
-export default function BookingEditor({ bookingId, onClose }: Props) {
+export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Props) {
   const { i18n } = useTranslation();
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; full_name: string; email: string; phone?: string | null } | null>(null);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["admin-booking-edit", bookingId],
