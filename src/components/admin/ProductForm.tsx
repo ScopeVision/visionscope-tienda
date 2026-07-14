@@ -738,6 +738,36 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
           {t("common.save")}
         </Button>
       </div>
+
+      <Dialog open={pinDialogOpen} onOpenChange={(o) => { setPinDialogOpen(o); if (!o) { setPinInput(""); setPinError(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Desbloquear código interno</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-secondary">PIN (4 dígitos)</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              autoFocus
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); attemptUnlock(); } }}
+              placeholder="••••"
+            />
+            {pinError && <p className="text-xs text-destructive">{pinError}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPinDialogOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" onClick={attemptUnlock} disabled={pinInput.length !== 4}>
+              Desbloquear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };
