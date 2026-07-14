@@ -257,6 +257,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
     try {
       const payload = {
         slug: values.slug,
+        internal_code: values.internal_code ? String(values.internal_code).trim().toUpperCase() : null,
         category_id: values.category_id || null,
         name_es: values.name_es,
         name_ca: values.name_ca || null,
