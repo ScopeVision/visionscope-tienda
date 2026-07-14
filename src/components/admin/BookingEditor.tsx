@@ -306,7 +306,116 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   };
 
   const save = async () => {
-    if (!draft || !booking || !breakdown) return;
+    if (!draft || !breakdown) return;
+
+    // ── CREATE MODE ──────────────────────────────────────────────────────────
+    if (isCreatingNew && !bookingId) {
+      if (!selectedCustomer) {
+        toast.error("Selecciona un cliente antes de guardar");
+        return;
+      }
+      if (draft.items.length === 0) {
+        toast.error("Añade al menos un producto");
+        return;
+      }
+      if (draft.items.some((i) => !i.product_id)) {
+        toast.error("Hay productos sin seleccionar");
+        return;
+      }
+      setSaving(true);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id ?? null;
+        const days = daysBetween(draft.start_date, draft.end_date);
+        const today = new Date().toISOString().split('T')[0];
+        const isRetroactive = draft.start_date < today;
+
+        const { data: newBooking, error: bErr } = await supabase
+          .from("bookings")
+          .insert({
+            customer_id: selectedCustomer.id,
+            start_date: draft.start_date,
+            end_date: draft.end_date,
+            status: draft.status as any,
+            payment_status: draft.payment_status as any,
+            subtotal: breakdown.effective_subtotal,
+            deposit_total: breakdown.deposit_total,
+            total: breakdown.total,
+            discount_type: draft.discount_type,
+            discount_value: draft.discount_value,
+            extra_fees: draft.extra_fees as any,
+            subtotal_override: draft.subtotal_override,
+            total_override: draft.total_override,
+            notes: draft.notes || null,
+            internal_notes: draft.internal_notes || null,
+          })
+          .select()
+          .single();
+        if (bErr) throw bErr;
+
+        for (const item of draft.items) {
+          const br = computeBookingBreakdown({ ...draft, items: [item] });
+          const auto = br.items[0].auto_subtotal;
+          const isOverride =
+            item.price_override != null ||
+            (item.discount_type !== "none" && (item.discount_value ?? 0) > 0);
+          const { error: iErr } = await supabase.from("booking_items").insert({
+            booking_id: newBooking.id,
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            days: item.days || days,
+            price_day: item.price_day,
+            price_week: item.price_week ?? null,
+            deposit: item.deposit,
+            discount_type: item.discount_type,
+            discount_value: item.discount_value,
+            price_override: item.price_override,
+            pricing_model: item.pricing_model ?? null,
+            auto_subtotal: auto,
+            override_reason: item.override_reason || null,
+            inventory_unit_id: item.inventory_unit_id ?? null,
+            overridden_by: isOverride ? userId : null,
+            overridden_at: isOverride ? new Date().toISOString() : null,
+            subtotal: br.items[0].final_subtotal,
+          });
+          if (iErr) throw iErr;
+        }
+
+        await supabase.from("booking_audit_log").insert({
+          booking_id: newBooking.id,
+          actor_user_id: userId,
+          action: "create",
+          changes: {
+            retroactive: isRetroactive,
+            logged_on: new Date().toISOString(),
+            start_date: draft.start_date,
+            end_date: draft.end_date,
+            customer_id: selectedCustomer.id,
+            customer_name: selectedCustomer.full_name,
+            items_count: draft.items.length,
+            total: breakdown.total,
+            ...(isRetroactive
+              ? { note: "Reserva retroactiva registrada manualmente por el administrador" }
+              : {}),
+          },
+        });
+
+        toast.success("Reserva creada correctamente");
+        qc.invalidateQueries({ queryKey: ["admin-bookings"] });
+        qc.invalidateQueries({ queryKey: ["admin-stats"] });
+        onClose();
+      } catch (e: any) {
+        toast.error(e.message || "Error al crear la reserva");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // ── EDIT MODE ────────────────────────────────────────────────────────────
+    if (!booking) return;
     if (draft.items.some((i) => !i.product_id)) {
       toast.error("Hay productos sin seleccionar");
       return;
