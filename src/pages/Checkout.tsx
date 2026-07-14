@@ -131,29 +131,27 @@ const Checkout = () => {
 
   const handleEmailLookup = async () => {
     const email = lookupEmail.trim().toLowerCase();
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast.error("Introduce un email válido para buscar tus datos.");
       return;
     }
     setLookupLoading(true);
     try {
-      const { data } = await supabase
-        .from("customers")
-        .select("full_name, email, phone, company, tax_id, address_line1, city, postal_code, country")
-        .eq("email", email)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (data) {
-        form.setValue("full_name", data.full_name ?? "");
-        form.setValue("email", data.email ?? "");
-        form.setValue("phone", data.phone ?? "");
-        form.setValue("company", data.company ?? "");
-        form.setValue("tax_id", data.tax_id ?? "");
-        form.setValue("address_line1", data.address_line1 ?? "");
-        form.setValue("city", data.city ?? "");
-        form.setValue("postal_code", data.postal_code ?? "");
-        form.setValue("country", data.country ?? "");
+      const { data, error } = await supabase.functions.invoke("lookup-customer-by-email", {
+        body: { email },
+      });
+      if (error) throw error;
+      if (data?.found && data?.customer) {
+        const c = data.customer;
+        form.setValue("full_name", c.full_name ?? "");
+        form.setValue("email", c.email ?? "");
+        form.setValue("phone", c.phone ?? "");
+        form.setValue("company", c.company ?? "");
+        form.setValue("tax_id", c.tax_id ?? "");
+        form.setValue("address_line1", c.address_line1 ?? "");
+        form.setValue("city", c.city ?? "");
+        form.setValue("postal_code", c.postal_code ?? "");
+        form.setValue("country", c.country ?? "");
         setLookupResult("found");
         toast.success("¡Bienvenido/a de vuelta! Hemos prellenado tus datos anteriores.");
       } else {
