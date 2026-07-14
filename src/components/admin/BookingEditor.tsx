@@ -330,6 +330,24 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         const today = new Date().toISOString().split('T')[0];
         const isRetroactive = draft.start_date < today;
 
+        // Stock check — non-blocking, only for prospective bookings
+        if (!isRetroactive) {
+          for (const item of draft.items) {
+            if (!item.product_id) continue;
+            const { data: availableStock } = await supabase.rpc("available_stock", {
+              _product_id: item.product_id,
+              _start: draft.start_date,
+              _end: draft.end_date,
+            });
+            if (typeof availableStock === "number" && availableStock < item.quantity) {
+              toast.warning(
+                `⚠ ${item.product_name || "Producto"} puede estar ya reservado en estas fechas por otra reserva activa. Verifica antes de confirmar.`,
+                { duration: 8000 }
+              );
+            }
+          }
+        }
+
         const { data: newBooking, error: bErr } = await supabase
           .from("bookings")
           .insert({
@@ -403,6 +421,8 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         });
 
         toast.success("Reserva creada correctamente");
+        qc.invalidateQueries({ queryKey: ["admin-bookings-month"] });
+        qc.invalidateQueries({ queryKey: ["admin-audit-month"] });
         qc.invalidateQueries({ queryKey: ["admin-bookings"] });
         qc.invalidateQueries({ queryKey: ["admin-stats"] });
         onClose();

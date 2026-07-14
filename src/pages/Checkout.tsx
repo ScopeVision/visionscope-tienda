@@ -157,7 +157,8 @@ const Checkout = () => {
       } else {
         setLookupResult("not_found");
       }
-    } catch {
+    } catch (err: any) {
+      console.error("Email lookup error:", err);
       toast.error("No se pudo buscar el cliente. Rellena el formulario manualmente.");
     } finally {
       setLookupLoading(false);
