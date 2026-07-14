@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/rental";
-import { Download, Eye, Search } from "lucide-react";
+import { Download, Eye, Plus, Search } from "lucide-react";
 
 import BookingEditor, {
   BOOKING_STATUSES,
