@@ -211,8 +211,5 @@ const InternalCodePinSection = () => {
     </div>
   );
 };
-    </div>
-  );
-};
 
 export default AdminDashboard;
