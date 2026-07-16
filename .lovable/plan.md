@@ -1,101 +1,87 @@
-# Finance Core Fix + Operational Control Layer
+PLAN: Switch backend from Lovable Cloud to external Supabase project
 
-Completar el sistema financiero existente sin romper la lógica actual. Añadir Owner Registry, splits totalmente editables, entries por pedido (no agregados), overrides manuales, audit log y mejoras de transición/concesión.
+SCOPE
+- Disconnect the current Lovable Cloud backend (`qzgblkypqaegpqqvvkzw`).
+- Connect your existing external Supabase project as the new backend.
+- Migrate the full schema and all production data.
+- Update the app and edge functions to use the new project.
+- Validate auth, storage, and finance/audit triggers.
 
-Antes de aclarar ambigüedades críticas hago **2 preguntas bloqueantes** al final.
+ASSUMPTIONS
+- You have owner/admin access to the external Supabase project.
+- You accept a brief maintenance window while we cut over.
+- You want to keep the same app code and data model (no redesign).
 
----
+STEP-BY-STEP
 
-## 1. Base de datos (migración)
+1. Add the Supabase organization in Lovable (you do this in the UI)
+   - Dashboard → + in prompt box → Databases → Add Supabase organization.
+   - Grant Lovable access to the organization.
+   - This is the only UI step I cannot perform; everything else I can code/migrate.
 
-### Nueva tabla `finance_owners`
-- `name`, `type` enum (`socio` | `external` | `concession` | `company`)
-- `default_company_pct` numeric (override por defecto)
-- `contact_email`, `contact_phone`, `notes`
-- `active` boolean, `sort_order`
+2. Select the external project as the new backend
+   - After the org is linked, choose the project you want to use.
+   - Lovable will update the project connection and write new values into `.env`:
+     - `VITE_SUPABASE_URL`
+     - `VITE_SUPABASE_PUBLISHABLE_KEY`
+     - `VITE_SUPABASE_PROJECT_ID`
+   - Verify the values in `.env` before proceeding.
 
-Migración: por cada `finance_partners` existente crear un `finance_owners` tipo `socio` y guardar el link.
+3. Capture the current production schema
+   - Read the full schema from Lovable Cloud (tables, functions, triggers, types, enums, policies, grants).
+   - Do the same for RLS policies and storage buckets.
 
-### `finance_assets` — cambios
-- Añadir `owner_id` → `finance_owners.id` (mantener `owner_label` legacy como fallback de display)
-- Añadir `target_recovery_value` numeric (para transición)
-- Añadir `concession_rules` jsonb (reglas libres para concesión: revenue_share variable por temporada, mínimos, etc.)
+4. Migrate the schema to the new Supabase project
+   - Use a single migration against the new project to create:
+     - All tables and columns
+     - All custom types/enums
+     - All functions and triggers
+     - All RLS policies and GRANT statements
+     - Storage buckets and public settings
+   - Avoid any `ALTER DATABASE ...` statements.
+   - Re-run the `finance` and `internal_code` triggers/functions as they are today.
 
-### `finance_entries` — cambios
-- Añadir `booking_item_id` uuid nullable → ahora **una entry por línea de pedido** (no por pedido entero)
-- Añadir `owner_id`, `applied_company_pct` numeric (split realmente aplicado)
-- Añadir `is_manual_override` boolean, `override_reason` text
-- Añadir `status` enum (`active` | `reversed` | `void`)
+5. Migrate data
+   - Export production data from Lovable Cloud for all tables (or a targeted dump if you want to exclude test data).
+   - Import into the new project.
+   - Preserve UUIDs, timestamps, and foreign-key relationships.
+   - Rebuild any sequences after import so new inserts do not conflict with existing IDs.
 
-### `finance_payouts` — cambios
-- Añadir `owner_id`, `applied_pct`
-- Añadir `is_manual_override` boolean
+6. Migrate auth users
+   - Auth users live in the `auth` schema and are managed by Supabase.
+   - If you have admin users, they must be recreated or migrated in the new project.
+   - Re-apply `user_roles` and `profiles` rows so admin access works after cutover.
 
-### `finance_partners` — cambios
-- `profit_share_pct` ya editable; añadir tabla `finance_partner_share_history`
-  (`partner_id`, `pct`, `effective_from`, `effective_to`, `note`) para historial.
+7. Update edge functions and secrets
+   - The new project will have its own `SUPABASE_SERVICE_ROLE_KEY` and API keys.
+   - Lovable normally updates these secrets automatically when the project connection changes.
+   - If not, set them manually via Secrets.
+   - No edge function code changes are needed unless the new project URL changes.
 
-### Settings globales
-- Nueva singleton `finance_settings`: `default_split_company_pct` (ej. 30), `default_currency`, notas.
+8. Verify the cutover
+   - Run a build/typecheck.
+   - Log in to the admin panel with a migrated admin user.
+   - Check that the finance dashboard still reconciles (booking totals vs. finance entries).
+   - Confirm product images load from storage.
+   - Place a test rental booking and check the checkout flow.
 
-### Audit log
-- Reutilizar `booking_audit_log` extendiéndolo: añadir columna `entity_type` text y `entity_id` uuid (nullable). Trigger en `finance_entries`, `finance_payouts`, `finance_assets`, `finance_owners`, `finance_partners` que registra UPDATE/DELETE con diff jsonb.
+DECISIONS YOU NEED TO MAKE BEFORE WE START
+- Project ref/URL of the external Supabase project.
+- Whether you want to keep any test data or migrate only production data.
+- Whether you want to keep the staging project `rnyimfopoumlntlnzssh` separate (it is not touched in this plan).
+- Whether you want to run this migration during a maintenance window or keep the app live.
 
-### Trigger `handle_booking_payment_change` — corrección
-Reescribir para:
-- Recorrer **booking_items uno por uno**
-- Para cada item: crear UNA `finance_entries` con `booking_item_id`, `owner_id` resuelto desde asset, `applied_company_pct` real
-- Crear un `finance_payouts` por entry (si payout > 0)
-- Fallback: si producto no tiene asset → usar `finance_settings.default_split_company_pct`
-- Refund: invertir entry por entry, no en bloque
+RISKS
+- During the cutover, the published app and admin will be briefly unavailable or may write data to the old backend.
+- Auth users and storage files require explicit migration; they do not move automatically with the schema.
+- If finance/audit triggers are recreated incorrectly, booking totals and owner payouts could drift.
+- Rollback requires pointing `.env` back to Lovable Cloud; any data written to the new project after cutover would be lost on rollback.
 
----
+RECOMMENDED APPROACH
+1. First, add the organization and share the new project details with me.
+2. I will run the schema migration on the new project (no data yet).
+3. We then migrate data and auth users together.
+4. I run a full verification checklist.
+5. Only then do we publish the updated app.
 
-## 2. Admin UI — `/admin/finance` (nuevos tabs)
-
-Ampliar `AdminFinance.tsx` con tabs:
-
-1. **Dashboard** (ya existe) — añadir cards: assets en transición con barra de progreso (recovered / target), beneficio distribuible.
-2. **Entries** — convertir en **ledger operativo**:
-   - Filtros: origin_system, owner, asset, mes, status
-   - Cada fila: order_id (link), fecha, cliente, items, gross, company, payout, split aplicado, owner, status, badge override
-   - Click → drawer editable: cambiar `applied_company_pct`, `company_amount`, `payout_amount`, `owner_id`, notas; marca `is_manual_override=true` y registra en audit log
-3. **Owners** (NUEVO) — CRUD completo de `finance_owners`: tipo, default %, contacto, notas, listado de assets asignados, toggle activo.
-4. **Assets** — refactor: selector de owner desde registry, edición de `revenue_model`, `custom_company_pct`, `target_recovery_value`, `concession_rules` (JSON editor simple).
-5. **Partners & Debt** — añadir editor de `profit_share_pct` por socio + historial; mantener panel de deuda y repayments.
-6. **Payouts** — lista filtrable por owner, editable (monto, %), "Marcar pagado".
-7. **Settings** (NUEVO) — `default_split_company_pct` global, `cash_reserve_target`.
-8. **Cash / Expenses** — mantener.
-
-Cada edición manual → llama RPC que escribe en `booking_audit_log` con `entity_type`, diff antes/después.
-
----
-
-## 3. Frontend técnico
-
-- `src/pages/admin/finance/*` split por tab (Dashboard, Entries, Owners, Assets, Partners, Payouts, Expenses, Cash, Settings) montados en `AdminFinance.tsx`
-- Drawer reutilizable `EntryEditor.tsx` con override + reason
-- Hook `useAuditLog(entityType, entityId)` para mostrar historial en cada drawer
-- Componente `TransitionProgress` para assets (barra recovered/target con sugerencia "marcar transferido")
-
----
-
-## 4. Fuera de scope
-
-- No tocamos checkout, pricing, store público, variantes, inventario
-- No conectamos pasarela de pago real
-- No multi-moneda
-- No envíos de email a owners (solo registro)
-
----
-
-## 5. Preguntas bloqueantes (necesito respuesta antes de migrar)
-
-**A. Migración de datos existentes.** Hay 3 `finance_partners` seed (Socio A/B/C) y posiblemente entries ya generadas por bookings paid. ¿Cómo proceder?
-   - Opción 1: crear `finance_owners` automáticamente desde los 3 partners (recomendado) y dejar entries históricas intactas con `owner_id = NULL`.
-   - Opción 2: backfill completo intentando inferir owner de cada entry desde el asset.
-   - Opción 3: borrar entries históricas (solo si son de prueba).
-
-**B. Granularidad de entry.** Un pedido con 3 items distintos pasaría a generar **3 entries separadas** (una por línea). ¿Confirmas? Alternativa: 1 entry por (booking, owner) — agrupando items del mismo dueño.
-
-Cuando respondas estas dos, ejecuto la migración completa + UI en un solo paso.
+Next: confirm the project you want to use and whether you want to proceed in this order. Once confirmed, I will start by building the schema migration.
