@@ -127,7 +127,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      <EquityPreview />
+      
 
       {transitionAssets.length > 0 && (
         <section>
