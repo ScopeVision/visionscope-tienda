@@ -67,7 +67,7 @@ const ProductCardComponent = ({ product, view = "grid", basePath = "/product" }:
 
   return (
     <Link
-      to={`/product/${product.slug}`}
+      to={`${basePath}/${product.slug}`}
       className="group block bg-surface border border-border hover:border-accent/40 overflow-hidden transition-all duration-300 rounded-sm"
     >
       {/* Image */}
