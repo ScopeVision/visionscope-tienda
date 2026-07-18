@@ -1033,12 +1033,6 @@ function OwnerBalancesTab() {
     return m;
   }, [owners]);
 
-  const equityByPartner = useMemo(() => {
-    const m = new Map<string, any>();
-    (equityDist as any[]).forEach((d) => m.set(d.partner_id, d));
-    return m;
-  }, [equityDist]);
-
   return (
     <div className="space-y-4">
       <div>
@@ -1053,7 +1047,7 @@ function OwnerBalancesTab() {
           const assets = kpisByOwner.get(b.owner_id) || [];
           const ownerUnits = unitsByOwner.get(b.owner_id) || [];
           const partner = partnerByOwner.get(b.owner_id);
-          const equity = partner ? equityByPartner.get(partner.id) : null;
+
           return (
             <div key={b.owner_id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
