@@ -57,7 +57,7 @@ const Home = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {featured.map((p: any) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} basePath="/rental" />
           ))}
         </div>
       </section>
