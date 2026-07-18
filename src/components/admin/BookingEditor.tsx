@@ -336,6 +336,15 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         toast.error("Hay productos sin seleccionar");
         return;
       }
+      // Require inventory unit selection when product has >1 active unit
+      for (const it of draft.items) {
+        if (!it.product_id) continue;
+        const units = (inventoryUnits as any[]).filter((u) => u.product_id === it.product_id);
+        if (units.length > 1 && !it.inventory_unit_id) {
+          toast.error(`Selecciona la unidad de inventario para: ${it.product_name || "producto"}`);
+          return;
+        }
+      }
       setSaving(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
