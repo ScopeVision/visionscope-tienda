@@ -1137,10 +1137,6 @@ function PartnersTab() {
     },
   });
 
-  const { data: equityDist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
 
   const { data: history = [] } = useQuery({
     queryKey: ["finance-debt-history"],
