@@ -1000,10 +1000,6 @@ function OwnerBalancesTab() {
     queryFn: async () => (await sb.from("finance_owners")
       .select("id, partner_id, partner:finance_partners(id, name, profit_share_pct)")).data || [],
   });
-  const { data: equityDist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
   const { data: unitsAll = [] } = useQuery({
     queryKey: ["finance-owner-units"],
     queryFn: async () => (await sb.from("inventory_units")
