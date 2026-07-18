@@ -127,7 +127,7 @@ function DashboardTab() {
         </div>
       </section>
 
-      <EquityPreview />
+      
 
       {transitionAssets.length > 0 && (
         <section>
@@ -160,43 +160,6 @@ function DashboardTab() {
   );
 }
 
-function EquityPreview() {
-  const { data: dist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
-  if (!dist.length) return null;
-  const total = (dist as any[]).reduce((s, d) => s + Number(d.equity_pct || 0), 0);
-  const valid = Math.round(total * 10000) / 10000 === 100;
-  return (
-    <section>
-      <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">
-        Distribución equity (preview · solo informativo)
-      </h3>
-      <div className="rounded-xl bg-surface border border-border overflow-hidden">
-        <Table>
-          <TableHeader><TableRow><TableHead>Socio</TableHead><TableHead>Equity %</TableHead><TableHead>Distribuible año</TableHead><TableHead className="text-right">Le correspondería</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {(dist as any[]).map((d) => (
-              <TableRow key={d.partner_id}>
-                <TableCell className="font-medium">{d.name}</TableCell>
-                <TableCell>{d.equity_pct}%</TableCell>
-                <TableCell className="text-xs text-secondary">{fmt(d.distributable)}</TableCell>
-                <TableCell className="text-right font-medium">{fmt(d.would_receive)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      {!valid && (
-        <div className="text-xs text-rose-500 mt-2 flex items-center gap-1.5">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          Equity total: {total.toFixed(2)}% (debería ser 100%). Corrige en la tab Equity.
-        </div>
-      )}
-    </section>
-  );
-}
 
 
 
@@ -1037,10 +1000,6 @@ function OwnerBalancesTab() {
     queryFn: async () => (await sb.from("finance_owners")
       .select("id, partner_id, partner:finance_partners(id, name, profit_share_pct)")).data || [],
   });
-  const { data: equityDist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
   const { data: unitsAll = [] } = useQuery({
     queryKey: ["finance-owner-units"],
     queryFn: async () => (await sb.from("inventory_units")
@@ -1074,12 +1033,6 @@ function OwnerBalancesTab() {
     return m;
   }, [owners]);
 
-  const equityByPartner = useMemo(() => {
-    const m = new Map<string, any>();
-    (equityDist as any[]).forEach((d) => m.set(d.partner_id, d));
-    return m;
-  }, [equityDist]);
-
   return (
     <div className="space-y-4">
       <div>
@@ -1094,7 +1047,7 @@ function OwnerBalancesTab() {
           const assets = kpisByOwner.get(b.owner_id) || [];
           const ownerUnits = unitsByOwner.get(b.owner_id) || [];
           const partner = partnerByOwner.get(b.owner_id);
-          const equity = partner ? equityByPartner.get(partner.id) : null;
+
           return (
             <div key={b.owner_id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1152,28 +1105,6 @@ function OwnerBalancesTab() {
                 )}
               </div>
 
-              {/* SECTION B: EQUITY PROFIT SHARE (solo si vinculado a socio) */}
-              {partner && (
-                <div className="rounded-md border border-accent/40 bg-accent/5 p-3 space-y-2">
-                  <div className="text-[10px] uppercase tracking-wider text-accent font-medium">
-                    B · Equity profit share (beneficio empresa)
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <div className="text-[10px] text-secondary">% equity</div>
-                      <div className="font-medium">{partner.profit_share_pct}%</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-secondary">Le correspondería ahora</div>
-                      <div className="font-medium">{fmt(equity?.would_receive)}</div>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-secondary">
-                    Calculado sobre el beneficio distribuible (income − gastos − reserva).
-                    Independiente de los payouts operativos de arriba.
-                  </p>
-                </div>
-              )}
             </div>
           );
         })}
@@ -1206,10 +1137,6 @@ function PartnersTab() {
     },
   });
 
-  const { data: equityDist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
 
   const { data: history = [] } = useQuery({
     queryKey: ["finance-debt-history"],
@@ -1283,7 +1210,6 @@ function PartnersTab() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {partners.map((p: any) => {
-            const dist = (equityDist as any[]).find((d) => d.partner_id === p.id);
             return (
               <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
                 <div>
@@ -1295,12 +1221,7 @@ function PartnersTab() {
                   <Input type="number" min={0} max={100} step="0.01" value={valOf(p)}
                     onChange={(e) => { setEquity({ ...equity, [p.id]: e.target.value }); setEquityDirty(true); }} />
                 </div>
-                {dist && (
-                  <div className="border-t border-border pt-2 text-xs">
-                    <div className="text-secondary">Le correspondería este año (basado en distribuible actual):</div>
-                    <div className="font-medium text-lg">{fmt(dist.would_receive)}</div>
-                  </div>
-                )}
+
                 <div className="text-sm border-t border-border pt-2">
                   <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
                   <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>

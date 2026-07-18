@@ -10,9 +10,10 @@ import { ArrowUpRight, ImageOff } from "lucide-react";
 type Props = {
   product: any;
   view?: "grid" | "list";
+  basePath?: string;
 };
 
-const ProductCardComponent = ({ product, view = "grid" }: Props) => {
+const ProductCardComponent = ({ product, view = "grid", basePath = "/product" }: Props) => {
   const { i18n, t } = useTranslation();
   const name = localized(product, "name", i18n.language);
   const desc = localized(product, "description", i18n.language);
@@ -23,7 +24,7 @@ const ProductCardComponent = ({ product, view = "grid" }: Props) => {
   if (view === "list") {
     return (
       <Link
-        to={`/product/${product.slug}`}
+        to={`${basePath}/${product.slug}`}
         className="group flex gap-5 p-4 rounded-sm bg-surface border border-border hover:border-accent/40 transition-smooth"
       >
         <div className="relative shrink-0 w-32 h-32 rounded-sm overflow-hidden bg-muted">
@@ -66,7 +67,7 @@ const ProductCardComponent = ({ product, view = "grid" }: Props) => {
 
   return (
     <Link
-      to={`/product/${product.slug}`}
+      to={`${basePath}/${product.slug}`}
       className="group block bg-surface border border-border hover:border-accent/40 overflow-hidden transition-all duration-300 rounded-sm"
     >
       {/* Image */}
