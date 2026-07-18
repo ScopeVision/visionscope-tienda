@@ -160,43 +160,6 @@ function DashboardTab() {
   );
 }
 
-function EquityPreview() {
-  const { data: dist = [] } = useQuery({
-    queryKey: ["finance-equity-distribution"],
-    queryFn: async () => (await sb.from("finance_equity_distribution").select("*")).data || [],
-  });
-  if (!dist.length) return null;
-  const total = (dist as any[]).reduce((s, d) => s + Number(d.equity_pct || 0), 0);
-  const valid = Math.round(total * 10000) / 10000 === 100;
-  return (
-    <section>
-      <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">
-        Distribución equity (preview · solo informativo)
-      </h3>
-      <div className="rounded-xl bg-surface border border-border overflow-hidden">
-        <Table>
-          <TableHeader><TableRow><TableHead>Socio</TableHead><TableHead>Equity %</TableHead><TableHead>Distribuible año</TableHead><TableHead className="text-right">Le correspondería</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {(dist as any[]).map((d) => (
-              <TableRow key={d.partner_id}>
-                <TableCell className="font-medium">{d.name}</TableCell>
-                <TableCell>{d.equity_pct}%</TableCell>
-                <TableCell className="text-xs text-secondary">{fmt(d.distributable)}</TableCell>
-                <TableCell className="text-right font-medium">{fmt(d.would_receive)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      {!valid && (
-        <div className="text-xs text-rose-500 mt-2 flex items-center gap-1.5">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          Equity total: {total.toFixed(2)}% (debería ser 100%). Corrige en la tab Equity.
-        </div>
-      )}
-    </section>
-  );
-}
 
 
 
