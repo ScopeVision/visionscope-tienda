@@ -24,7 +24,7 @@ const ProductCardComponent = ({ product, view = "grid", basePath = "/product" }:
   if (view === "list") {
     return (
       <Link
-        to={`/product/${product.slug}`}
+        to={`${basePath}/${product.slug}`}
         className="group flex gap-5 p-4 rounded-sm bg-surface border border-border hover:border-accent/40 transition-smooth"
       >
         <div className="relative shrink-0 w-32 h-32 rounded-sm overflow-hidden bg-muted">
