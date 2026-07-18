@@ -1214,7 +1214,6 @@ function PartnersTab() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {partners.map((p: any) => {
-            const dist = (equityDist as any[]).find((d) => d.partner_id === p.id);
             return (
               <div key={p.id} className="p-4 rounded-xl bg-surface border border-border space-y-3">
                 <div>
@@ -1226,12 +1225,7 @@ function PartnersTab() {
                   <Input type="number" min={0} max={100} step="0.01" value={valOf(p)}
                     onChange={(e) => { setEquity({ ...equity, [p.id]: e.target.value }); setEquityDirty(true); }} />
                 </div>
-                {dist && (
-                  <div className="border-t border-border pt-2 text-xs">
-                    <div className="text-secondary">Le correspondería este año (basado en distribuible actual):</div>
-                    <div className="font-medium text-lg">{fmt(dist.would_receive)}</div>
-                  </div>
-                )}
+
                 <div className="text-sm border-t border-border pt-2">
                   <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
                   <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
