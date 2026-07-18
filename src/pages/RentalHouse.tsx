@@ -393,7 +393,7 @@ const RentalCard = ({ product }: { product: any }) => {
 
   return (
     <Link
-      to={`/product/${product.slug}`}
+      to={`/rental/${product.slug}`}
       className="group block rounded-sm bg-surface border border-border overflow-hidden transition-smooth hover-glow"
     >
       <div className="relative aspect-square overflow-hidden">
