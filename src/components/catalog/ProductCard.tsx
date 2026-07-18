@@ -10,9 +10,10 @@ import { ArrowUpRight, ImageOff } from "lucide-react";
 type Props = {
   product: any;
   view?: "grid" | "list";
+  basePath?: string;
 };
 
-const ProductCardComponent = ({ product, view = "grid" }: Props) => {
+const ProductCardComponent = ({ product, view = "grid", basePath = "/product" }: Props) => {
   const { i18n, t } = useTranslation();
   const name = localized(product, "name", i18n.language);
   const desc = localized(product, "description", i18n.language);
