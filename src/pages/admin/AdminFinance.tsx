@@ -1115,28 +1115,6 @@ function OwnerBalancesTab() {
                 )}
               </div>
 
-              {/* SECTION B: EQUITY PROFIT SHARE (solo si vinculado a socio) */}
-              {partner && (
-                <div className="rounded-md border border-accent/40 bg-accent/5 p-3 space-y-2">
-                  <div className="text-[10px] uppercase tracking-wider text-accent font-medium">
-                    B · Equity profit share (beneficio empresa)
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <div className="text-[10px] text-secondary">% equity</div>
-                      <div className="font-medium">{partner.profit_share_pct}%</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-secondary">Le correspondería ahora</div>
-                      <div className="font-medium">{fmt(equity?.would_receive)}</div>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-secondary">
-                    Calculado sobre el beneficio distribuible (income − gastos − reserva).
-                    Independiente de los payouts operativos de arriba.
-                  </p>
-                </div>
-              )}
             </div>
           );
         })}
