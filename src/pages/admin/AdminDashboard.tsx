@@ -137,6 +137,7 @@ const InternalCodePinSection = () => {
   const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
   const [current, setCurrent] = useState<string | null>(null);
+  const [currentInput, setCurrentInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
