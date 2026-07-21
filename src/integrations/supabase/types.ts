@@ -1678,6 +1678,7 @@ export type Database = {
       site_settings: {
         Row: {
           contact_email: string
+          equity_pin: string | null
           id: boolean
           instagram_url: string
           internal_code_pin: string | null
@@ -1687,6 +1688,7 @@ export type Database = {
         }
         Insert: {
           contact_email?: string
+          equity_pin?: string | null
           id?: boolean
           instagram_url?: string
           internal_code_pin?: string | null
@@ -1696,6 +1698,7 @@ export type Database = {
         }
         Update: {
           contact_email?: string
+          equity_pin?: string | null
           id?: boolean
           instagram_url?: string
           internal_code_pin?: string | null
