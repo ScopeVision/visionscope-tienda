@@ -913,13 +913,16 @@ function PartnersTab() {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [pinChangeOpen, setPinChangeOpen] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [pinChangeError, setPinChangeError] = useState<string | null>(null);
 
   const attemptUnlock = async () => {
     setPinError(null);
-    const { data, error } = await sb.from("site_settings").select("internal_code_pin").maybeSingle();
+    const { data, error } = await sb.from("site_settings").select("equity_pin").maybeSingle();
     if (error) { setPinError(error.message); return; }
-    const pin = (data as any)?.internal_code_pin;
-    if (!pin) { setPinError("No hay PIN configurado. Configúralo en el Dashboard primero."); return; }
+    const pin = (data as any)?.equity_pin;
+    if (!pin) { setPinError("No hay PIN de equity configurado. Configúralo en el Dashboard primero."); return; }
     if (pinInput === pin) {
       setUnlocked(true);
       setPinDialogOpen(false);
@@ -929,6 +932,22 @@ function PartnersTab() {
       setPinError("PIN incorrecto");
       toast.error("PIN incorrecto");
     }
+  };
+
+  const saveNewPin = async () => {
+    setPinChangeError(null);
+    if (!/^\d{4}$/.test(newPin)) {
+      setPinChangeError("El PIN debe tener exactamente 4 dígitos");
+      return;
+    }
+    const { error } = await sb.from("site_settings").update({ equity_pin: newPin }).eq("id", true);
+    if (error) {
+      setPinChangeError(error.message);
+      return toast.error("No se pudo actualizar el PIN de equity");
+    }
+    toast.success("PIN de equity actualizado");
+    setPinChangeOpen(false);
+    setNewPin("");
   };
 
   const { data: partners = [] } = useQuery({
