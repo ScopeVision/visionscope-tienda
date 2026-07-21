@@ -909,6 +909,27 @@ function PartnersTab() {
   const [amount, setAmount] = useState<Record<string, string>>({});
   const [equity, setEquity] = useState<Record<string, string>>({});
   const [equityDirty, setEquityDirty] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState<string | null>(null);
+
+  const attemptUnlock = async () => {
+    setPinError(null);
+    const { data, error } = await sb.from("site_settings").select("internal_code_pin").maybeSingle();
+    if (error) { setPinError(error.message); return; }
+    const pin = (data as any)?.internal_code_pin;
+    if (!pin) { setPinError("No hay PIN configurado. Configúralo en el Dashboard primero."); return; }
+    if (pinInput === pin) {
+      setUnlocked(true);
+      setPinDialogOpen(false);
+      setPinInput("");
+      toast.success("Edición de equity desbloqueada");
+    } else {
+      setPinError("PIN incorrecto");
+      toast.error("PIN incorrecto");
+    }
+  };
 
   const { data: partners = [] } = useQuery({
     queryKey: ["finance-partners-full"],
