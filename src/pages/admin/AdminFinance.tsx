@@ -1037,22 +1037,27 @@ function PartnersTab() {
                 <div>
                   <Label className="text-xs">Equity %</Label>
                   <Input type="number" min={0} max={100} step="0.01" value={valOf(p)}
+                    disabled={!unlocked}
                     onChange={(e) => { setEquity({ ...equity, [p.id]: e.target.value }); setEquityDirty(true); }} />
                 </div>
 
-                <div className="text-sm border-t border-border pt-2">
-                  <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
-                  <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
-                  <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
-                    Restante: <span className="font-medium">{fmt(p.remaining)}</span>
-                  </div>
-                </div>
-                {p.remaining > 0 && (
-                  <div className="flex gap-2">
-                    <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
-                      onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
-                    <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
-                  </div>
+                {Number(p.initial_debt) > 0 && (
+                  <>
+                    <div className="text-sm border-t border-border pt-2">
+                      <div>Deuda inicial: <span className="font-medium">{fmt(p.initial_debt)}</span></div>
+                      <div>Devuelto: <span className="font-medium">{fmt(p.repaid)}</span></div>
+                      <div className={p.remaining > 0 ? "text-rose-500" : "text-emerald-500"}>
+                        Restante: <span className="font-medium">{fmt(p.remaining)}</span>
+                      </div>
+                    </div>
+                    {p.remaining > 0 && (
+                      <div className="flex gap-2">
+                        <Input type="number" placeholder="Importe €" value={amount[p.id] || ""}
+                          onChange={(e) => setAmount({ ...amount, [p.id]: e.target.value })} />
+                        <Button size="sm" onClick={() => register(p.id)}>Registrar</Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             );
