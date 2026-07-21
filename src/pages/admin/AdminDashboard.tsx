@@ -151,6 +151,10 @@ const InternalCodePinSection = () => {
   }, []);
 
   const save = async () => {
+    if (current && currentInput !== current) {
+      toast.error("El PIN actual no es correcto");
+      return;
+    }
     if (!/^\d{4}$/.test(pin)) {
       toast.error("El PIN debe tener exactamente 4 dígitos");
       return;
@@ -172,6 +176,7 @@ const InternalCodePinSection = () => {
     setCurrent(pin);
     setPin("");
     setConfirm("");
+    setCurrentInput("");
     toast.success("PIN guardado");
   };
 
