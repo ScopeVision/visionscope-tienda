@@ -137,6 +137,7 @@ const InternalCodePinSection = () => {
   const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
   const [current, setCurrent] = useState<string | null>(null);
+  const [currentInput, setCurrentInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -150,6 +151,10 @@ const InternalCodePinSection = () => {
   }, []);
 
   const save = async () => {
+    if (current && currentInput !== current) {
+      toast.error("El PIN actual no es correcto");
+      return;
+    }
     if (!/^\d{4}$/.test(pin)) {
       toast.error("El PIN debe tener exactamente 4 dígitos");
       return;
@@ -171,6 +176,7 @@ const InternalCodePinSection = () => {
     setCurrent(pin);
     setPin("");
     setConfirm("");
+    setCurrentInput("");
     toast.success("PIN guardado");
   };
 
@@ -182,6 +188,19 @@ const InternalCodePinSection = () => {
         {current ? " Ya hay un PIN configurado; introduce uno nuevo para cambiarlo." : " No hay PIN configurado."}
       </p>
       <div className="grid sm:grid-cols-2 gap-4">
+        {current && (
+          <div className="sm:col-span-2">
+            <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">PIN actual</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={currentInput}
+              onChange={(e) => setCurrentInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="••••"
+            />
+          </div>
+        )}
         <div>
           <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">PIN</Label>
           <Input
