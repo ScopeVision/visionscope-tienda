@@ -913,13 +913,16 @@ function PartnersTab() {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [pinChangeOpen, setPinChangeOpen] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [pinChangeError, setPinChangeError] = useState<string | null>(null);
 
   const attemptUnlock = async () => {
     setPinError(null);
-    const { data, error } = await sb.from("site_settings").select("internal_code_pin").maybeSingle();
+    const { data, error } = await sb.from("site_settings").select("equity_pin").maybeSingle();
     if (error) { setPinError(error.message); return; }
-    const pin = (data as any)?.internal_code_pin;
-    if (!pin) { setPinError("No hay PIN configurado. Configúralo en el Dashboard primero."); return; }
+    const pin = (data as any)?.equity_pin;
+    if (!pin) { setPinError("No hay PIN de equity configurado. Configúralo en el Dashboard primero."); return; }
     if (pinInput === pin) {
       setUnlocked(true);
       setPinDialogOpen(false);
@@ -929,6 +932,22 @@ function PartnersTab() {
       setPinError("PIN incorrecto");
       toast.error("PIN incorrecto");
     }
+  };
+
+  const saveNewPin = async () => {
+    setPinChangeError(null);
+    if (!/^\d{4}$/.test(newPin)) {
+      setPinChangeError("El PIN debe tener exactamente 4 dígitos");
+      return;
+    }
+    const { error } = await sb.from("site_settings").update({ equity_pin: newPin }).eq("id", true);
+    if (error) {
+      setPinChangeError(error.message);
+      return toast.error("No se pudo actualizar el PIN de equity");
+    }
+    toast.success("PIN de equity actualizado");
+    setPinChangeOpen(false);
+    setNewPin("");
   };
 
   const { data: partners = [] } = useQuery({
@@ -1008,9 +1027,14 @@ function PartnersTab() {
                 <Lock className="h-3.5 w-3.5 mr-1.5" />Desbloquear edición
               </Button>
             ) : (
-              <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
-                Guardar equity
-              </Button>
+              <>
+                <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
+                  Guardar equity
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setPinChangeOpen(true)}>
+                  Cambiar PIN de equity
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -1127,6 +1151,29 @@ function PartnersTab() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPinDialogOpen(false)}>Cancelar</Button>
             <Button onClick={attemptUnlock} disabled={pinInput.length !== 4}>Desbloquear</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pinChangeOpen} onOpenChange={(o) => { setPinChangeOpen(o); if (!o) { setNewPin(""); setPinChangeError(null); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Cambiar PIN de equity</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-secondary">Nuevo PIN (4 dígitos)</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter" && /^\d{4}$/.test(newPin)) saveNewPin(); }}
+              autoFocus
+            />
+            {pinChangeError && <p className="text-xs text-destructive">{pinChangeError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPinChangeOpen(false)}>Cancelar</Button>
+            <Button onClick={saveNewPin} disabled={!/^\d{4}$/.test(newPin)}>Guardar PIN</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
