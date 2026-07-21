@@ -1064,6 +1064,9 @@ function OwnerBalancesTab() {
                   </div>
                   <div className="text-xs text-secondary">{b.type} {!b.active && "· inactivo"}</div>
                 </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to={`/admin/finance/owners/${b.owner_id}`}>Ver perfil</Link>
+                </Button>
               </div>
 
               {/* SECTION A: OWNER PAYOUTS (operativo) */}
