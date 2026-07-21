@@ -163,7 +163,7 @@ function DashboardTab() {
       <section>
         <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio empresa</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={Wallet} label="Caja real" value={fmt(cashPos?.cash_now)} tone="positive" hint="entradas − pagos a owners − gastos" />
+          <Card icon={Wallet} label="Caja empresa" value={fmt(cashPos?.company_cash)} tone="positive" hint="tuyo, tras owners" />
           <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} hint="solo comisión empresa" />
         </div>
       </section>
@@ -1248,22 +1248,27 @@ function CashTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-medium mb-3">Caja de la empresa</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card icon={TrendingUp} label="Entradas (cobrado a clientes)" value={fmt(pos?.income)} tone="positive" />
-          <Card icon={ArrowDownToLine} label="Pagos a owners" value={fmt(pos?.owner_paid)} tone="negative" />
-          <Card icon={Receipt} label="Gastos" value={fmt(pos?.expenses)} tone="negative" />
-          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
-            <div className="flex items-center justify-between">
-              <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-[10px] uppercase tracking-wider text-secondary">CAJA ACTUAL</span>
-            </div>
-            <div className="mt-2 text-3xl font-display font-medium text-emerald-600 dark:text-emerald-400">{fmt(pos?.cash_now)}</div>
+        <div className="p-4 rounded-xl bg-surface border border-border shadow-sm">
+          <div className="flex items-center justify-between">
+            <Wallet className="h-5 w-5 text-foreground" />
+            <span className="text-[10px] uppercase tracking-wider text-secondary">EN CAJA</span>
+          </div>
+          <div className="mt-2 text-3xl font-display font-medium text-foreground">{fmt(pos?.cash_gross)}</div>
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 space-y-1">
+          <div className="text-sm font-medium text-amber-700 dark:text-amber-400">
+            De esto, es de owners (aún sin pagar): {fmt(pos?.owners_in_cash)}
+          </div>
+          <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            Tuyo (empresa): {fmt(pos?.company_cash)}
           </div>
         </div>
-        <div className="text-xs text-secondary mt-3">
-          Pendiente por pagar a owners: <span className="font-medium">{fmt(pos?.owner_pending)}</span> → disponible real cuando liquides: <span className="font-medium">{fmt(pos?.available_after_owners)}</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+          <Card icon={TrendingUp} label="Entradas (cobrado)" value={fmt(pos?.income)} tone="positive" />
+          <Card icon={ArrowDownToLine} label="Pagos a owners" value={fmt(pos?.owner_paid)} tone="negative" />
+          <Card icon={Receipt} label="Gastos" value={fmt(pos?.expenses)} tone="negative" />
         </div>
-        <div className="text-[11px] text-secondary mt-1">
+        <div className="text-[11px] text-secondary mt-3">
           Caja calculada automáticamente desde el 1 de julio de 2026. Baja sola al registrar pagos a owners (en su perfil) o gastos aquí abajo.
         </div>
       </div>
