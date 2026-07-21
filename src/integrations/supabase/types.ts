@@ -2150,13 +2150,13 @@ export type Database = {
       finance_cash_position: {
         Args: never
         Returns: {
-          available_after_owners: number
-          cash_now: number
+          cash_gross: number
+          company_cash: number
           expenses: number
           income: number
-          opening_balance: number
           owner_paid: number
-          owner_pending: number
+          owner_pending_total: number
+          owners_in_cash: number
           start_date: string
         }[]
       }
