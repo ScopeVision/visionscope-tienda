@@ -1490,7 +1490,7 @@ export default function AdminFinance() {
           <TabsContent value="reconciliation"><ReconciliationTab /></TabsContent>
           <TabsContent value="owners"><OwnersTab /></TabsContent>
           <TabsContent value="assets"><AssetsTab /></TabsContent>
-          <TabsContent value="payouts"><PayoutsTab /></TabsContent>
+          
           <TabsContent value="balances"><OwnerBalancesTab /></TabsContent>
           <TabsContent value="partners"><PartnersTab /></TabsContent>
           <TabsContent value="expenses"><ExpensesTab /></TabsContent>
