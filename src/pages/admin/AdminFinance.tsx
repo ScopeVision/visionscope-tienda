@@ -122,11 +122,21 @@ function DashboardTab() {
       </div>
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Ingresos empresa</h3>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Facturación (lo que paga el cliente)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card icon={TrendingUp} label="Facturación total" value={fmt(billing?.total)} tone="positive" hint="bruto cobrado al cliente" />
+          <Card icon={TrendingUp} label="Rental (bruto)" value={fmt(billing?.rental)} />
+          <Card icon={TrendingUp} label="Super Store (bruto)" value={fmt(billing?.store)} />
+          <Card icon={TrendingUp} label="Services (bruto)" value={fmt(billing?.services)} />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Comisión de la empresa (lo que se queda TVS)</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={TrendingUp} label="Rental" value={fmt(summary?.rental_income)} tone="accent" />
-          <Card icon={TrendingUp} label="Super Store" value={fmt(summary?.store_income)} tone="accent" />
-          <Card icon={TrendingUp} label="Services" value={fmt(summary?.services_income)} tone="accent" />
+          <Card icon={TrendingUp} label="Rental (comisión)" value={fmt(summary?.rental_income)} tone="accent" />
+          <Card icon={TrendingUp} label="Super Store (comisión)" value={fmt(summary?.store_income)} tone="accent" />
+          <Card icon={TrendingUp} label="Services (comisión)" value={fmt(summary?.services_income)} tone="accent" />
         </div>
       </section>
 
