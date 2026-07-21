@@ -825,6 +825,12 @@ function PayoutsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-medium">Payouts (liabilities a owners)</h2>
+      </div>
+      <div className="rounded-md border border-border bg-background/40 p-3 text-xs text-secondary">
+        Los pagos a owners se registran ahora en el <Link to="/admin/finance" className="underline">perfil de cada owner</Link> (pestaña Balances → «Ver perfil»). Esta tabla queda como consulta de la liability generada por reservas.
+      </div>
+      <div className="flex items-center justify-end flex-wrap gap-2">
+        <div className="flex gap-2">
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
