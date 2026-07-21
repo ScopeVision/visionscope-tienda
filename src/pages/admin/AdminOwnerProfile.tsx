@@ -394,6 +394,7 @@ export default function AdminOwnerProfile() {
   const qc = useQueryClient();
   const [payOpen, setPayOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [summaryBookingId, setSummaryBookingId] = useState<string | null>(null);
 
   const { data: owner } = useQuery({
     queryKey: ["owner-profile", ownerId],
