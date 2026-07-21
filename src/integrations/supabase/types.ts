@@ -779,6 +779,63 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_owner_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          paid_at: string
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          paid_at?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          paid_at?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_owner_payments_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
+          },
+          {
+            foreignKeyName: "finance_owner_payments_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_owners: {
         Row: {
           active: boolean
@@ -1980,6 +2037,31 @@ export type Database = {
           type?: Database["public"]["Enums"]["finance_owner_type"] | null
         }
         Relationships: []
+      }
+      finance_owner_monthly: {
+        Row: {
+          bookings_count: number | null
+          generated_gross: number | null
+          generated_payout: number | null
+          owner_id: string | null
+          period_month: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_entries_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_period_v: {
         Row: {
