@@ -831,7 +831,6 @@ function PayoutsTab() {
       </div>
       <div className="flex items-center justify-end flex-wrap gap-2">
         <div className="flex gap-2">
-        <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
