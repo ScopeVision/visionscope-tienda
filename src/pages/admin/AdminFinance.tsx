@@ -890,11 +890,10 @@ function PayoutsTab() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
-                    {p.status !== "cancelled" && p.status !== "paid" && (
-                      <Button size="sm" variant="outline" onClick={() => { setPaying(p); setPayForm({ amount: String(remaining.toFixed(2)), method: "", notes: "" }); }}>Pagar</Button>
-                    )}
-                    {p.status === "paid" && (
-                      <Button size="sm" variant="ghost" onClick={() => { setPaying(p); setPayForm({ amount: "", method: "", notes: "" }); }}>Historial</Button>
+                    {p.owner_id && (
+                      <Button size="sm" variant="outline" asChild>
+                        <Link to={`/admin/finance/owners/${p.owner_id}`}>Ver owner</Link>
+                      </Button>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p })}>Editar</Button>
                   </TableCell>
