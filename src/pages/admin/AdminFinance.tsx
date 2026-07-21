@@ -153,11 +153,11 @@ function DashboardTab() {
       <section>
         <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio empresa</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" hint="comisión − gastos − deuda" />
-          <Card icon={PiggyBank} label="Reserva objetivo" value={fmt(summary?.cash_reserve_target)} />
+          <Card icon={Wallet} label="Caja real" value={fmt(cashPos?.cash_now)} tone="positive" hint="entradas − pagos a owners − gastos" />
           <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} hint="solo comisión empresa" />
         </div>
       </section>
+
 
       
 
