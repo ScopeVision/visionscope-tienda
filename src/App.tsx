@@ -92,6 +92,7 @@ const App = () => (
                 <Route path="store-tags" element={<AdminStoreTags />} />
                 <Route path="blog" element={<AdminBlog />} />
                 <Route path="finance" element={<AdminFinance />} />
+                <Route path="finance/owners/:id" element={<AdminOwnerProfile />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
