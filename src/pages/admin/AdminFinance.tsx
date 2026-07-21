@@ -1027,9 +1027,14 @@ function PartnersTab() {
                 <Lock className="h-3.5 w-3.5 mr-1.5" />Desbloquear edición
               </Button>
             ) : (
-              <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
-                Guardar equity
-              </Button>
+              <>
+                <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
+                  Guardar equity
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setPinChangeOpen(true)}>
+                  Cambiar PIN de equity
+                </Button>
+              </>
             )}
           </div>
         </div>
