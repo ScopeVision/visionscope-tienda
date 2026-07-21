@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -235,7 +236,8 @@ function OwnersTab() {
                 <TableCell className="text-xs text-secondary">{o.contact_email || o.contact_phone || "—"}</TableCell>
                 <TableCell className="text-xs">{(o.assets || []).length}</TableCell>
                 <TableCell>{o.active ? <Badge>activo</Badge> : <Badge variant="secondary">inactivo</Badge>}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right space-x-1 whitespace-nowrap">
+                  <Button size="sm" variant="outline" asChild><Link to={`/admin/finance/owners/${o.id}`}>Ver perfil</Link></Button>
                   <Button size="sm" variant="ghost" onClick={() => { setEditing({ ...o }); setOpen(true); }}>Editar</Button>
                 </TableCell>
               </TableRow>
@@ -737,8 +739,6 @@ function EntriesTab() {
 function PayoutsTab() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<any | null>(null);
-  const [paying, setPaying] = useState<any | null>(null);
-  const [payForm, setPayForm] = useState({ amount: "", method: "", notes: "" });
   const [statusFilter, setStatusFilter] = useState<string>("__open__");
   const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
 
@@ -760,43 +760,6 @@ function PayoutsTab() {
     },
   });
 
-  const { data: payments = [] } = useQuery({
-    queryKey: ["finance-payout-payments", paying?.id],
-    enabled: !!paying,
-    queryFn: async () => (await sb.from("finance_payout_payments").select("*").eq("payout_id", paying.id).order("paid_at", { ascending: false })).data || [],
-  });
-
-  const registerPayment = async () => {
-    const v = Number(payForm.amount);
-    if (!v || v <= 0) return toast.error("Importe inválido");
-    const remaining = Number(paying.amount) - Number(paying.paid_amount || 0);
-    if (v > remaining + 0.01) return toast.error(`Máximo posible: ${fmt(remaining)}`);
-    const { error } = await sb.from("finance_payout_payments").insert({
-      payout_id: paying.id, amount: v,
-      method: payForm.method || null, notes: payForm.notes || null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Pago registrado");
-    setPayForm({ amount: "", method: "", notes: "" });
-    qc.invalidateQueries({ queryKey: ["finance-payouts"] });
-    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
-    qc.invalidateQueries({ queryKey: ["finance-owner-balances"] });
-    // reload payout for header values
-    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
-    if (fresh) setPaying(fresh);
-  };
-
-  const deletePayment = async (id: string) => {
-    if (!confirm("¿Eliminar este pago?")) return;
-    const { error } = await sb.from("finance_payout_payments").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["finance-payouts"] });
-    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
-    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
-    if (fresh) setPaying(fresh);
-  };
 
   const save = async () => {
     const { id, asset, owner, paid_amount, ...rest } = editing;
@@ -823,6 +786,11 @@ function PayoutsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-medium">Payouts (liabilities a owners)</h2>
+      </div>
+      <div className="rounded-md border border-border bg-background/40 p-3 text-xs text-secondary">
+        Los pagos a owners se registran ahora en el <Link to="/admin/finance" className="underline">perfil de cada owner</Link> (pestaña Balances → «Ver perfil»). Esta tabla queda como consulta de la liability generada por reservas.
+      </div>
+      <div className="flex items-center justify-end flex-wrap gap-2">
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
@@ -883,11 +851,10 @@ function PayoutsTab() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
-                    {p.status !== "cancelled" && p.status !== "paid" && (
-                      <Button size="sm" variant="outline" onClick={() => { setPaying(p); setPayForm({ amount: String(remaining.toFixed(2)), method: "", notes: "" }); }}>Pagar</Button>
-                    )}
-                    {p.status === "paid" && (
-                      <Button size="sm" variant="ghost" onClick={() => { setPaying(p); setPayForm({ amount: "", method: "", notes: "" }); }}>Historial</Button>
+                    {p.owner_id && (
+                      <Button size="sm" variant="outline" asChild>
+                        <Link to={`/admin/finance/owners/${p.owner_id}`}>Ver owner</Link>
+                      </Button>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p })}>Editar</Button>
                   </TableCell>
@@ -901,55 +868,7 @@ function PayoutsTab() {
         </Table>
       </div>
 
-      {/* Payment registration dialog */}
-      <Dialog open={!!paying} onOpenChange={(v) => !v && setPaying(null)}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle>Registrar pago · {paying?.owner?.name || paying?.owner_label}</DialogTitle></DialogHeader>
-          {paying && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Debido</div><div className="font-medium">{fmt(paying.amount)}</div></div>
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Pagado</div><div className="font-medium text-emerald-600">{fmt(paying.paid_amount)}</div></div>
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Restante</div><div className="font-medium text-rose-500">{fmt(Number(paying.amount) - Number(paying.paid_amount || 0))}</div></div>
-              </div>
 
-              {paying.status !== "paid" && paying.status !== "cancelled" && (
-                <div className="space-y-2 border border-border rounded-lg p-3">
-                  <div className="text-xs font-medium uppercase tracking-wider text-secondary">Nuevo pago</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label className="text-xs">Importe €</Label><Input type="number" step="0.01" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} /></div>
-                    <div><Label className="text-xs">Método</Label><Input placeholder="transferencia, efectivo…" value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} /></div>
-                  </div>
-                  <div><Label className="text-xs">Notas</Label><Input value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} /></div>
-                  <Button size="sm" onClick={registerPayment}>Registrar pago</Button>
-                </div>
-              )}
-
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wider text-secondary mb-2">Historial de pagos</div>
-                <div className="rounded-md border border-border max-h-60 overflow-auto">
-                  <Table>
-                    <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Importe</TableHead><TableHead>Método</TableHead><TableHead>Notas</TableHead><TableHead></TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {payments.map((pm: any) => (
-                        <TableRow key={pm.id}>
-                          <TableCell className="text-xs">{new Date(pm.paid_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="font-medium">{fmt(pm.amount)}</TableCell>
-                          <TableCell className="text-xs">{pm.method || "—"}</TableCell>
-                          <TableCell className="text-xs">{pm.notes || "—"}</TableCell>
-                          <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => deletePayment(pm.id)}>×</Button></TableCell>
-                        </TableRow>
-                      ))}
-                      {payments.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-4 text-xs">Sin pagos</TableCell></TableRow>)}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter><Button variant="ghost" onClick={() => setPaying(null)}>Cerrar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
@@ -1062,6 +981,9 @@ function OwnerBalancesTab() {
                   </div>
                   <div className="text-xs text-secondary">{b.type} {!b.active && "· inactivo"}</div>
                 </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to={`/admin/finance/owners/${b.owner_id}`}>Ver perfil</Link>
+                </Button>
               </div>
 
               {/* SECTION A: OWNER PAYOUTS (operativo) */}
