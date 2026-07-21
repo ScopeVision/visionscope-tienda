@@ -87,7 +87,17 @@ function DashboardTab() {
     },
   });
 
+  const { data: cashPos } = useQuery({
+    queryKey: ["finance-cash-position"],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("finance_cash_position");
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) as any;
+    },
+  });
+
   // Partners query removed: no suggested distribution. Real payouts only.
+
 
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
