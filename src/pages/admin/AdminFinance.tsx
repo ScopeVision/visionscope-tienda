@@ -1154,6 +1154,29 @@ function PartnersTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={pinChangeOpen} onOpenChange={(o) => { setPinChangeOpen(o); if (!o) { setNewPin(""); setPinChangeError(null); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Cambiar PIN de equity</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-secondary">Nuevo PIN (4 dígitos)</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter" && /^\d{4}$/.test(newPin)) saveNewPin(); }}
+              autoFocus
+            />
+            {pinChangeError && <p className="text-xs text-destructive">{pinChangeError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPinChangeOpen(false)}>Cancelar</Button>
+            <Button onClick={saveNewPin} disabled={!/^\d{4}$/.test(newPin)}>Guardar PIN</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
