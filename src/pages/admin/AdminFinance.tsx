@@ -907,55 +907,7 @@ function PayoutsTab() {
         </Table>
       </div>
 
-      {/* Payment registration dialog */}
-      <Dialog open={!!paying} onOpenChange={(v) => !v && setPaying(null)}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle>Registrar pago · {paying?.owner?.name || paying?.owner_label}</DialogTitle></DialogHeader>
-          {paying && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Debido</div><div className="font-medium">{fmt(paying.amount)}</div></div>
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Pagado</div><div className="font-medium text-emerald-600">{fmt(paying.paid_amount)}</div></div>
-                <div className="p-3 rounded-md bg-muted"><div className="text-[10px] text-secondary">Restante</div><div className="font-medium text-rose-500">{fmt(Number(paying.amount) - Number(paying.paid_amount || 0))}</div></div>
-              </div>
 
-              {paying.status !== "paid" && paying.status !== "cancelled" && (
-                <div className="space-y-2 border border-border rounded-lg p-3">
-                  <div className="text-xs font-medium uppercase tracking-wider text-secondary">Nuevo pago</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label className="text-xs">Importe €</Label><Input type="number" step="0.01" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} /></div>
-                    <div><Label className="text-xs">Método</Label><Input placeholder="transferencia, efectivo…" value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} /></div>
-                  </div>
-                  <div><Label className="text-xs">Notas</Label><Input value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} /></div>
-                  <Button size="sm" onClick={registerPayment}>Registrar pago</Button>
-                </div>
-              )}
-
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wider text-secondary mb-2">Historial de pagos</div>
-                <div className="rounded-md border border-border max-h-60 overflow-auto">
-                  <Table>
-                    <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Importe</TableHead><TableHead>Método</TableHead><TableHead>Notas</TableHead><TableHead></TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {payments.map((pm: any) => (
-                        <TableRow key={pm.id}>
-                          <TableCell className="text-xs">{new Date(pm.paid_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="font-medium">{fmt(pm.amount)}</TableCell>
-                          <TableCell className="text-xs">{pm.method || "—"}</TableCell>
-                          <TableCell className="text-xs">{pm.notes || "—"}</TableCell>
-                          <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => deletePayment(pm.id)}>×</Button></TableCell>
-                        </TableRow>
-                      ))}
-                      {payments.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-4 text-xs">Sin pagos</TableCell></TableRow>)}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter><Button variant="ghost" onClick={() => setPaying(null)}>Cerrar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
