@@ -1107,6 +1107,29 @@ function PartnersTab() {
           </Table>
         </div>
       </section>
+
+      <Dialog open={pinDialogOpen} onOpenChange={(o) => { setPinDialogOpen(o); if (!o) { setPinInput(""); setPinError(null); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Desbloquear edición de equity</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-secondary">PIN (4 dígitos)</Label>
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter" && pinInput.length === 4) attemptUnlock(); }}
+              autoFocus
+            />
+            {pinError && <p className="text-xs text-destructive">{pinError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPinDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={attemptUnlock} disabled={pinInput.length !== 4}>Desbloquear</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
