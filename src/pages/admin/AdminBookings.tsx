@@ -167,7 +167,10 @@ const AdminBookings = () => {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm font-medium">{b.reference}</span>
+                      {b.order_code && (
+                        <span className="font-mono text-lg font-semibold tracking-tight">{b.order_code}</span>
+                      )}
+                      <span className="font-mono text-[11px] text-secondary">{b.reference}</span>
                       <Badge variant="secondary">{STATUS_LABELS[b.status] ?? b.status}</Badge>
                       <Badge variant="outline">{PAYMENT_LABELS[b.payment_status] ?? "Unpaid"}</Badge>
                       {(b.subtotal_override != null || b.total_override != null) && (
