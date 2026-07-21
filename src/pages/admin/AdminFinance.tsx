@@ -87,7 +87,17 @@ function DashboardTab() {
     },
   });
 
+  const { data: cashPos } = useQuery({
+    queryKey: ["finance-cash-position"],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("finance_cash_position");
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) as any;
+    },
+  });
+
   // Partners query removed: no suggested distribution. Real payouts only.
+
 
   const { data: transitionAssets = [] } = useQuery({
     queryKey: ["finance-assets-transition"],
@@ -153,11 +163,11 @@ function DashboardTab() {
       <section>
         <h3 className="text-xs uppercase tracking-wider text-secondary mb-3">Caja & beneficio empresa</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Card icon={Wallet} label="Caja real" value={fmt(summary?.cash_balance)} tone="positive" hint="comisión − gastos − deuda" />
-          <Card icon={PiggyBank} label="Reserva objetivo" value={fmt(summary?.cash_reserve_target)} />
+          <Card icon={Wallet} label="Caja real" value={fmt(cashPos?.cash_now)} tone="positive" hint="entradas − pagos a owners − gastos" />
           <Card icon={TrendingUp} label="Distribuible" value={fmt(distributable)} tone={distributable >= 0 ? "positive" : "negative"} hint="solo comisión empresa" />
         </div>
       </section>
+
 
       
 
@@ -1183,151 +1193,112 @@ function PartnersTab() {
 
 
 // ============== EXPENSES ==============
-function ExpensesTab() {
+// ============== CASH (posición + gastos) ==============
+function CashTab() {
   const qc = useQueryClient();
-  const [form, setForm] = useState<any>({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
-  const [scopeFilter, setScopeFilter] = useState<string>("__all__");
+  const todayISO = () => new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState<any>({ occurred_at: todayISO(), category: "general", description: "", amount: "" });
 
-  const { data: expenses = [] } = useQuery({
-    queryKey: ["finance-expenses", scopeFilter],
+  const { data: pos } = useQuery({
+    queryKey: ["finance-cash-position"],
     queryFn: async () => {
-      let q = sb.from("finance_expenses").select("*, asset:finance_assets(name)").order("occurred_at", { ascending: false }).limit(200);
-      if (scopeFilter !== "__all__") q = q.eq("scope", scopeFilter);
-      return (await q).data || [];
+      const { data, error } = await sb.rpc("finance_cash_position");
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) as any;
     },
   });
 
-  const { data: assets = [] } = useQuery({
-    queryKey: ["finance-assets-lookup-exp"],
-    queryFn: async () => (await sb.from("finance_assets").select("id, name").eq("active", true).order("name")).data || [],
+  const { data: expenses = [] } = useQuery({
+    queryKey: ["finance-expenses", "cashtab"],
+    queryFn: async () =>
+      (await sb.from("finance_expenses").select("*").order("occurred_at", { ascending: false }).limit(200)).data || [],
   });
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ["finance-expenses"] });
+    qc.invalidateQueries({ queryKey: ["finance-cash-position"] });
+    qc.invalidateQueries({ queryKey: ["finance-summary"] });
+  };
 
   const add = async () => {
     const v = Number(form.amount);
     if (!v || v <= 0) return toast.error("Importe inválido");
-    if (form.scope === "asset" && (!form.asset_id || form.asset_id === "__none__")) return toast.error("Selecciona el activo");
+    if (!form.occurred_at) return toast.error("Fecha requerida");
     const payload: any = {
-      scope: form.scope,
+      scope: "company",
       category: form.category || "general",
       description: form.description,
       amount: v,
-      asset_id: form.scope === "asset" ? form.asset_id : null,
-      booking_id: form.scope === "rental" && form.booking_id ? form.booking_id : null,
+      occurred_at: new Date(form.occurred_at).toISOString(),
     };
     const { error } = await sb.from("finance_expenses").insert(payload);
     if (error) return toast.error(error.message);
-    setForm({ scope: "company", category: "general", description: "", amount: "", asset_id: "__none__", booking_id: "" });
-    qc.invalidateQueries({ queryKey: ["finance-expenses"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
+    setForm({ occurred_at: todayISO(), category: "general", description: "", amount: "" });
+    invalidateAll();
+    toast.success("Gasto añadido");
   };
 
   const remove = async (id: string) => {
     if (!confirm("¿Eliminar gasto?")) return;
     await sb.from("finance_expenses").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["finance-expenses"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
+    invalidateAll();
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg font-medium">Gastos</h2>
-        <Select value={scopeFilter} onValueChange={setScopeFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Todos los ámbitos</SelectItem>
-            <SelectItem value="company">Company</SelectItem>
-            <SelectItem value="asset">Asset</SelectItem>
-            <SelectItem value="rental">Rental</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
-        <div>
-          <Label className="text-xs text-secondary">Ámbito</Label>
-          <Select value={form.scope} onValueChange={(v) => setForm({ ...form, scope: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="company">Company</SelectItem>
-              <SelectItem value="asset">Asset</SelectItem>
-              <SelectItem value="rental">Rental</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {form.scope === "asset" && (
-          <div>
-            <Label className="text-xs text-secondary">Activo</Label>
-            <Select value={form.asset_id} onValueChange={(v) => setForm({ ...form, asset_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Activo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">—</SelectItem>
-                {assets.map((a: any) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-medium mb-3">Caja de la empresa</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card icon={TrendingUp} label="Entradas (cobrado a clientes)" value={fmt(pos?.income)} tone="positive" />
+          <Card icon={ArrowDownToLine} label="Pagos a owners" value={fmt(pos?.owner_paid)} tone="negative" />
+          <Card icon={Receipt} label="Gastos" value={fmt(pos?.expenses)} tone="negative" />
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
+            <div className="flex items-center justify-between">
+              <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[10px] uppercase tracking-wider text-secondary">CAJA ACTUAL</span>
+            </div>
+            <div className="mt-2 text-3xl font-display font-medium text-emerald-600 dark:text-emerald-400">{fmt(pos?.cash_now)}</div>
           </div>
-        )}
-        {form.scope === "rental" && (
-          <div><Label className="text-xs text-secondary">Booking ID (opcional)</Label><Input value={form.booking_id} onChange={(e) => setForm({ ...form, booking_id: e.target.value })} /></div>
-        )}
-        <div><Label className="text-xs text-secondary">Categoría</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
-        <div className="md:col-span-2"><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-        <div><Label className="text-xs text-secondary">Importe €</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-        <Button onClick={add} className="gap-2"><Plus className="h-4 w-4" />Añadir</Button>
+        </div>
+        <div className="text-xs text-secondary mt-3">
+          Pendiente por pagar a owners: <span className="font-medium">{fmt(pos?.owner_pending)}</span> → disponible real cuando liquides: <span className="font-medium">{fmt(pos?.available_after_owners)}</span>
+        </div>
+        <div className="text-[11px] text-secondary mt-1">
+          Caja calculada automáticamente desde el 1 de julio de 2026. Baja sola al registrar pagos a owners (en su perfil) o gastos aquí abajo.
+        </div>
       </div>
-      <div className="rounded-xl bg-surface border border-border overflow-hidden">
-        <Table>
-          <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Ámbito</TableHead><TableHead>Asset</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
-          <TableBody>
-            {expenses.map((e: any) => (
-              <TableRow key={e.id}>
-                <TableCell className="text-xs">{new Date(e.occurred_at).toLocaleDateString()}</TableCell>
-                <TableCell><Badge variant="outline">{e.scope || "company"}</Badge></TableCell>
-                <TableCell className="text-xs">{e.asset?.name || "—"}</TableCell>
-                <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
-                <TableCell>{e.description || "—"}</TableCell>
-                <TableCell className="font-medium">{fmt(e.amount)}</TableCell>
-                <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => remove(e.id)}>Eliminar</Button></TableCell>
-              </TableRow>
-            ))}
-            {expenses.length === 0 && (<TableRow><TableCell colSpan={7} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-}
 
-// ============== CASH ==============
-function CashTab() {
-  const qc = useQueryClient();
-  const { data: reserve } = useQuery({
-    queryKey: ["finance-cash-reserve"],
-    queryFn: async () => (await sb.from("finance_cash_reserve").select("*").maybeSingle()).data,
-  });
-  const [target, setTarget] = useState<string>("");
-
-  const save = async () => {
-    const v = Number(target);
-    if (isNaN(v) || v < 0) return toast.error("Valor inválido");
-    const { error } = await sb.from("finance_cash_reserve").update({ target_amount: v, updated_at: new Date().toISOString() }).eq("id", true);
-    if (error) return toast.error(error.message);
-    toast.success("Reserva actualizada");
-    qc.invalidateQueries({ queryKey: ["finance-cash-reserve"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
-  };
-
-  return (
-    <div className="space-y-4 max-w-md">
-      <h2 className="text-lg font-medium">Caja de empresa</h2>
-      <div className="p-5 rounded-xl bg-surface border border-border space-y-3">
-        <div><div className="text-xs text-secondary">Reserva objetivo actual</div><div className="text-2xl font-display">{fmt((reserve as any)?.target_amount)}</div></div>
-        <div><Label>Nuevo objetivo de reserva (€)</Label><Input type="number" placeholder={String((reserve as any)?.target_amount ?? 0)} value={target} onChange={(e) => setTarget(e.target.value)} /></div>
-        <Button onClick={save}>Guardar reserva</Button>
-        <p className="text-xs text-secondary">Se descuenta del beneficio distribuible para mantener liquidez.</p>
+      <div>
+        <h3 className="text-sm font-medium mb-3">Gastos / pagos</h3>
+        <div className="p-4 rounded-xl bg-surface border border-border grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+          <div><Label className="text-xs text-secondary">Fecha</Label><Input type="date" value={form.occurred_at} onChange={(e) => setForm({ ...form, occurred_at: e.target.value })} /></div>
+          <div><Label className="text-xs text-secondary">Categoría</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
+          <div className="md:col-span-2"><Label className="text-xs text-secondary">Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+          <div><Label className="text-xs text-secondary">Importe €</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+          <Button onClick={add} className="gap-2 md:col-span-5 md:w-auto md:justify-self-end"><Plus className="h-4 w-4" />Añadir gasto</Button>
+        </div>
+        <div className="rounded-xl bg-surface border border-border overflow-hidden mt-3">
+          <Table>
+            <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Categoría</TableHead><TableHead>Descripción</TableHead><TableHead>Importe</TableHead><TableHead></TableHead></TableRow></TableHeader>
+            <TableBody>
+              {expenses.map((e: any) => (
+                <TableRow key={e.id}>
+                  <TableCell className="text-xs">{new Date(e.occurred_at).toLocaleDateString()}</TableCell>
+                  <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
+                  <TableCell>{e.description || "—"}</TableCell>
+                  <TableCell className="font-medium">{fmt(e.amount)}</TableCell>
+                  <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => remove(e.id)}>Eliminar</Button></TableCell>
+                </TableRow>
+              ))}
+              {expenses.length === 0 && (<TableRow><TableCell colSpan={5} className="text-center text-secondary py-6">Sin gastos</TableCell></TableRow>)}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
 }
+
 
 // ============== SETTINGS ==============
 function SettingsTab() {
@@ -1619,7 +1590,6 @@ export default function AdminFinance() {
           
           <TabsTrigger value="balances"><Users className="h-4 w-4 mr-1.5" />Balances</TabsTrigger>
           <TabsTrigger value="partners"><Users className="h-4 w-4 mr-1.5" />Equity</TabsTrigger>
-          <TabsTrigger value="expenses"><Receipt className="h-4 w-4 mr-1.5" />Gastos</TabsTrigger>
           <TabsTrigger value="cash"><Wallet className="h-4 w-4 mr-1.5" />Caja</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="h-4 w-4 mr-1.5" />Settings</TabsTrigger>
         </TabsList>
@@ -1632,7 +1602,7 @@ export default function AdminFinance() {
           
           <TabsContent value="balances"><OwnerBalancesTab /></TabsContent>
           <TabsContent value="partners"><PartnersTab /></TabsContent>
-          <TabsContent value="expenses"><ExpensesTab /></TabsContent>
+
           <TabsContent value="cash"><CashTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
         </div>
