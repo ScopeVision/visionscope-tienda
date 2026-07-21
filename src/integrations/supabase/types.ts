@@ -536,18 +536,24 @@ export type Database = {
         Row: {
           id: boolean
           notes: string | null
+          opening_balance: number
+          opening_date: string
           target_amount: number
           updated_at: string
         }
         Insert: {
           id?: boolean
           notes?: string | null
+          opening_balance?: number
+          opening_date?: string
           target_amount?: number
           updated_at?: string
         }
         Update: {
           id?: boolean
           notes?: string | null
+          opening_balance?: number
+          opening_date?: string
           target_amount?: number
           updated_at?: string
         }
@@ -2139,6 +2145,19 @@ export type Database = {
         Returns: {
           booking_id: string
           reference: string
+        }[]
+      }
+      finance_cash_position: {
+        Args: never
+        Returns: {
+          available_after_owners: number
+          cash_now: number
+          expenses: number
+          income: number
+          opening_balance: number
+          owner_paid: number
+          owner_pending: number
+          start_date: string
         }[]
       }
       finance_summary: {
