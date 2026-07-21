@@ -179,14 +179,134 @@ function PaymentDialog({
   );
 }
 
-function MonthRow({ ownerId, row }: { ownerId: string; row: any }) {
+function BookingSummaryDialog({
+  bookingId, ownerId, open, onOpenChange,
+}: {
+  bookingId: string | null;
+  ownerId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { data: booking } = useQuery({
+    queryKey: ["owner-booking-summary", bookingId],
+    enabled: !!bookingId && open,
+    queryFn: async () => (await sb
+      .from("bookings")
+      .select("order_code, reference, start_date, end_date, status, payment_status, total, customer:customers(full_name, email)")
+      .eq("id", bookingId)
+      .maybeSingle()).data,
+  });
+
+  const { data: items = [] } = useQuery({
+    queryKey: ["owner-booking-items", bookingId],
+    enabled: !!bookingId && open,
+    queryFn: async () => (await sb
+      .from("booking_items")
+      .select("product_name, quantity, days, subtotal")
+      .eq("booking_id", bookingId)).data || [],
+  });
+
+  const { data: ownerRows = [] } = useQuery({
+    queryKey: ["owner-booking-share", bookingId, ownerId],
+    enabled: !!bookingId && open,
+    queryFn: async () => (await sb
+      .from("finance_period_v")
+      .select("payout_amount, owner_split_pct_snapshot")
+      .eq("booking_id", bookingId)
+      .eq("owner_id", ownerId)).data || [],
+  });
+
+  const ownerShare = ownerRows.reduce((s: number, r: any) => s + Number(r.payout_amount || 0), 0);
+  const splitPct = ownerRows[0]?.owner_split_pct_snapshot;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <span className="font-mono text-2xl font-semibold">{booking?.order_code || "—"}</span>
+              <span className="font-mono text-xs text-secondary">{booking?.reference}</span>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-secondary">Cliente</div>
+              <div className="font-medium">{booking?.customer?.full_name || "—"}</div>
+              <div className="text-xs text-secondary">{booking?.customer?.email || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-secondary">Fechas</div>
+              <div className="text-xs">
+                {booking?.start_date} → {booking?.end_date}
+              </div>
+              <div className="mt-1 flex gap-1 flex-wrap">
+                <Badge variant="secondary">{booking?.status || "—"}</Badge>
+                <Badge variant="outline">{booking?.payment_status || "—"}</Badge>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-secondary mb-1">Equipos</div>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Producto</TableHead>
+                    <TableHead className="text-right">Cant.</TableHead>
+                    <TableHead className="text-right">Días</TableHead>
+                    <TableHead className="text-right">Subtotal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((it: any, i: number) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-xs">{it.product_name}</TableCell>
+                      <TableCell className="text-right text-xs">{it.quantity}</TableCell>
+                      <TableCell className="text-right text-xs">{it.days}</TableCell>
+                      <TableCell className="text-right text-xs">{fmt(it.subtotal)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {items.length === 0 && (
+                    <TableRow><TableCell colSpan={4} className="text-center text-xs text-secondary py-3">Sin líneas</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-surface border border-border">
+              <div className="text-[10px] uppercase tracking-wider text-secondary">Total pedido</div>
+              <div className="text-lg font-medium">{fmt(booking?.total)}</div>
+            </div>
+            <div className="p-3 rounded-lg bg-surface border border-border">
+              <div className="text-[10px] uppercase tracking-wider text-secondary">
+                Parte de este owner {splitPct != null && `· ${Number(splitPct)}%`}
+              </div>
+              <div className="text-lg font-medium text-emerald-600 dark:text-emerald-400">{fmt(ownerShare)}</div>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cerrar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MonthRow({ ownerId, row, onOpenBooking }: { ownerId: string; row: any; onOpenBooking: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["owner-period-detail", ownerId, row.period_month],
     enabled: open,
     queryFn: async () => (await sb
       .from("finance_period_v")
-      .select("booking_id, booking_reference, period_date, period_month, gross_amount, payout_amount, owner_split_pct_snapshot, agreement_type_snapshot")
+      .select("booking_id, booking_reference, order_code, period_date, period_month, gross_amount, payout_amount, owner_split_pct_snapshot, agreement_type_snapshot")
       .eq("owner_id", ownerId)
       .eq("period_month", row.period_month)
       .order("period_date", { ascending: false })).data || [],
@@ -219,7 +339,7 @@ function MonthRow({ ownerId, row }: { ownerId: string; row: any }) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Referencia</TableHead>
+                        <TableHead>Pedido</TableHead>
                         <TableHead>Fecha</TableHead>
                         <TableHead>% split</TableHead>
                         <TableHead>Acuerdo</TableHead>
@@ -230,7 +350,19 @@ function MonthRow({ ownerId, row }: { ownerId: string; row: any }) {
                     <TableBody>
                       {entries.map((e: any, i: number) => (
                         <TableRow key={`${e.booking_id}-${i}`}>
-                          <TableCell className="font-mono text-xs">{e.booking_reference || "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            {e.booking_id ? (
+                              <button
+                                type="button"
+                                onClick={(ev) => { ev.stopPropagation(); onOpenBooking(e.booking_id); }}
+                                className="font-mono font-medium text-primary hover:underline"
+                              >
+                                {e.order_code || e.booking_reference || "—"}
+                              </button>
+                            ) : (
+                              <span className="font-mono text-secondary">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs">
                             {e.period_date ? new Date(e.period_date).toLocaleDateString("es-ES") : "—"}
                           </TableCell>
