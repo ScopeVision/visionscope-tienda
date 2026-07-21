@@ -997,17 +997,29 @@ function PartnersTab() {
       </div>
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-xs uppercase tracking-wider text-secondary">Distribución de equity</h3>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className={valid ? "border-emerald-500 text-emerald-600" : "border-rose-500 text-rose-600"}>
               Total: {draftTotal.toFixed(2)}%
             </Badge>
-            <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
-              Guardar equity
-            </Button>
+            {!unlocked ? (
+              <Button size="sm" variant="outline" onClick={() => setPinDialogOpen(true)}>
+                <Lock className="h-3.5 w-3.5 mr-1.5" />Desbloquear edición
+              </Button>
+            ) : (
+              <Button size="sm" disabled={!equityDirty || !valid} onClick={saveEquity}>
+                Guardar equity
+              </Button>
+            )}
           </div>
         </div>
+        {!unlocked && (
+          <div className="text-xs text-secondary flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5" />
+            Edición protegida por PIN. Solo lectura hasta desbloquear.
+          </div>
+        )}
         {!valid && equityDirty && (
           <div className="text-xs text-rose-500 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" />
