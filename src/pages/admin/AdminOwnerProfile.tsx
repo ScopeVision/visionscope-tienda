@@ -519,7 +519,7 @@ export default function AdminOwnerProfile() {
             </TableHeader>
             <TableBody>
               {monthly.map((m: any) => (
-                <MonthRow key={m.period_month} ownerId={ownerId} row={m} />
+                <MonthRow key={m.period_month} ownerId={ownerId} row={m} onOpenBooking={setSummaryBookingId} />
               ))}
               {monthly.length === 0 && (
                 <TableRow>
