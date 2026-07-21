@@ -601,6 +601,13 @@ export default function AdminOwnerProfile() {
         editing={editingPayment}
         onSaved={onSaved}
       />
+
+      <BookingSummaryDialog
+        bookingId={summaryBookingId}
+        ownerId={ownerId}
+        open={!!summaryBookingId}
+        onOpenChange={(v) => { if (!v) setSummaryBookingId(null); }}
+      />
     </div>
   );
 }
