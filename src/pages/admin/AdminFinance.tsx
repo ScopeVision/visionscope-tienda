@@ -24,7 +24,7 @@ import { currentMonthKey, getMonthRange, parseMonthKey } from "@/lib/monthRange"
 import { formatCurrency } from "@/lib/rental";
 import {
   TrendingUp, Wallet, Users, Package, Receipt, ArrowDownToLine, PiggyBank, Plus,
-  UserCircle, Settings as SettingsIcon, AlertTriangle, ListChecks, CheckCircle2,
+  UserCircle, Settings as SettingsIcon, AlertTriangle, ListChecks, CheckCircle2, Lock,
 } from "lucide-react";
 
 const fmt = (n: number | null | undefined) => formatCurrency(Number(n || 0), "es");
