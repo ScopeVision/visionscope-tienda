@@ -739,8 +739,6 @@ function EntriesTab() {
 function PayoutsTab() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<any | null>(null);
-  const [paying, setPaying] = useState<any | null>(null);
-  const [payForm, setPayForm] = useState({ amount: "", method: "", notes: "" });
   const [statusFilter, setStatusFilter] = useState<string>("__open__");
   const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
 
@@ -762,43 +760,6 @@ function PayoutsTab() {
     },
   });
 
-  const { data: payments = [] } = useQuery({
-    queryKey: ["finance-payout-payments", paying?.id],
-    enabled: !!paying,
-    queryFn: async () => (await sb.from("finance_payout_payments").select("*").eq("payout_id", paying.id).order("paid_at", { ascending: false })).data || [],
-  });
-
-  const registerPayment = async () => {
-    const v = Number(payForm.amount);
-    if (!v || v <= 0) return toast.error("Importe inválido");
-    const remaining = Number(paying.amount) - Number(paying.paid_amount || 0);
-    if (v > remaining + 0.01) return toast.error(`Máximo posible: ${fmt(remaining)}`);
-    const { error } = await sb.from("finance_payout_payments").insert({
-      payout_id: paying.id, amount: v,
-      method: payForm.method || null, notes: payForm.notes || null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Pago registrado");
-    setPayForm({ amount: "", method: "", notes: "" });
-    qc.invalidateQueries({ queryKey: ["finance-payouts"] });
-    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
-    qc.invalidateQueries({ queryKey: ["finance-owner-balances"] });
-    // reload payout for header values
-    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
-    if (fresh) setPaying(fresh);
-  };
-
-  const deletePayment = async (id: string) => {
-    if (!confirm("¿Eliminar este pago?")) return;
-    const { error } = await sb.from("finance_payout_payments").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["finance-payouts"] });
-    qc.invalidateQueries({ queryKey: ["finance-payout-payments"] });
-    qc.invalidateQueries({ queryKey: ["finance-summary"] });
-    const { data: fresh } = await sb.from("finance_payouts").select("*").eq("id", paying.id).maybeSingle();
-    if (fresh) setPaying(fresh);
-  };
 
   const save = async () => {
     const { id, asset, owner, paid_amount, ...rest } = editing;
