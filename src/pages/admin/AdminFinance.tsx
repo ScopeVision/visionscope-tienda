@@ -66,6 +66,27 @@ function DashboardTab() {
     },
   });
 
+  const periodKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const { data: billing } = useQuery({
+    queryKey: ["finance-billing-period", periodKey],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("finance_period_v")
+        .select("origin_system, gross_amount")
+        .eq("period_month", periodKey);
+      if (error) throw error;
+      const acc = { total: 0, rental: 0, store: 0, services: 0 };
+      for (const r of (data || []) as any[]) {
+        const g = Number(r.gross_amount || 0);
+        acc.total += g;
+        if (r.origin_system === "rental") acc.rental += g;
+        else if (r.origin_system === "store") acc.store += g;
+        else if (r.origin_system === "services") acc.services += g;
+      }
+      return acc;
+    },
+  });
+
   // Partners query removed: no suggested distribution. Real payouts only.
 
   const { data: transitionAssets = [] } = useQuery({
