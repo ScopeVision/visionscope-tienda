@@ -257,6 +257,8 @@ export type Database = {
           id: string
           internal_notes: string | null
           notes: string | null
+          order_code: string | null
+          order_number: number
           paid_at: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           reference: string
@@ -280,6 +282,8 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           notes?: string | null
+          order_code?: string | null
+          order_number?: number
           paid_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
@@ -303,6 +307,8 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           notes?: string | null
+          order_code?: string | null
+          order_number?: number
           paid_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           reference?: string
@@ -2088,6 +2094,7 @@ export type Database = {
             | Database["public"]["Enums"]["finance_entry_status"]
             | null
           gross_amount: number | null
+          order_code: string | null
           origin_system:
             | Database["public"]["Enums"]["finance_origin_system"]
             | null
