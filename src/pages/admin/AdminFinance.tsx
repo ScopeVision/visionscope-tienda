@@ -236,7 +236,8 @@ function OwnersTab() {
                 <TableCell className="text-xs text-secondary">{o.contact_email || o.contact_phone || "—"}</TableCell>
                 <TableCell className="text-xs">{(o.assets || []).length}</TableCell>
                 <TableCell>{o.active ? <Badge>activo</Badge> : <Badge variant="secondary">inactivo</Badge>}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right space-x-1 whitespace-nowrap">
+                  <Button size="sm" variant="outline" asChild><Link to={`/admin/finance/owners/${o.id}`}>Ver perfil</Link></Button>
                   <Button size="sm" variant="ghost" onClick={() => { setEditing({ ...o }); setOpen(true); }}>Editar</Button>
                 </TableCell>
               </TableRow>
