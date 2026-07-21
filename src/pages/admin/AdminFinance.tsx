@@ -1590,7 +1590,6 @@ export default function AdminFinance() {
           
           <TabsTrigger value="balances"><Users className="h-4 w-4 mr-1.5" />Balances</TabsTrigger>
           <TabsTrigger value="partners"><Users className="h-4 w-4 mr-1.5" />Equity</TabsTrigger>
-          <TabsTrigger value="expenses"><Receipt className="h-4 w-4 mr-1.5" />Gastos</TabsTrigger>
           <TabsTrigger value="cash"><Wallet className="h-4 w-4 mr-1.5" />Caja</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="h-4 w-4 mr-1.5" />Settings</TabsTrigger>
         </TabsList>
@@ -1603,7 +1602,7 @@ export default function AdminFinance() {
           
           <TabsContent value="balances"><OwnerBalancesTab /></TabsContent>
           <TabsContent value="partners"><PartnersTab /></TabsContent>
-          <TabsContent value="expenses"><ExpensesTab /></TabsContent>
+
           <TabsContent value="cash"><CashTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
         </div>
