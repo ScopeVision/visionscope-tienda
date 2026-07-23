@@ -1334,6 +1334,160 @@ export type Database = {
         }
         Relationships: []
       }
+      op_initiatives: {
+        Row: {
+          category: Database["public"]["Enums"]["op_initiative_category"]
+          created_at: string
+          description: string | null
+          id: string
+          owner_partner_id: string | null
+          status: Database["public"]["Enums"]["op_initiative_status"]
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["op_initiative_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_partner_id?: string | null
+          status?: Database["public"]["Enums"]["op_initiative_status"]
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["op_initiative_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_partner_id?: string | null
+          status?: Database["public"]["Enums"]["op_initiative_status"]
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_initiatives_owner_partner_id_fkey"
+            columns: ["owner_partner_id"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_partners: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      op_tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          initiative_id: string | null
+          priority: Database["public"]["Enums"]["op_task_priority"]
+          status: Database["public"]["Enums"]["op_task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          initiative_id?: string | null
+          priority?: Database["public"]["Enums"]["op_task_priority"]
+          status?: Database["public"]["Enums"]["op_task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          initiative_id?: string | null
+          priority?: Database["public"]["Enums"]["op_task_priority"]
+          status?: Database["public"]["Enums"]["op_task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_tasks_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "op_initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_updates: {
+        Row: {
+          author_partner_id: string | null
+          content: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          author_partner_id?: string | null
+          content: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          author_partner_id?: string | null
+          content?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_updates_author_partner_id_fkey"
+            columns: ["author_partner_id"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_product_agreements: {
         Row: {
           agreement_type: Database["public"]["Enums"]["finance_agreement_type"]
@@ -2286,6 +2440,10 @@ export type Database = {
         | "payout"
       finance_transition_status: "normal" | "in_transition" | "transferred"
       inventory_unit_status: "active" | "maintenance" | "retired" | "lost"
+      op_initiative_category: "growth" | "rnd" | "operations" | "finance"
+      op_initiative_status: "planning" | "active" | "paused" | "done"
+      op_task_priority: "low" | "medium" | "high"
+      op_task_status: "todo" | "in_progress" | "blocked" | "done"
       payment_status:
         | "unpaid"
         | "deposit_pending"
@@ -2463,6 +2621,10 @@ export const Constants = {
       ],
       finance_transition_status: ["normal", "in_transition", "transferred"],
       inventory_unit_status: ["active", "maintenance", "retired", "lost"],
+      op_initiative_category: ["growth", "rnd", "operations", "finance"],
+      op_initiative_status: ["planning", "active", "paused", "done"],
+      op_task_priority: ["low", "medium", "high"],
+      op_task_status: ["todo", "in_progress", "blocked", "done"],
       payment_status: [
         "unpaid",
         "deposit_pending",
