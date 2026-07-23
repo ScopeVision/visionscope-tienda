@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OperationsCalendar from "@/components/admin/OperationsCalendar";
 
 const sb = supabase as any;
 
@@ -154,6 +155,7 @@ export default function AdminOperations() {
         <TabsList>
           <TabsTrigger value="initiatives">Iniciativas</TabsTrigger>
           <TabsTrigger value="tasks">Tareas</TabsTrigger>
+          <TabsTrigger value="calendar">Calendario</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
         </TabsList>
 
@@ -175,6 +177,16 @@ export default function AdminOperations() {
             partnersById={partnersById}
             onOpen={(id) => setOpenTask(id)}
             onNewTask={(initId) => setTaskDialog({ open: true, defaultInitiative: initId })}
+          />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="mt-4">
+          <OperationsCalendar
+            initiatives={initiatives}
+            tasks={tasks}
+            partnersById={partnersById}
+            onOpenTask={(id) => setOpenTask(id)}
+            onOpenInitiative={(id) => setOpenInitiative(id)}
           />
         </TabsContent>
 
