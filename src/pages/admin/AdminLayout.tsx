@@ -102,6 +102,11 @@ const AdminLayout = () => {
       items: [{ to: "/admin/finance", label: "Finanzas", icon: Wallet }],
     },
     {
+      key: "operations",
+      label: "Productividad",
+      items: [{ to: "/admin/operations", label: "Operations Hub", icon: KanbanSquare }],
+    },
+    {
       key: "system",
       label: "System",
       items: [
