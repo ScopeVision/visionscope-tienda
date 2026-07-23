@@ -23,6 +23,7 @@ import {
   Plug,
   BadgePercent,
   Wallet,
+  KanbanSquare,
   PanelLeftClose,
   PanelLeftOpen,
   Menu,
