@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OperationsCalendar from "@/components/admin/OperationsCalendar";
 
 const sb = supabase as any;
 
