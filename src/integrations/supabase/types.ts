@@ -1378,6 +1378,44 @@ export type Database = {
           },
         ]
       }
+      op_milestones: {
+        Row: {
+          created_at: string
+          id: string
+          initiative_id: string | null
+          milestone_date: string
+          notes: string | null
+          title: string
+          type: Database["public"]["Enums"]["op_milestone_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initiative_id?: string | null
+          milestone_date: string
+          notes?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["op_milestone_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initiative_id?: string | null
+          milestone_date?: string
+          notes?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["op_milestone_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_milestones_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "op_initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       op_partners: {
         Row: {
           active: boolean
@@ -2442,6 +2480,7 @@ export type Database = {
       inventory_unit_status: "active" | "maintenance" | "retired" | "lost"
       op_initiative_category: "growth" | "rnd" | "operations" | "finance"
       op_initiative_status: "planning" | "active" | "paused" | "done"
+      op_milestone_type: "launch" | "deadline" | "review" | "other"
       op_task_priority: "low" | "medium" | "high"
       op_task_status: "todo" | "in_progress" | "blocked" | "done"
       payment_status:
@@ -2623,6 +2662,7 @@ export const Constants = {
       inventory_unit_status: ["active", "maintenance", "retired", "lost"],
       op_initiative_category: ["growth", "rnd", "operations", "finance"],
       op_initiative_status: ["planning", "active", "paused", "done"],
+      op_milestone_type: ["launch", "deadline", "review", "other"],
       op_task_priority: ["low", "medium", "high"],
       op_task_status: ["todo", "in_progress", "blocked", "done"],
       payment_status: [
