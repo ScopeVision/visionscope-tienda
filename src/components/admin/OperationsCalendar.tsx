@@ -514,7 +514,7 @@ function MilestoneDialog({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     if (!open) return;
     if (editing) {
       setTitle(editing.title);
