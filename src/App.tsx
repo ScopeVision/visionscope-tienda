@@ -35,6 +35,7 @@ import AdminStoreCategories from "./pages/admin/AdminStoreCategories";
 import AdminStoreTags from "./pages/admin/AdminStoreTags";
 import AdminFinance from "./pages/admin/AdminFinance";
 import AdminOwnerProfile from "./pages/admin/AdminOwnerProfile";
+import AdminOperations from "./pages/admin/AdminOperations";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient({
@@ -93,6 +94,7 @@ const App = () => (
                 <Route path="blog" element={<AdminBlog />} />
                 <Route path="finance" element={<AdminFinance />} />
                 <Route path="finance/owners/:id" element={<AdminOwnerProfile />} />
+                <Route path="operations" element={<AdminOperations />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
