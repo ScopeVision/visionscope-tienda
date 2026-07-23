@@ -155,6 +155,7 @@ export default function AdminOperations() {
         <TabsList>
           <TabsTrigger value="initiatives">Iniciativas</TabsTrigger>
           <TabsTrigger value="tasks">Tareas</TabsTrigger>
+          <TabsTrigger value="calendar">Calendario</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
         </TabsList>
 
@@ -176,6 +177,16 @@ export default function AdminOperations() {
             partnersById={partnersById}
             onOpen={(id) => setOpenTask(id)}
             onNewTask={(initId) => setTaskDialog({ open: true, defaultInitiative: initId })}
+          />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="mt-4">
+          <OperationsCalendar
+            initiatives={initiatives}
+            tasks={tasks}
+            partnersById={partnersById}
+            onOpenTask={(id) => setOpenTask(id)}
+            onOpenInitiative={(id) => setOpenInitiative(id)}
           />
         </TabsContent>
 
