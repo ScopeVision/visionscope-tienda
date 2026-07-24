@@ -50,6 +50,7 @@ const schema = z.object({
   description_ca: z.string().max(4000).optional().or(z.literal("")),
   description_en: z.string().max(4000).optional().or(z.literal("")),
   description_fr: z.string().max(4000).optional().or(z.literal("")),
+  contents_es: z.string().max(4000).optional().or(z.literal("")),
   price_day: z.coerce.number().min(0),
   price_week: z.union([z.coerce.number().min(0), z.literal("").transform(() => null)]).nullable().optional(),
   deposit: z.coerce.number().min(0),
@@ -114,6 +115,25 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       return data ?? [];
     },
   });
+  const { data: liveUnits = [] } = useQuery({
+    enabled: !!product?.id,
+    queryKey: ["product-form-units", product?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("inventory_units")
+        .select("active, status")
+        .eq("product_id", product?.id);
+      return data ?? [];
+    },
+  });
+  const unitsInService = useMemo(
+    () =>
+      liveUnits.filter(
+        (u: any) => u.active === true && (u.status === "active" || u.status === "maintenance")
+      ).length,
+    [liveUnits]
+  );
+
 
   const defaults: ProductFormValues = useMemo(
     () => ({
@@ -128,6 +148,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       description_ca: product?.description_ca ?? "",
       description_en: product?.description_en ?? "",
       description_fr: product?.description_fr ?? "",
+      contents_es: product?.contents_es ?? "",
       price_day: product?.price_day ?? 0,
       price_week: product?.price_week ?? null,
       deposit: product?.deposit ?? 0,
@@ -267,6 +288,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         description_ca: values.description_ca || null,
         description_en: values.description_en || null,
         description_fr: values.description_fr || null,
+        contents_es: values.contents_es || null,
         price_day: Number(values.price_day),
         price_week: values.price_week == null || (values.price_week as any) === "" ? null : Number(values.price_week),
         deposit: Number(values.deposit),
@@ -303,13 +325,13 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       let productId: string;
 
       if (product?.id) {
-        const { error } = await supabase.from("products").update(payload).eq("id", product.id);
+        const { error } = await supabase.from("products").update(payload as any).eq("id", product.id);
         if (error) throw error;
         productId = product.id;
       } else {
         const { data, error } = await supabase
           .from("products")
-          .insert(payload)
+          .insert(payload as any)
           .select("id")
           .single();
         if (error) throw error;
@@ -481,6 +503,11 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("admin.products.fields.stock") + " *"} error={form.formState.errors.stock?.message}>
                 <Input type="number" step="1" min="0" {...form.register("stock")} />
+                {product?.id && (
+                  <p className="text-[11px] text-secondary mt-1">
+                    Unidades reales en servicio ahora: <span className="font-mono text-foreground">{unitsInService}</span> (solo informativo)
+                  </p>
+                )}
               </Field>
               <div className="flex items-end gap-3">
                 <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input bg-background w-full">
@@ -494,6 +521,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 </div>
               </div>
             </div>
+
+            <Field label="Contenido del kit / maletín (opcional, solo interno)">
+              <Textarea rows={3} {...form.register("contents_es")} placeholder="Ej. Cuerpo, 2 baterías, cargador, cable USB-C…" />
+            </Field>
 
             {/* Kit mode selector */}
             <div>
