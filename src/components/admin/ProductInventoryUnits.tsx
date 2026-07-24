@@ -215,6 +215,7 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
         <UnitForm
           draft={editing}
           owners={owners}
+          variants={variants}
           saving={savingId === (editing.id ?? "new")}
           onChange={setEditing}
           onCancel={() => setEditing(null)}
