@@ -69,6 +69,13 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
       (await sb.from("finance_owners").select("id, name, type").eq("active", true).order("name")).data || [],
   });
 
+  const { data: variants = [] } = useQuery({
+    enabled: !!productId,
+    queryKey: ["inventory-unit-variants", productId],
+    queryFn: async () =>
+      (await sb.from("product_variants").select("id, name").eq("product_id", productId).order("sort_order")).data || [],
+  });
+
   const { data: units = [], isLoading, refetch } = useQuery({
     enabled: !!productId,
     queryKey: ["inventory-units", productId],
