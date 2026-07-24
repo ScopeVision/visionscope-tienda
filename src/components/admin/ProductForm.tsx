@@ -306,13 +306,13 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       let productId: string;
 
       if (product?.id) {
-        const { error } = await supabase.from("products").update(payload).eq("id", product.id);
+        const { error } = await supabase.from("products").update(payload as any).eq("id", product.id);
         if (error) throw error;
         productId = product.id;
       } else {
         const { data, error } = await supabase
           .from("products")
-          .insert(payload)
+          .insert(payload as any)
           .select("id")
           .single();
         if (error) throw error;
