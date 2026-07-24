@@ -125,6 +125,7 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
         status: draft.status,
         notes: draft.notes || null,
         active: draft.active,
+        variant_id: draft.variant_id || null,
       };
       const res = draft.id
         ? await sb.from("inventory_units").update(payload).eq("id", draft.id).select().single()
