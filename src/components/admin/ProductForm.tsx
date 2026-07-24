@@ -522,6 +522,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </div>
             </div>
 
+            <Field label="Contenido del kit / maletín (opcional, solo interno)">
+              <Textarea rows={3} {...form.register("contents_es")} placeholder="Ej. Cuerpo, 2 baterías, cargador, cable USB-C…" />
+            </Field>
+
             {/* Kit mode selector */}
             <div>
               <Label className="text-xs uppercase tracking-wider text-secondary mb-2 block">
