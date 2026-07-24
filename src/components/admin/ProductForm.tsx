@@ -50,6 +50,7 @@ const schema = z.object({
   description_ca: z.string().max(4000).optional().or(z.literal("")),
   description_en: z.string().max(4000).optional().or(z.literal("")),
   description_fr: z.string().max(4000).optional().or(z.literal("")),
+  contents_es: z.string().max(4000).optional().or(z.literal("")),
   price_day: z.coerce.number().min(0),
   price_week: z.union([z.coerce.number().min(0), z.literal("").transform(() => null)]).nullable().optional(),
   deposit: z.coerce.number().min(0),
