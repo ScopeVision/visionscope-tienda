@@ -233,10 +233,11 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
 }
 
 function UnitForm({
-  draft, owners, saving, onChange, onCancel, onSave,
+  draft, owners, variants, saving, onChange, onCancel, onSave,
 }: {
   draft: UnitDraft;
   owners: any[];
+  variants: any[];
   saving: boolean;
   onChange: (d: UnitDraft) => void;
   onCancel: () => void;
@@ -254,6 +255,23 @@ function UnitForm({
           <Label className="text-xs">Código interno</Label>
           <Input value={draft.internal_code} onChange={(e) => onChange({ ...draft, internal_code: e.target.value })} />
         </div>
+        {variants.length > 0 && (
+          <div>
+            <Label className="text-xs">Variante</Label>
+            <Select
+              value={draft.variant_id ?? "__none__"}
+              onValueChange={(v) => onChange({ ...draft, variant_id: v === "__none__" ? null : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="Sin variante" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Sin variante —</SelectItem>
+                {variants.map((v: any) => (
+                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div>
           <Label className="text-xs">Owner</Label>
           <Select
