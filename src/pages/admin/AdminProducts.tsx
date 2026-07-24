@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +26,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProductForm } from "@/components/admin/ProductForm";
-import { Plus, Pencil, Trash2, Search, ImageOff } from "lucide-react";
+import InventoryPanel from "@/components/admin/InventoryPanel";
+import { Plus, Pencil, Trash2, Search, ImageOff, Copy, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { useInventoryAudit } from "@/hooks/useInventoryAudit";
+import { buildExportRows, exportInventoryXlsx } from "@/lib/inventoryExport";
 
 const AdminProducts = () => {
   const { t, i18n } = useTranslation();
@@ -58,6 +62,8 @@ const AdminProducts = () => {
     },
   });
 
+  const { audits, categoryName } = useInventoryAudit();
+
   const filtered = useMemo(() => {
     return products.filter((p: any) => {
       if (categoryFilter && p.category_id !== categoryFilter) return false;
@@ -82,6 +88,37 @@ const AdminProducts = () => {
     qc.invalidateQueries({ queryKey: ["admin-products"] });
     qc.invalidateQueries({ queryKey: ["rental-products"] });
     qc.invalidateQueries({ queryKey: ["home-featured"] });
+  };
+
+  const duplicateProduct = (p: any) => {
+    const suggestedSlug = (p.slug ? `${p.slug}-copia` : "");
+    const draft: any = {
+      ...p,
+      id: undefined,
+      internal_code: "",
+      slug: suggestedSlug,
+      name_es: `${p.name_es ?? ""} (copia)`.trim(),
+      published: false,
+      images: [],
+      product_tags: p.product_tags ?? [],
+      created_at: undefined,
+      updated_at: undefined,
+    };
+    setEditing(draft);
+  };
+
+  const exportListToXlsx = async () => {
+    const filteredIds = new Set(filtered.map((p: any) => p.id));
+    const rows = buildExportRows(
+      audits.filter((a) => filteredIds.has(a.product.id)),
+      categoryName,
+      i18n.language
+    );
+    if (rows.length === 0) {
+      toast.error("Nada que exportar");
+      return;
+    }
+    await exportInventoryXlsx(rows);
   };
 
   const confirmDelete = async () => {
@@ -118,124 +155,149 @@ const AdminProducts = () => {
         </Button>
       </div>
 
-      {/* Filter bar */}
-      <div className="grid sm:grid-cols-[1fr_240px] gap-3 mb-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-          <Input
-            placeholder={t("common.search")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="h-10 px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-        >
-          <option value="">{t("common.all")}</option>
-          {categories.map((c: any) => (
-            <option key={c.id} value={c.id}>
-              {localized(c, "name", i18n.language)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Tabs defaultValue="list">
+        <TabsList className="bg-muted">
+          <TabsTrigger value="list">Listado</TabsTrigger>
+          <TabsTrigger value="inventory">Inventario</TabsTrigger>
+        </TabsList>
 
-      <div className="rounded-md bg-surface border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16"></TableHead>
-              <TableHead>{t("common.name")}</TableHead>
-              <TableHead>{t("admin.categories")}</TableHead>
-              <TableHead className="text-right">{t("common.perDay")}</TableHead>
-              <TableHead className="text-right">{t("common.deposit")}</TableHead>
-              <TableHead className="text-right">{t("admin.stock")}</TableHead>
-              <TableHead className="text-center">{t("admin.published")}</TableHead>
-              <TableHead className="text-right">{t("common.actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-secondary py-10">
-                  {t("common.loading")}
-                </TableCell>
-              </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-secondary py-10">
-                  —
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((p: any) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <div className="w-12 h-12 rounded-sm bg-muted overflow-hidden grid place-items-center">
-                      {p.images?.[0] ? (
-                        <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <ImageOff className="h-4 w-4 text-secondary/40" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {localized(p, "name", i18n.language)}
-                    <div className="text-[10px] font-mono text-secondary mt-0.5">{p.slug}</div>
-                  </TableCell>
-                  <TableCell className="text-secondary">
-                    {p.category ? localized(p.category, "name", i18n.language) : "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(Number(p.price_day), i18n.language)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(Number(p.deposit), i18n.language)}
-                  </TableCell>
-                  <TableCell className="text-right">{p.stock}</TableCell>
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={p.published}
-                      onCheckedChange={() => togglePublished(p)}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditing(p)}
-                        aria-label={t("common.edit")}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDeleting(p)}
-                        aria-label={t("common.delete")}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <TabsContent value="list" className="mt-5">
+          {/* Filter bar */}
+          <div className="grid sm:grid-cols-[1fr_240px_auto] gap-3 mb-5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+              <Input
+                placeholder={t("common.search")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="h-10 px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="">{t("common.all")}</option>
+              {categories.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {localized(c, "name", i18n.language)}
+                </option>
+              ))}
+            </select>
+            <Button variant="outline" onClick={exportListToXlsx} className="gap-1.5">
+              <FileSpreadsheet className="h-4 w-4" /> Exportar a Excel
+            </Button>
+          </div>
+
+          <div className="rounded-md bg-surface border border-border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16"></TableHead>
+                  <TableHead>{t("common.name")}</TableHead>
+                  <TableHead>{t("admin.categories")}</TableHead>
+                  <TableHead className="text-right">{t("common.perDay")}</TableHead>
+                  <TableHead className="text-right">{t("common.deposit")}</TableHead>
+                  <TableHead className="text-right">{t("admin.stock")}</TableHead>
+                  <TableHead className="text-center">{t("admin.published")}</TableHead>
+                  <TableHead className="text-right">{t("common.actions")}</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-secondary py-10">
+                      {t("common.loading")}
+                    </TableCell>
+                  </TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-secondary py-10">
+                      —
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((p: any) => (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        <div className="w-12 h-12 rounded-sm bg-muted overflow-hidden grid place-items-center">
+                          {p.images?.[0] ? (
+                            <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <ImageOff className="h-4 w-4 text-secondary/40" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {localized(p, "name", i18n.language)}
+                        <div className="text-[10px] font-mono text-secondary mt-0.5">{p.slug}</div>
+                      </TableCell>
+                      <TableCell className="text-secondary">
+                        {p.category ? localized(p.category, "name", i18n.language) : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Number(p.price_day), i18n.language)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Number(p.deposit), i18n.language)}
+                      </TableCell>
+                      <TableCell className="text-right">{p.stock}</TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={p.published}
+                          onCheckedChange={() => togglePublished(p)}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => duplicateProduct(p)}
+                            aria-label="Duplicar"
+                            title="Duplicar producto"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditing(p)}
+                            aria-label={t("common.edit")}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleting(p)}
+                            aria-label={t("common.delete")}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="mt-5">
+          <InventoryPanel />
+        </TabsContent>
+      </Tabs>
 
       {/* Create / Edit dialog */}
       <Dialog open={openDialog} onOpenChange={(o) => !o && closeDialog()}>
         <DialogContent className="max-w-3xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
             <DialogTitle className="uppercase tracking-tight">
-              {editing ? t("admin.products.editTitle") : t("admin.products.createTitle")}
+              {editing?.id ? t("admin.products.editTitle") : t("admin.products.createTitle")}
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
