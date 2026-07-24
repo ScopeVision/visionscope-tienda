@@ -115,6 +115,25 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       return data ?? [];
     },
   });
+  const { data: liveUnits = [] } = useQuery({
+    enabled: !!product?.id,
+    queryKey: ["product-form-units", product?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("inventory_units")
+        .select("active, status")
+        .eq("product_id", product?.id);
+      return data ?? [];
+    },
+  });
+  const unitsInService = useMemo(
+    () =>
+      liveUnits.filter(
+        (u: any) => u.active === true && (u.status === "active" || u.status === "maintenance")
+      ).length,
+    [liveUnits]
+  );
+
 
   const defaults: ProductFormValues = useMemo(
     () => ({
