@@ -503,6 +503,11 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("admin.products.fields.stock") + " *"} error={form.formState.errors.stock?.message}>
                 <Input type="number" step="1" min="0" {...form.register("stock")} />
+                {product?.id && (
+                  <p className="text-[11px] text-secondary mt-1">
+                    Unidades reales en servicio ahora: <span className="font-mono text-foreground">{unitsInService}</span> (solo informativo)
+                  </p>
+                )}
               </Field>
               <div className="flex items-end gap-3">
                 <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input bg-background w-full">
