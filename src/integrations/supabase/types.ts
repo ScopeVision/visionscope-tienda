@@ -1297,6 +1297,7 @@ export type Database = {
           status: Database["public"]["Enums"]["inventory_unit_status"]
           target_recovery_value: number
           updated_at: string
+          variant_id: string | null
         }
         Insert: {
           acquisition_value?: number
@@ -1314,6 +1315,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["inventory_unit_status"]
           target_recovery_value?: number
           updated_at?: string
+          variant_id?: string | null
         }
         Update: {
           acquisition_value?: number
@@ -1331,8 +1333,17 @@ export type Database = {
           status?: Database["public"]["Enums"]["inventory_unit_status"]
           target_recovery_value?: number
           updated_at?: string
+          variant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       op_initiatives: {
         Row: {
@@ -1699,6 +1710,7 @@ export type Database = {
           accessory_type: string | null
           brand: string | null
           category_id: string | null
+          contents_es: string | null
           coverage: string | null
           created_at: string
           deposit: number
@@ -1740,6 +1752,7 @@ export type Database = {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          contents_es?: string | null
           coverage?: string | null
           created_at?: string
           deposit?: number
@@ -1781,6 +1794,7 @@ export type Database = {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          contents_es?: string | null
           coverage?: string | null
           created_at?: string
           deposit?: number
