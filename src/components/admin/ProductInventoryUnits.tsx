@@ -40,6 +40,7 @@ type UnitDraft = {
   status: string;
   notes: string;
   active: boolean;
+  variant_id: string | null;
 };
 
 const emptyDraft = (): UnitDraft => ({
@@ -53,6 +54,7 @@ const emptyDraft = (): UnitDraft => ({
   status: "active",
   notes: "",
   active: true,
+  variant_id: null,
 });
 
 export function ProductInventoryUnits({ productId }: { productId?: string }) {
