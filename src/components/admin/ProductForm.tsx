@@ -269,6 +269,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         description_ca: values.description_ca || null,
         description_en: values.description_en || null,
         description_fr: values.description_fr || null,
+        contents_es: values.contents_es || null,
         price_day: Number(values.price_day),
         price_week: values.price_week == null || (values.price_week as any) === "" ? null : Number(values.price_week),
         deposit: Number(values.deposit),
