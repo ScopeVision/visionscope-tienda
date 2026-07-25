@@ -35,6 +35,7 @@ import AdminStoreCategories from "./pages/admin/AdminStoreCategories";
 import AdminStoreTags from "./pages/admin/AdminStoreTags";
 import AdminFinance from "./pages/admin/AdminFinance";
 import AdminOwnerProfile from "./pages/admin/AdminOwnerProfile";
+import AdminServices from "./pages/admin/AdminServices";
 import AdminOperations from "./pages/admin/AdminOperations";
 import NotFound from "./pages/NotFound.tsx";
 
