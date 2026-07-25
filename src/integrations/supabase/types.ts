@@ -636,6 +636,7 @@ export type Database = {
           owner_split_pct_snapshot: number | null
           partner_id: string | null
           payout_amount: number
+          service_id: string | null
           source_type: Database["public"]["Enums"]["finance_source_type"]
           status: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id: string | null
@@ -666,6 +667,7 @@ export type Database = {
           owner_split_pct_snapshot?: number | null
           partner_id?: string | null
           payout_amount?: number
+          service_id?: string | null
           source_type: Database["public"]["Enums"]["finance_source_type"]
           status?: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id?: string | null
@@ -696,6 +698,7 @@ export type Database = {
           owner_split_pct_snapshot?: number | null
           partner_id?: string | null
           payout_amount?: number
+          service_id?: string | null
           source_type?: Database["public"]["Enums"]["finance_source_type"]
           status?: Database["public"]["Enums"]["finance_entry_status"]
           store_order_id?: string | null
@@ -742,6 +745,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "finance_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -1893,6 +1903,65 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          amount_charged: number
+          cost_materials: number
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name_freeform: string | null
+          description: string
+          equipment_reference: string | null
+          equipment_source: string
+          id: string
+          notes: string | null
+          service_date: string
+          service_type: string
+          status: string
+        }
+        Insert: {
+          amount_charged: number
+          cost_materials?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name_freeform?: string | null
+          description: string
+          equipment_reference?: string | null
+          equipment_source: string
+          id?: string
+          notes?: string | null
+          service_date: string
+          service_type: string
+          status?: string
+        }
+        Update: {
+          amount_charged?: number
+          cost_materials?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name_freeform?: string | null
+          description?: string
+          equipment_reference?: string | null
+          equipment_source?: string
+          id?: string
+          notes?: string | null
+          service_date?: string
+          service_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           contact_email: string
@@ -2490,6 +2559,7 @@ export type Database = {
         | "expense"
         | "debt_repayment"
         | "payout"
+        | "service_payment"
       finance_transition_status: "normal" | "in_transition" | "transferred"
       inventory_unit_status: "active" | "maintenance" | "retired" | "lost"
       op_initiative_category: "growth" | "rnd" | "operations" | "finance"
@@ -2671,6 +2741,7 @@ export const Constants = {
         "expense",
         "debt_repayment",
         "payout",
+        "service_payment",
       ],
       finance_transition_status: ["normal", "in_transition", "transferred"],
       inventory_unit_status: ["active", "maintenance", "retired", "lost"],

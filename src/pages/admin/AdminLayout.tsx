@@ -23,6 +23,7 @@ import {
   Plug,
   BadgePercent,
   Wallet,
+  Wrench,
   KanbanSquare,
   PanelLeftClose,
   PanelLeftOpen,
@@ -99,7 +100,10 @@ const AdminLayout = () => {
     {
       key: "finance",
       label: "Finance",
-      items: [{ to: "/admin/finance", label: "Finanzas", icon: Wallet }],
+      items: [
+        { to: "/admin/finance", label: "Finanzas", icon: Wallet },
+        { to: "/admin/services", label: "Servicios", icon: Wrench },
+      ],
     },
     {
       key: "operations",
