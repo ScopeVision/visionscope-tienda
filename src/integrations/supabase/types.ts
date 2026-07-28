@@ -1728,12 +1728,14 @@ export type Database = {
           description_en: string | null
           description_es: string | null
           description_fr: string | null
+          featured_rank: number | null
           format: string | null
           grip_type: string | null
           id: string
           images: string[]
           internal_code: string | null
           is_anamorphic: boolean
+          is_featured: boolean
           is_rehoused: boolean
           is_vintage: boolean
           kit_mode: string
@@ -1754,6 +1756,7 @@ export type Database = {
           sensor_type: string | null
           series: string | null
           slug: string
+          sort_order: number
           stock: number
           updated_at: string
           year: number | null
@@ -1770,12 +1773,14 @@ export type Database = {
           description_en?: string | null
           description_es?: string | null
           description_fr?: string | null
+          featured_rank?: number | null
           format?: string | null
           grip_type?: string | null
           id?: string
           images?: string[]
           internal_code?: string | null
           is_anamorphic?: boolean
+          is_featured?: boolean
           is_rehoused?: boolean
           is_vintage?: boolean
           kit_mode?: string
@@ -1796,6 +1801,7 @@ export type Database = {
           sensor_type?: string | null
           series?: string | null
           slug: string
+          sort_order?: number
           stock?: number
           updated_at?: string
           year?: number | null
@@ -1812,12 +1818,14 @@ export type Database = {
           description_en?: string | null
           description_es?: string | null
           description_fr?: string | null
+          featured_rank?: number | null
           format?: string | null
           grip_type?: string | null
           id?: string
           images?: string[]
           internal_code?: string | null
           is_anamorphic?: boolean
+          is_featured?: boolean
           is_rehoused?: boolean
           is_vintage?: boolean
           kit_mode?: string
@@ -1838,6 +1846,7 @@ export type Database = {
           sensor_type?: string | null
           series?: string | null
           slug?: string
+          sort_order?: number
           stock?: number
           updated_at?: string
           year?: number | null
@@ -1900,6 +1909,51 @@ export type Database = {
           title?: string
           updated_at?: string
           year?: number | null
+        }
+        Relationships: []
+      }
+      rental_collections: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          published: boolean
+          sort_order: number
+          subtitle_es: string | null
+          target_url: string | null
+          title_ca: string | null
+          title_en: string | null
+          title_es: string
+          title_fr: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          sort_order?: number
+          subtitle_es?: string | null
+          target_url?: string | null
+          title_ca?: string | null
+          title_en?: string | null
+          title_es?: string
+          title_fr?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          sort_order?: number
+          subtitle_es?: string | null
+          target_url?: string | null
+          title_ca?: string | null
+          title_en?: string | null
+          title_es?: string
+          title_fr?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2399,6 +2453,14 @@ export type Database = {
           },
         ]
       }
+      product_popularity: {
+        Row: {
+          product_id: string | null
+          rentals_12m: number | null
+          rentals_total: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       available_stock: {
@@ -2458,6 +2520,14 @@ export type Database = {
           rental_income: number
           services_income: number
           store_income: number
+        }[]
+      }
+      fn_product_popularity: {
+        Args: never
+        Returns: {
+          product_id: string
+          rentals_12m: number
+          rentals_total: number
         }[]
       }
       generate_internal_code: {

@@ -56,11 +56,30 @@ const AdminProducts = () => {
       const { data, error } = await supabase
         .from("products")
         .select("*, category:categories(*), product_tags(tag_id, tag:tags(*))")
-        .order("created_at", { ascending: false });
+        .order("sort_order", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
   });
+
+  const { data: popularity = [] } = useQuery({
+    queryKey: ["admin-product-popularity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_popularity")
+        .select("product_id, rentals_12m, rentals_total");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const popularityMap = useMemo(() => {
+    const m = new Map<string, { rentals_12m: number; rentals_total: number }>();
+    for (const row of popularity as any[]) {
+      m.set(row.product_id, { rentals_12m: Number(row.rentals_12m), rentals_total: Number(row.rentals_total) });
+    }
+    return m;
+  }, [popularity]);
 
   const { audits, categoryName } = useInventoryAudit();
 
@@ -105,6 +124,30 @@ const AdminProducts = () => {
       updated_at: undefined,
     };
     setEditing(draft);
+  };
+
+  const updateSortOrder = async (id: string, value: number) => {
+    const { error } = await supabase.from("products").update({ sort_order: value }).eq("id", id);
+    if (error) toast.error(error.message);
+    else qc.invalidateQueries({ queryKey: ["admin-products"] });
+  };
+
+  const toggleFeatured = async (p: any) => {
+    const newVal = !p.is_featured;
+    const patch: any = { is_featured: newVal };
+    if (!newVal) patch.featured_rank = null;
+    const { error } = await supabase.from("products").update(patch).eq("id", p.id);
+    if (error) toast.error(error.message);
+    else {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["home-featured"] });
+    }
+  };
+
+  const updateFeaturedRank = async (id: string, value: number | null) => {
+    const { error } = await supabase.from("products").update({ featured_rank: value }).eq("id", id);
+    if (error) toast.error(error.message);
+    else qc.invalidateQueries({ queryKey: ["admin-products"] });
   };
 
   const exportListToXlsx = async () => {
@@ -200,6 +243,9 @@ const AdminProducts = () => {
                   <TableHead className="text-right">{t("common.perDay")}</TableHead>
                   <TableHead className="text-right">{t("common.deposit")}</TableHead>
                   <TableHead className="text-right">{t("admin.stock")}</TableHead>
+                  <TableHead className="text-right w-20">Orden</TableHead>
+                  <TableHead className="text-center w-28">Destacado</TableHead>
+                  <TableHead className="text-right w-24">Alquileres</TableHead>
                   <TableHead className="text-center">{t("admin.published")}</TableHead>
                   <TableHead className="text-right">{t("common.actions")}</TableHead>
                 </TableRow>
@@ -207,13 +253,13 @@ const AdminProducts = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-secondary py-10">
+                    <TableCell colSpan={11} className="text-center text-secondary py-10">
                       {t("common.loading")}
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-secondary py-10">
+                    <TableCell colSpan={11} className="text-center text-secondary py-10">
                       —
                     </TableCell>
                   </TableRow>
@@ -243,6 +289,40 @@ const AdminProducts = () => {
                         {formatCurrency(Number(p.deposit), i18n.language)}
                       </TableCell>
                       <TableCell className="text-right">{p.stock}</TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          defaultValue={p.sort_order ?? 0}
+                          className="w-16 h-7 text-right text-xs px-1"
+                          onBlur={(e) => updateSortOrder(p.id, Number(e.target.value))}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Switch
+                            checked={p.is_featured ?? false}
+                            onCheckedChange={() => toggleFeatured(p)}
+                          />
+                          {p.is_featured && (
+                            <Input
+                              type="number"
+                              placeholder="#"
+                              defaultValue={p.featured_rank ?? ""}
+                              className="w-12 h-7 text-center text-xs px-1"
+                              onBlur={(e) => updateFeaturedRank(p.id, e.target.value === "" ? null : Number(e.target.value))}
+                              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-secondary tabular-nums">
+                        {(() => {
+                          const pop = popularityMap.get(p.id);
+                          if (!pop) return "—";
+                          return `${pop.rentals_12m} / ${pop.rentals_total}`;
+                        })()}
+                      </TableCell>
                       <TableCell className="text-center">
                         <Switch
                           checked={p.published}
