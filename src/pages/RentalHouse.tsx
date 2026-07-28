@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/rental";
 import { Search, X, ImageOff, ArrowRight, SlidersHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SmartImage } from "@/components/SmartImage";
 import { cn } from "@/lib/utils";
-import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { useRentalCatalog, SortOption } from "@/hooks/useRentalCatalog";
 
@@ -26,14 +26,38 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 const RentalHouse = () => {
   const { t, i18n } = useTranslation();
-  const [params, setParams] = useSearchParams();
-  const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const selectedCategory = params.get("category") ?? "";
-  const sort = (params.get("sort") ?? "recommended") as SortOption;
+  const {
+    filtered,
+    isLoading,
+    dynFilters,
+    activeCount,
+    activeChips,
+    searchTerm,
+    priceRange,
+    facets,
+    selectedCategory,
+    sort,
+    categoryCounts,
+    totalPublished,
+    setSearch,
+    setPriceRange,
+    setCategory,
+    removeChip,
+    clearFilters,
+    setSort,
+    toggleDynValue,
+  } = useRentalCatalog();
 
-  const { filtered, isLoading, dynFilters, activeCount } = useRentalCatalog(search);
+  // Local state for immediate input feedback; URL updated with 250ms debounce via setSearch
+  const [localSearch, setLocalSearch] = useState(searchTerm);
+  useEffect(() => { setLocalSearch(searchTerm); }, [searchTerm]);
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value);
+    setSearch(value);
+  };
 
   const { data: categories = [] } = useQuery({
     queryKey: ["rental-categories"],
@@ -57,37 +81,112 @@ const RentalHouse = () => {
     },
   });
 
-  const dynamicSpecs = selectedCategory ? CATEGORY_FILTERS[selectedCategory] ?? [] : [];
+  const hasPriceSlider = priceRange.min < priceRange.max;
 
-  const setCategory = (slug: string) => {
-    const next = new URLSearchParams(params);
-    if (slug) next.set("category", slug);
-    else next.delete("category");
-    setParams(next);
-  };
+  const FilterPanel = ({ onDone }: { onDone?: () => void }) => (
+    <>
+      {/* Category pills */}
+      <div className="mb-5">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">Categoría</div>
+        <div className="flex flex-wrap gap-2">
+          <CategoryPill
+            active={!selectedCategory}
+            label={t("common.all")}
+            count={totalPublished}
+            onClick={() => { setCategory(""); onDone?.(); }}
+          />
+          {(categories as any[])
+            .filter((c: any) => (categoryCounts.get(c.slug) ?? 0) > 0)
+            .map((c: any) => (
+              <CategoryPill
+                key={c.id}
+                active={selectedCategory === c.slug}
+                label={localized(c, "name", i18n.language)}
+                count={categoryCounts.get(c.slug) ?? 0}
+                onClick={() => { setCategory(c.slug); onDone?.(); }}
+              />
+            ))}
+        </div>
+      </div>
 
-  const toggleDynValue = (key: string, value: string) => {
-    const current = dynFilters[key] ?? [];
-    const next = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
-    const newParams = new URLSearchParams(params);
-    if (next.length === 0) newParams.delete(key);
-    else newParams.set(key, next.join(","));
-    setParams(newParams);
-  };
+      {/* Dynamic facets */}
+      {facets.length > 0 && (
+        <div className="space-y-4 mb-5">
+          {facets.map((facet) => {
+            const active = dynFilters[facet.key] ?? [];
+            if (facet.kind === "boolean") {
+              return (
+                <div key={facet.key}>
+                  <button
+                    type="button"
+                    onClick={() => toggleDynValue(facet.key, "1")}
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                      active.length > 0
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
+                    )}
+                  >
+                    {t(facet.labelKey)}
+                  </button>
+                </div>
+              );
+            }
+            if (facet.options.length === 0) return null;
+            return (
+              <div key={facet.key}>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">{t(facet.labelKey)}</div>
+                <div className="flex flex-wrap gap-2">
+                  {facet.options.map((opt) => {
+                    const isActive = active.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => !opt.disabled && toggleDynValue(facet.key, opt.value)}
+                        disabled={opt.disabled && !isActive}
+                        className={cn(
+                          "text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
+                          isActive
+                            ? "bg-accent text-accent-foreground border-accent"
+                            : opt.disabled
+                            ? "bg-background text-secondary/40 border-border/40 cursor-not-allowed"
+                            : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
+                        )}
+                      >
+                        {opt.label} ({opt.count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-  const clearFilters = () => {
-    setParams(new URLSearchParams());
-    setSearch("");
-  };
-
-  const setSort = (value: SortOption) => {
-    const next = new URLSearchParams(params);
-    if (value === "recommended") next.delete("sort");
-    else next.set("sort", value);
-    setParams(next);
-  };
+      {/* Price range slider */}
+      {hasPriceSlider && (
+        <div className="mb-5">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-3">
+            Precio/día: <span className="text-foreground">€{priceRange.low} – €{priceRange.high}</span>
+          </div>
+          <Slider
+            min={priceRange.min}
+            max={priceRange.max}
+            step={1}
+            value={[priceRange.low, priceRange.high]}
+            onValueChange={([low, high]) => setPriceRange(low, high)}
+            className="w-full"
+          />
+          <div className="flex justify-between text-[10px] text-secondary mt-1">
+            <span>€{priceRange.min}</span>
+            <span>€{priceRange.max}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="container-page py-20">
@@ -128,6 +227,7 @@ const RentalHouse = () => {
         </div>
       )}
 
+      {/* Mobile: sticky bar with filter sheet + search */}
       <div className="flex md:hidden items-center gap-2 mb-4 sticky top-16 z-20 bg-background/95 backdrop-blur-sm py-2 -mx-4 px-4">
         <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
           <SheetTrigger asChild>
@@ -145,140 +245,79 @@ const RentalHouse = () => {
             <SheetHeader className="mb-5">
               <SheetTitle className="text-left text-[11px] uppercase tracking-[0.28em]">Filtros</SheetTitle>
             </SheetHeader>
-            <div className="mb-5">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">Categoría</div>
-              <div className="flex flex-wrap gap-2">
-                <CategoryPill active={!selectedCategory} label={t("common.all")} onClick={() => setCategory("")} />
-                {(categories as any[]).map((c: any) => (
-                  <CategoryPill key={c.id} active={selectedCategory === c.slug}
-                    label={localized(c, "name", i18n.language)} onClick={() => setCategory(c.slug)} />
-                ))}
-              </div>
-            </div>
-            {dynamicSpecs.length > 0 && (
-              <div className="space-y-4 mb-5">
-                {dynamicSpecs.map((spec) => {
-                  const active = dynFilters[spec.key] ?? [];
-                  if (spec.kind === "boolean") {
-                    return (
-                      <div key={spec.key}>
-                        <button type="button" onClick={() => toggleDynValue(spec.key, "1")}
-                          className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
-                            active.length > 0 ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border")}>
-                          {t(spec.labelKey)}
-                        </button>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div key={spec.key}>
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">{t(spec.labelKey)}</div>
-                      <div className="flex flex-wrap gap-2">
-                        {spec.options.map((opt) => {
-                          const isActive = active.includes(opt.value);
-                          const label = opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey;
-                          return (
-                            <button key={opt.value} type="button" onClick={() => toggleDynValue(spec.key, opt.value)}
-                              className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
-                                isActive ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border")}>
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <FilterPanel onDone={() => setFilterOpen(false)} />
             {activeCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => { clearFilters(); setFilterOpen(false); }}
-                className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px] mb-3 w-full justify-start">
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => { clearFilters(); setFilterOpen(false); }}
+                className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px] mb-3 w-full justify-start"
+              >
                 <X className="h-3 w-3" /> Limpiar filtros
               </Button>
             )}
-            <Button className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 uppercase tracking-[0.2em] text-xs rounded-sm"
-              onClick={() => setFilterOpen(false)}>
+            <Button
+              className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 uppercase tracking-[0.2em] text-xs rounded-sm"
+              onClick={() => setFilterOpen(false)}
+            >
               Ver {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
             </Button>
           </SheetContent>
         </Sheet>
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary pointer-events-none" />
-          <Input placeholder={t("rental.searchPlaceholder")} value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-surface border-border h-10 focus-visible:ring-accent" />
+          <Input
+            placeholder={t("rental.searchPlaceholder")}
+            value={localSearch}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-9 bg-surface border-border h-10 focus-visible:ring-accent"
+          />
         </div>
       </div>
 
+      {/* Desktop: search + filters */}
       <div className="hidden md:block">
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
           <Input
             placeholder={t("rental.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={localSearch}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9 bg-surface border-border focus-visible:ring-accent h-11"
           />
         </div>
-        <div className="flex flex-wrap gap-2 mb-4">
-          <CategoryPill active={!selectedCategory} label={t("common.all")} onClick={() => setCategory("")} />
-          {(categories as any[]).map((c: any) => (
-            <CategoryPill key={c.id} active={selectedCategory === c.slug}
-              label={localized(c, "name", i18n.language)} onClick={() => setCategory(c.slug)} />
-          ))}
-        </div>
-        {dynamicSpecs.length > 0 && (
-          <div className="mb-6 p-5 rounded-sm bg-surface border border-border space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-            {dynamicSpecs.map((spec) => {
-              const active = dynFilters[spec.key] ?? [];
-              if (spec.kind === "boolean") {
-                const isActive = active.length > 0;
-                return (
-                  <div key={spec.key} className="flex items-center gap-3">
-                    <button type="button" onClick={() => toggleDynValue(spec.key, "1")}
-                      className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
-                        isActive ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border hover:border-accent hover:text-foreground")}>
-                      {t(spec.labelKey)}
-                    </button>
-                  </div>
-                );
-              }
-              return (
-                <div key={spec.key}>
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">{t(spec.labelKey)}</div>
-                  <div className="flex flex-wrap gap-2">
-                    {spec.options.map((opt) => {
-                      const isActive = active.includes(opt.value);
-                      const label = opt.labelKey.includes(".") ? t(opt.labelKey) : opt.labelKey;
-                      return (
-                        <button key={opt.value} type="button" onClick={() => toggleDynValue(spec.key, opt.value)}
-                          className={cn("text-xs px-3 py-1.5 rounded-full border transition-colors uppercase tracking-[0.12em]",
-                            isActive ? "bg-accent text-accent-foreground border-accent" : "bg-background text-secondary border-border hover:border-accent hover:text-foreground")}>
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <FilterPanel />
       </div>
 
+      {/* Active filter chips */}
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          {activeChips.map((chip) => (
+            <button
+              key={`${chip.key}-${chip.value}`}
+              type="button"
+              onClick={() => removeChip(chip.key, chip.value)}
+              className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-foreground uppercase tracking-[0.12em] hover:bg-accent/20 transition-colors"
+            >
+              {chip.label} <X className="h-2.5 w-2.5" />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-[11px] text-secondary hover:text-accent uppercase tracking-[0.18em] ml-1 transition-colors"
+          >
+            {t("rental.filters.clear")}
+          </button>
+        </div>
+      )}
+
+      {/* Results header: count + sort */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           {activeCount > 0 && (
-            <>
-              <span className="text-xs text-secondary uppercase tracking-[0.18em]">
-                {t("rental.activeFilters", { count: activeCount })}
-              </span>
-              <Button variant="ghost" size="sm" onClick={clearFilters}
-                className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px]">
-                <X className="h-3 w-3" /> {t("rental.filters.clear")}
-              </Button>
-            </>
+            <span className="text-xs text-secondary uppercase tracking-[0.18em]">
+              {t("rental.activeFilters", { count: activeCount })}
+            </span>
           )}
         </div>
         <select
@@ -309,11 +348,28 @@ const RentalHouse = () => {
   );
 };
 
-const CategoryPill = ({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) => (
-  <button type="button" onClick={onClick}
-    className={cn("text-[11px] px-4 py-2 rounded-sm border transition-colors uppercase tracking-[0.22em]",
-      active ? "bg-accent text-accent-foreground border-accent" : "bg-surface text-secondary border-border hover:border-accent hover:text-foreground")}>
-    {label}
+const CategoryPill = ({
+  active,
+  label,
+  count,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  count?: number;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "text-[11px] px-4 py-2 rounded-sm border transition-colors uppercase tracking-[0.22em]",
+      active
+        ? "bg-accent text-accent-foreground border-accent"
+        : "bg-surface text-secondary border-border hover:border-accent hover:text-foreground"
+    )}
+  >
+    {label}{count !== undefined ? ` (${count})` : ""}
   </button>
 );
 
@@ -327,7 +383,9 @@ const RentalCard = ({ product }: { product: any }) => {
   const hasVariants = variants.length > 0;
   const minVariantPrice = hasVariants ? Math.min(...variants.map((v) => Number(v.price_day))) : Number(product.price_day);
   const structured: string[] = [product.brand, product.mount, product.sensor_type, product.lens_type].filter(Boolean).slice(0, 3);
-  const specs: string[] = structured.length > 0 ? structured : (product.product_tags ?? []).slice(0, 3).map((pt: any) => localized(pt.tag ?? {}, "name", i18n.language)).filter(Boolean);
+  const specs: string[] = structured.length > 0
+    ? structured
+    : (product.product_tags ?? []).slice(0, 3).map((pt: any) => localized(pt.tag ?? {}, "name", i18n.language)).filter(Boolean);
 
   return (
     <Link to={`/rental/${product.slug}`} className="group block rounded-sm bg-surface border border-border overflow-hidden transition-smooth hover-glow">
