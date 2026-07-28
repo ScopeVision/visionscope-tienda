@@ -28,6 +28,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Menu,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +76,7 @@ const AdminLayout = () => {
         { to: "/admin/bookings", label: "Orders", icon: ClipboardList },
         { to: "/admin/products", label: "Products", icon: Package },
         { to: "/admin/categories", label: "Categories", icon: FolderTree },
+        { to: "/admin/collections", label: "Collections", icon: Layers },
         { to: "/admin/tags", label: "Tags", icon: Tag },
         { to: "/admin/customers", label: "Customers", icon: Users },
       ],
