@@ -17,7 +17,7 @@ export const Footer = () => {
         </div>
         <div>
           <h4 className="text-[11px] uppercase tracking-[0.28em] text-accent mb-4">
-            VisionScope
+            The Vision Scope
           </h4>
           <ul className="space-y-2.5 text-sm">
             <li><Link to="/rental" className="text-foreground/80 hover:text-accent">{t("nav.rental")}</Link></li>
