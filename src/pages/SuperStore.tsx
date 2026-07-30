@@ -88,13 +88,13 @@ const SuperStore = () => {
   return (
     <div className="container-page py-20">
       <Helmet>
-        <title>Super Store — VisionScope</title>
+        <title>Super Store — The Vision Scope</title>
         <meta
           name="description"
-          content="Super Store de VisionScope: accesorios, consumibles y equipo cinematográfico a la venta. Productos seleccionados por profesionales del cine."
+          content="Super Store de The Vision Scope: accesorios, consumibles y equipo cinematográfico a la venta. Productos seleccionados por profesionales del cine."
         />
         <link rel="canonical" href="https://thevisionscope.lovable.app/super-store" />
-        <meta property="og:title" content="Super Store — VisionScope" />
+        <meta property="og:title" content="Super Store — The Vision Scope" />
         <meta property="og:url" content="https://thevisionscope.lovable.app/super-store" />
         <meta property="og:type" content="website" />
       </Helmet>

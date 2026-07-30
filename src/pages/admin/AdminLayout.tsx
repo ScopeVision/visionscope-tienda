@@ -136,7 +136,7 @@ const AdminLayout = () => {
       >
         {!isCollapsed && (
           <div className="min-w-0">
-            <div className="font-display font-semibold tracking-tight truncate">Admin · VisionScope</div>
+            <div className="font-display font-semibold tracking-tight truncate">Admin · The Vision Scope</div>
             <div className="text-xs text-secondary mt-0.5 truncate">{user.email}</div>
           </div>
         )}
@@ -232,7 +232,7 @@ const AdminLayout = () => {
                 <SidebarInner onNavigate={() => setMobileOpen(false)} />
               </SheetContent>
             </Sheet>
-            <div className="font-display font-semibold tracking-tight text-sm">Admin · VisionScope</div>
+            <div className="font-display font-semibold tracking-tight text-sm">Admin · The Vision Scope</div>
           </header>
           <main className="flex-1 overflow-auto pt-12">
             <div className="max-w-[1400px] mx-auto p-4 sm:p-6">

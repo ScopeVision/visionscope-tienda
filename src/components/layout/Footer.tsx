@@ -9,6 +9,7 @@ export const Footer = () => {
       <div className="container-page py-14 grid gap-10 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">The</span>
             <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">Vision</span>
             <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">Scope</span>
           </div>
@@ -16,7 +17,7 @@ export const Footer = () => {
         </div>
         <div>
           <h4 className="text-[11px] uppercase tracking-[0.28em] text-accent mb-4">
-            VisionScope
+            The Vision Scope
           </h4>
           <ul className="space-y-2.5 text-sm">
             <li><Link to="/rental" className="text-foreground/80 hover:text-accent">{t("nav.rental")}</Link></li>
@@ -35,7 +36,7 @@ export const Footer = () => {
       </div>
       <div className="border-t border-border">
         <div className="container-page py-5 text-[11px] uppercase tracking-[0.22em] text-secondary flex flex-col md:flex-row justify-between gap-2">
-          <span>© {year} VisionScope — All rights reserved.</span>
+          <span>© {year} The Vision Scope — All rights reserved.</span>
           <span>Crafted for filmmakers.</span>
         </div>
       </div>

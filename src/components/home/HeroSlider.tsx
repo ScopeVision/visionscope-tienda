@@ -88,7 +88,7 @@ export const HeroSlider = () => {
       <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" aria-hidden />
 
       <div className="relative z-10 h-full container-page flex flex-col justify-center pt-16">
-        <span className="cine-eyebrow mb-5">VisionScope · Cinematic Rental House</span>
+        <span className="cine-eyebrow mb-5">The Vision Scope · Cinematic Rental House</span>
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-medium text-balance leading-[0.95] uppercase tracking-tight text-foreground">
           {current.title || t("home.heroTitle", { defaultValue: "Capture Stories." })}
         </h1>

@@ -352,7 +352,7 @@ const ProductDetail = () => {
         : product.stock > 0;
 
   const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
-  const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en VisionScope — rental house de cine profesional.`);
+  const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -361,7 +361,7 @@ const ProductDetail = () => {
     image: images,
     sku: product.id,
     category: cat || undefined,
-    brand: { "@type": "Brand", name: "VisionScope" },
+    brand: { "@type": "Brand", name: "The Vision Scope" },
     offers: {
       "@type": "Offer",
       priceCurrency: "EUR",
@@ -374,11 +374,11 @@ const ProductDetail = () => {
   return (
     <article className="container-page py-10">
       <Helmet>
-        <title>{`${name} — VisionScope Rental`}</title>
+        <title>{`${name} — The Vision Scope Rental`}</title>
         <meta name="description" content={metaDesc} />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:type" content="product" />
-        <meta property="og:title" content={`${name} — VisionScope Rental`} />
+        <meta property="og:title" content={`${name} — The Vision Scope Rental`} />
         <meta property="og:description" content={metaDesc} />
         <meta property="og:url" content={canonicalUrl} />
         {img && <meta property="og:image" content={img} />}
