@@ -51,6 +51,9 @@ export const Header = () => {
           className="flex items-baseline gap-1.5 font-display"
           onClick={() => setOpen(false)}
         >
+          <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
+            The
+          </span>
           <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">
             Vision
           </span>

@@ -9,6 +9,7 @@ export const Footer = () => {
       <div className="container-page py-14 grid gap-10 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">The</span>
             <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">Vision</span>
             <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">Scope</span>
           </div>

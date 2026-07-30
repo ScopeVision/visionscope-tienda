@@ -21,7 +21,7 @@ const Contact = () => {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const subject = encodeURIComponent(`VisionScope · ${form.name || "Contact"}`);
+    const subject = encodeURIComponent(`The Vision Scope · ${form.name || "Contact"}`);
     const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`);
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     toast({ title: t("checkout.success") });
