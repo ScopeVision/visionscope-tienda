@@ -48,7 +48,7 @@ export const Header = () => {
       <div className="container-page flex h-16 items-center justify-between">
         <Link
           to="/"
-          className="flex items-baseline gap-1.5 font-display"
+          className="flex items-baseline gap-1.5 font-display shrink-0"
           onClick={() => setOpen(false)}
         >
           <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
@@ -62,7 +62,7 @@ export const Header = () => {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden xl:flex items-center gap-8">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -70,7 +70,7 @@ export const Header = () => {
               end={l.end}
               className={({ isActive }) =>
                 cn(
-                  "text-xs uppercase tracking-[0.22em] font-medium transition-colors hover:text-accent",
+                  "text-xs uppercase tracking-[0.22em] font-medium transition-colors hover:text-accent whitespace-nowrap",
                   isActive ? "text-accent" : "text-foreground/80"
                 )
               }
@@ -80,7 +80,7 @@ export const Header = () => {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden xl:flex items-center gap-3">
           <LanguageSwitcher />
           <Link to="/cart">
             <Button variant="outline" size="sm" className="relative gap-2 border-accent/40 text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent uppercase tracking-[0.18em] text-[11px]">
@@ -95,7 +95,7 @@ export const Header = () => {
           </Link>
         </div>
 
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center xl:hidden">
           <Link
             to="/cart"
             onClick={() => setOpen(false)}
@@ -120,7 +120,7 @@ export const Header = () => {
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-border bg-background">
+        <div className="xl:hidden border-t border-border bg-background">
           <nav className="container-page py-4 flex flex-col gap-3">
             {links.map((l) => (
               <NavLink
