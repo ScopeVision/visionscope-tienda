@@ -45,7 +45,7 @@ export const Header = () => {
           : "bg-background/95 backdrop-blur-md border-b border-border"
       )}
     >
-      <div className="container-page flex h-16 items-center justify-between">
+      <div className="container-page flex h-16 items-center justify-between lg:px-6 xl:px-10 lg:gap-4">
         <Link
           to="/"
           className="flex items-baseline gap-1.5 font-display shrink-0"
@@ -62,7 +62,7 @@ export const Header = () => {
           </span>
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -70,7 +70,7 @@ export const Header = () => {
               end={l.end}
               className={({ isActive }) =>
                 cn(
-                  "text-xs uppercase tracking-[0.22em] font-medium transition-colors hover:text-accent whitespace-nowrap",
+                  "text-xs uppercase tracking-[0.14em] xl:tracking-[0.22em] font-medium transition-colors hover:text-accent whitespace-nowrap",
                   isActive ? "text-accent" : "text-foreground/80"
                 )
               }
@@ -80,7 +80,7 @@ export const Header = () => {
           ))}
         </nav>
 
-        <div className="hidden xl:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3 shrink-0">
           <LanguageSwitcher />
           <Link to="/cart">
             <Button variant="outline" size="sm" className="relative gap-2 border-accent/40 text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent uppercase tracking-[0.18em] text-[11px]">
@@ -95,7 +95,7 @@ export const Header = () => {
           </Link>
         </div>
 
-        <div className="flex items-center xl:hidden">
+        <div className="flex items-center lg:hidden">
           <Link
             to="/cart"
             onClick={() => setOpen(false)}
@@ -120,7 +120,7 @@ export const Header = () => {
       </div>
 
       {open && (
-        <div className="xl:hidden border-t border-border bg-background">
+        <div className="lg:hidden border-t border-border bg-background">
           <nav className="container-page py-4 flex flex-col gap-3">
             {links.map((l) => (
               <NavLink
