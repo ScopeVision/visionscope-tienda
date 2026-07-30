@@ -36,7 +36,7 @@ export const Footer = () => {
       </div>
       <div className="border-t border-border">
         <div className="container-page py-5 text-[11px] uppercase tracking-[0.22em] text-secondary flex flex-col md:flex-row justify-between gap-2">
-          <span>© {year} VisionScope — All rights reserved.</span>
+          <span>© {year} The Vision Scope — All rights reserved.</span>
           <span>Crafted for filmmakers.</span>
         </div>
       </div>
