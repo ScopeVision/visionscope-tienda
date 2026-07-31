@@ -165,6 +165,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
 
   const [showLog, setShowLog] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [regenerating, setRegenerating] = useState(false);
 
   const toggleItem = (idx: number) => {
     setExpandedItems((prev) => {
@@ -173,6 +174,35 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       else next.add(idx);
       return next;
     });
+  };
+
+  const handleRegenerate = async () => {
+    if (!bookingId) return;
+    setRegenerating(true);
+    try {
+      const { data, error } = await supabase.rpc("regenerate_booking_finance", {
+        _booking_id: bookingId,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else if (typeof data === "string" && data.startsWith("OK:")) {
+        toast.success(data);
+        qc.invalidateQueries({ queryKey: ["booking-finance-stale", bookingId] });
+        qc.invalidateQueries({ queryKey: ["admin-booking-edit", bookingId] });
+        qc.invalidateQueries({ queryKey: ["finance-entries"] });
+        qc.invalidateQueries({ queryKey: ["finance-summary"] });
+        qc.invalidateQueries({ queryKey: ["finance-billing-period"] });
+        qc.invalidateQueries({ queryKey: ["finance-cash-position"] });
+      } else if (typeof data === "string" && data.startsWith("ABORTADO:")) {
+        toast.error(data);
+      } else {
+        toast.error("Respuesta inesperada al regenerar finanzas");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Error al regenerar finanzas");
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   // Create mode: initialize fresh draft when dialog opens
