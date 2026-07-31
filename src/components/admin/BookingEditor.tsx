@@ -142,6 +142,18 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
     },
   });
 
+  const { data: financeStale } = useQuery({
+    queryKey: ["booking-finance-stale", bookingId],
+    enabled: !!bookingId && booking?.payment_status === "paid",
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("booking_finance_is_stale", {
+        _booking_id: bookingId,
+      });
+      if (error) throw error;
+      return data as boolean;
+    },
+  });
+
   const [draft, setDraft] = useState<EditableBooking & {
     status: string;
     payment_status: string;
