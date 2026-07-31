@@ -2467,6 +2467,10 @@ export type Database = {
         Args: { _end: string; _product_id: string; _start: string }
         Returns: number
       }
+      booking_finance_is_stale: {
+        Args: { _booking_id: string }
+        Returns: boolean
+      }
       bootstrap_first_admin: { Args: { _user_id: string }; Returns: undefined }
       calc_rental_unit_total: {
         Args: {
@@ -2522,6 +2526,22 @@ export type Database = {
           store_income: number
         }[]
       }
+      fn_booking_finance_expected: {
+        Args: { _booking_id: string }
+        Returns: {
+          agreement: Database["public"]["Enums"]["finance_agreement_type"]
+          booking_item_id: string
+          company: number
+          company_pct: number
+          gross: number
+          inventory_unit_id: string
+          is_fee: boolean
+          owner_id: string
+          owner_pct: number
+          payout: number
+          product_id: string
+        }[]
+      }
       fn_product_popularity: {
         Args: never
         Returns: {
@@ -2563,6 +2583,10 @@ export type Database = {
       recompute_payout_status: {
         Args: { _payout_id: string }
         Returns: undefined
+      }
+      regenerate_booking_finance: {
+        Args: { _booking_id: string }
+        Returns: string
       }
       submit_checkout_request: {
         Args: {
