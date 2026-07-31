@@ -142,6 +142,18 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
     },
   });
 
+  const { data: financeStale } = useQuery({
+    queryKey: ["booking-finance-stale", bookingId],
+    enabled: !!bookingId && booking?.payment_status === "paid",
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("booking_finance_is_stale", {
+        _booking_id: bookingId,
+      });
+      if (error) throw error;
+      return data as boolean;
+    },
+  });
+
   const [draft, setDraft] = useState<EditableBooking & {
     status: string;
     payment_status: string;
@@ -153,6 +165,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
 
   const [showLog, setShowLog] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [regenerating, setRegenerating] = useState(false);
 
   const toggleItem = (idx: number) => {
     setExpandedItems((prev) => {
@@ -161,6 +174,35 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       else next.add(idx);
       return next;
     });
+  };
+
+  const handleRegenerate = async () => {
+    if (!bookingId) return;
+    setRegenerating(true);
+    try {
+      const { data, error } = await supabase.rpc("regenerate_booking_finance", {
+        _booking_id: bookingId,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else if (typeof data === "string" && data.startsWith("OK:")) {
+        toast.success(data);
+        qc.invalidateQueries({ queryKey: ["booking-finance-stale", bookingId] });
+        qc.invalidateQueries({ queryKey: ["admin-booking-edit", bookingId] });
+        qc.invalidateQueries({ queryKey: ["finance-entries"] });
+        qc.invalidateQueries({ queryKey: ["finance-summary"] });
+        qc.invalidateQueries({ queryKey: ["finance-billing-period"] });
+        qc.invalidateQueries({ queryKey: ["finance-cash-position"] });
+      } else if (typeof data === "string" && data.startsWith("ABORTADO:")) {
+        toast.error(data);
+      } else {
+        toast.error("Respuesta inesperada al regenerar finanzas");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Error al regenerar finanzas");
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   // Create mode: initialize fresh draft when dialog opens
@@ -644,6 +686,20 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
             </DialogHeader>
 
             <div className="space-y-6 mt-2">
+              {financeStale && (
+                <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-400 flex items-center justify-between gap-3">
+                  <span>⚠ Las finanzas de este pedido están desactualizadas respecto a las líneas actuales.</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                  >
+                    {regenerating ? "Regenerando…" : "Regenerar finanzas"}
+                  </Button>
+                </div>
+              )}
+
               {/* Status + payment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
