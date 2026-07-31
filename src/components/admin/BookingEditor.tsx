@@ -686,6 +686,20 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
             </DialogHeader>
 
             <div className="space-y-6 mt-2">
+              {financeStale && (
+                <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-400 flex items-center justify-between gap-3">
+                  <span>⚠ Las finanzas de este pedido están desactualizadas respecto a las líneas actuales.</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                  >
+                    {regenerating ? "Regenerando…" : "Regenerar finanzas"}
+                  </Button>
+                </div>
+              )}
+
               {/* Status + payment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
