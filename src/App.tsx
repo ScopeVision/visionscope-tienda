@@ -38,6 +38,7 @@ import AdminFinance from "./pages/admin/AdminFinance";
 import AdminOwnerProfile from "./pages/admin/AdminOwnerProfile";
 import AdminServices from "./pages/admin/AdminServices";
 import AdminOperations from "./pages/admin/AdminOperations";
+import AdminUsers from "./pages/admin/AdminUsers";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient({
@@ -99,6 +100,7 @@ const App = () => (
                 <Route path="finance/owners/:id" element={<AdminOwnerProfile />} />
                 <Route path="services" element={<AdminServices />} />
                 <Route path="operations" element={<AdminOperations />} />
+                <Route path="users" element={<AdminUsers />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

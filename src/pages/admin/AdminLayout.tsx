@@ -29,6 +29,7 @@ import {
   PanelLeftOpen,
   Menu,
   Layers,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +118,7 @@ const AdminLayout = () => {
       label: "System",
       items: [
         { to: "/admin", label: "Settings", icon: Settings, end: true },
+        { to: "/admin/users", label: "Usuarios y accesos", icon: ShieldCheck },
         { to: "#", label: "Emails (soon)", icon: Mail, disabled: true },
         { to: "#", label: "Integrations (soon)", icon: Plug, disabled: true },
         { to: "#", label: "Pricing rules (soon)", icon: BadgePercent, disabled: true },
