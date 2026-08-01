@@ -51,7 +51,14 @@ export const Header = () => {
           className="flex items-baseline gap-1.5 font-display shrink-0"
           onClick={() => setOpen(false)}
         >
+          <img
+            src="/logo.png"
+            alt="The Vision Scope"
+            loading="eager"
+            className="h-7 lg:h-9 w-auto object-contain shrink-0"
+          />
           <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
+
             The
           </span>
           <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">
