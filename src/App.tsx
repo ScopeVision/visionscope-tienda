@@ -100,6 +100,7 @@ const App = () => (
                 <Route path="finance/owners/:id" element={<AdminOwnerProfile />} />
                 <Route path="services" element={<AdminServices />} />
                 <Route path="operations" element={<AdminOperations />} />
+                <Route path="users" element={<AdminUsers />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
