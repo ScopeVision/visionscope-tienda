@@ -38,6 +38,7 @@ import AdminFinance from "./pages/admin/AdminFinance";
 import AdminOwnerProfile from "./pages/admin/AdminOwnerProfile";
 import AdminServices from "./pages/admin/AdminServices";
 import AdminOperations from "./pages/admin/AdminOperations";
+import AdminUsers from "./pages/admin/AdminUsers";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient({
