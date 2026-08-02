@@ -57,6 +57,7 @@ const schema = z.object({
   deposit: z.coerce.number().min(0),
   stock: z.coerce.number().int().min(0),
   published: z.boolean(),
+  standalone_rentable: z.boolean().default(true),
   images: z.array(z.string().url()),
   tag_ids: z.array(z.string().uuid()),
   pricing_model: z.enum(["premium", "aggressive", "weekly_flat", "custom"]).default("premium"),
@@ -155,6 +156,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       deposit: product?.deposit ?? 0,
       stock: product?.stock ?? 1,
       published: product?.published ?? true,
+      standalone_rentable: product?.standalone_rentable ?? true,
       images: product?.images ?? [],
       tag_ids: (product?.product_tags ?? []).map((pt: any) => pt.tag_id),
       brand: product?.brand ?? "",
@@ -295,6 +297,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         deposit: Number(values.deposit),
         stock: Number(values.stock),
         published: values.published,
+        standalone_rentable: values.standalone_rentable ?? true,
         images: values.images,
         brand: values.brand || null,
         model: values.model || null,
@@ -523,6 +526,33 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                 </div>
               </div>
             </div>
+
+            <div className="rounded-md border border-border p-3">
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={form.watch("standalone_rentable")}
+                  onCheckedChange={(v) => form.setValue("standalone_rentable", v, { shouldDirty: true })}
+                />
+                <span className="text-sm">Se alquila suelto</span>
+              </div>
+              <p className="text-[11px] text-secondary mt-1.5">
+                Desactívalo para accesorios: no aparecerán en el catálogo público ni en el buscador de
+                productos del editor de reservas. Solo saldrán atados a una unidad-padre.
+              </p>
+            </div>
+
+            {product?.id && (
+              <div className="rounded-md border border-border p-3 space-y-3">
+                <Label className="text-xs uppercase tracking-wider text-secondary">
+                  Accesorios incluidos (plantilla del modelo)
+                </Label>
+                <p className="text-[11px] text-secondary">
+                  Define qué accesorios incluye este modelo. Sirve como sugerencia al atar unidades físicas
+                  concretas (cargador #3 → cámara #1).
+                </p>
+                <KitComponentsManager parentProductId={product.id} />
+              </div>
+            )}
 
             <Field label="Contenido del kit / maletín (opcional, solo interno)">
               <Textarea rows={3} {...form.register("contents_es")} placeholder="Ej. Cuerpo, 2 baterías, cargador, cable USB-C…" />
