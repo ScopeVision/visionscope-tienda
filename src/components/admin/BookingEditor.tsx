@@ -100,6 +100,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         .from("products")
         .select("id, name_es, price_day, price_week, deposit, pricing_model, pricing_multipliers, product_variants(id, name, price_day, deposit)")
         .eq("published", true)
+        .eq("standalone_rentable", true)
         .order("name_es");
       if (error) throw error;
       return data ?? [];
