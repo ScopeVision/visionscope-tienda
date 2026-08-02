@@ -68,6 +68,22 @@ const ProductDetail = () => {
     },
   });
 
+  const { data: videos = [] } = useQuery({
+    queryKey: ["product-videos", product?.id],
+    enabled: !!product?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_videos")
+        .select("*")
+        .eq("product_id", product!.id)
+        .eq("is_published", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+
   const hasPricedVariants = pricedVariants.length > 0;
 
   useEffect(() => {
