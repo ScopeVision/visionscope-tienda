@@ -1715,6 +1715,59 @@ export type Database = {
           },
         ]
       }
+      product_videos: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          product_id: string
+          provider: string
+          sort_order: number
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          url: string
+          video_id: string | null
+          video_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          product_id: string
+          provider?: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url: string
+          video_id?: string | null
+          video_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          product_id?: string
+          provider?: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string
+          video_id?: string | null
+          video_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_videos_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           accessory_type: string | null
