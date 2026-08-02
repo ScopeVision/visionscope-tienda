@@ -48,25 +48,15 @@ export const Header = () => {
       <div className="container-page flex h-16 items-center justify-between lg:px-6 xl:px-10 lg:gap-4">
         <Link
           to="/"
-          className="flex items-baseline gap-1.5 font-display shrink-0"
+          className="flex items-center shrink-0"
           onClick={() => setOpen(false)}
         >
           <img
             src="/logo.png"
             alt="The Vision Scope"
             loading="eager"
-            className="h-7 lg:h-9 w-auto object-contain shrink-0"
+            className="h-8 lg:h-10 w-auto object-contain shrink-0"
           />
-          <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
-
-            The
-          </span>
-          <span className="text-lg font-semibold tracking-[0.18em] uppercase text-accent">
-            Vision
-          </span>
-          <span className="text-lg font-light tracking-[0.18em] uppercase text-foreground">
-            Scope
-          </span>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8">
