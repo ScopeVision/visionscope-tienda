@@ -6,6 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
 import { SmartImage } from "@/components/SmartImage";
+import { ProductMediaGallery, youtubeThumb } from "@/components/ProductMediaGallery";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
