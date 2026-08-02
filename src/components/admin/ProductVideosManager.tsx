@@ -82,7 +82,7 @@ export const ProductVideosManager = ({ productId }: { productId?: string | null 
     toast.success("Vídeo añadido");
   };
 
-  const update = async (id: string, patch: Record<string, any>) => {
+  const update = async (id: string, patch: Partial<{ title: string | null; video_type: string; is_published: boolean; sort_order: number }>) => {
     const { error } = await supabase.from("product_videos").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else refresh();
