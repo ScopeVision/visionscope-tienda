@@ -370,6 +370,7 @@ const ProductDetail = () => {
 
   const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
   const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
+  const firstVideo: any = (videos as any[]).find((v) => v.video_id);
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -379,6 +380,19 @@ const ProductDetail = () => {
     sku: product.id,
     category: cat || undefined,
     brand: { "@type": "Brand", name: "The Vision Scope" },
+    ...(firstVideo
+      ? {
+          video: {
+            "@type": "VideoObject",
+            name: firstVideo.title || name,
+            description: metaDesc,
+            thumbnailUrl: youtubeThumb(firstVideo),
+            contentUrl: firstVideo.url,
+            embedUrl: `https://www.youtube.com/embed/${firstVideo.video_id}`,
+            uploadDate: firstVideo.created_at,
+          },
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       priceCurrency: "EUR",
@@ -387,6 +401,7 @@ const ProductDetail = () => {
       url: canonicalUrl,
     },
   };
+
 
   return (
     <article className="container-page py-10">
