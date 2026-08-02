@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
+import { ProductVideosManager } from "./ProductVideosManager";
 import { ProductInventoryUnits } from "./ProductInventoryUnits";
 import { ProductOwnerSummary } from "./ProductOwnerSummary";
 
