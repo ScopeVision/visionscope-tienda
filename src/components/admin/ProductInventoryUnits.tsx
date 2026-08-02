@@ -41,6 +41,7 @@ type UnitDraft = {
   notes: string;
   active: boolean;
   variant_id: string | null;
+  parent_unit_id?: string | null;
 };
 
 const emptyDraft = (): UnitDraft => ({
@@ -55,6 +56,7 @@ const emptyDraft = (): UnitDraft => ({
   notes: "",
   active: true,
   variant_id: null,
+  parent_unit_id: null,
 });
 
 export function ProductInventoryUnits({ productId }: { productId?: string }) {
@@ -82,6 +84,38 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
     queryFn: async () =>
       (await sb.from("inventory_units").select("*").eq("product_id", productId).order("created_at")).data || [],
   });
+
+  const { data: allUnits = [] } = useQuery({
+    queryKey: ["inventory-units-all-mini"],
+    queryFn: async () =>
+      (
+        await sb
+          .from("inventory_units")
+          .select("id, product_id, serial, internal_code, parent_unit_id, active, product:products(name_es)")
+          .eq("active", true)
+          .order("created_at")
+      ).data || [],
+  });
+
+  const { data: templateComponents = [] } = useQuery({
+    enabled: !!productId,
+    queryKey: ["inventory-unit-template", productId],
+    queryFn: async () =>
+      (
+        await sb
+          .from("product_components")
+          .select("child_product_id, quantity, child:products!product_components_child_product_id_fkey(name_es)")
+          .eq("parent_product_id", productId)
+      ).data || [],
+  });
+
+  const setParent = async (unitId: string, parentId: string | null) => {
+    const { error } = await sb.from("inventory_units").update({ parent_unit_id: parentId }).eq("id", unitId);
+    if (error) return toast.error(error.message);
+    toast.success(parentId ? "Accesorio atado" : "Accesorio desatado");
+    qc.invalidateQueries({ queryKey: ["inventory-units-all-mini"] });
+    refetch();
+  };
 
   if (!productId) {
     return (
@@ -126,6 +160,7 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
         notes: draft.notes || null,
         active: draft.active,
         variant_id: draft.variant_id || null,
+        parent_unit_id: draft.parent_unit_id || null,
       };
       const res = draft.id
         ? await sb.from("inventory_units").update(payload).eq("id", draft.id).select().single()
@@ -216,6 +251,9 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
           draft={editing}
           owners={owners}
           variants={variants}
+          allUnits={allUnits}
+          templateComponents={templateComponents}
+          onSetParent={setParent}
           saving={savingId === (editing.id ?? "new")}
           onChange={setEditing}
           onCancel={() => setEditing(null)}
@@ -233,11 +271,14 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
 }
 
 function UnitForm({
-  draft, owners, variants, saving, onChange, onCancel, onSave,
+  draft, owners, variants, allUnits, templateComponents, onSetParent, saving, onChange, onCancel, onSave,
 }: {
   draft: UnitDraft;
   owners: any[];
   variants: any[];
+  allUnits: any[];
+  templateComponents: any[];
+  onSetParent: (unitId: string, parentId: string | null) => void;
   saving: boolean;
   onChange: (d: UnitDraft) => void;
   onCancel: () => void;
