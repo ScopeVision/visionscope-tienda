@@ -232,6 +232,14 @@ export function ProductInventoryUnits({ productId }: { productId?: string }) {
               <span className="text-secondary">
                 {u.agreement_type} · empresa {100 - Number(u.owner_split_pct)}% / owner {Number(u.owner_split_pct)}%
               </span>
+              {u.parent_unit_id && (
+                <Badge variant="outline" className="text-[10px]">accesorio de una unidad</Badge>
+              )}
+              {allUnits.filter((x: any) => x.parent_unit_id === u.id).length > 0 && (
+                <Badge variant="outline" className="text-[10px]">
+                  {allUnits.filter((x: any) => x.parent_unit_id === u.id).length} accesorio(s)
+                </Badge>
+              )}
               <div className="ml-auto flex gap-1">
                 {savedId === u.id && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                 <Button type="button" size="sm" variant="ghost" onClick={() => setEditing({ ...u })}>
@@ -285,6 +293,15 @@ function UnitForm({
   onSave: () => void;
 }) {
   const showPct = draft.agreement_type !== "company_owned" && draft.agreement_type !== "split_70_30";
+  const unitLabel = (u: any) =>
+    `${u.product?.name_es ? u.product.name_es + " · " : ""}${u.serial || u.internal_code || u.id.slice(0, 8)}`;
+  const children = draft.id ? allUnits.filter((u: any) => u.parent_unit_id === draft.id) : [];
+  const templateIds = new Set(templateComponents.map((c: any) => c.child_product_id));
+  const suggestions = draft.id
+    ? allUnits.filter(
+        (u: any) => templateIds.has(u.product_id) && !u.parent_unit_id && u.id !== draft.id
+      )
+    : [];
   return (
     <div className="rounded-md border border-accent/30 bg-accent/5 p-3 space-y-3">
       <div className="grid sm:grid-cols-2 gap-3">
@@ -376,6 +393,69 @@ function UnitForm({
             onChange={(e) => onChange({ ...draft, target_recovery_value: Number(e.target.value) })} />
         </div>
       </div>
+      <div>
+        <Label className="text-xs">Pertenece a la unidad (padre)</Label>
+        <Select
+          value={draft.parent_unit_id ?? "__none__"}
+          onValueChange={(v) => onChange({ ...draft, parent_unit_id: v === "__none__" ? null : v })}
+        >
+          <SelectTrigger><SelectValue placeholder="Sin padre" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">— Sin padre (unidad independiente) —</SelectItem>
+            {allUnits
+              .filter((u: any) => u.id !== draft.id && u.parent_unit_id !== draft.id)
+              .map((u: any) => (
+                <SelectItem key={u.id} value={u.id}>{unitLabel(u)}</SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-secondary mt-1">
+          Si esta unidad es un accesorio, átala a la unidad-padre concreta con la que viaja. Hereda su disponibilidad.
+        </p>
+      </div>
+
+      {draft.id && (
+        <div className="rounded-md border border-border p-3 space-y-2">
+          <Label className="text-xs uppercase tracking-wider text-secondary">Accesorios de esta unidad</Label>
+          {children.length === 0 ? (
+            <p className="text-[11px] text-secondary">Todavía no hay accesorios atados a esta unidad.</p>
+          ) : (
+            <div className="space-y-1">
+              {children.map((c: any) => (
+                <div key={c.id} className="flex items-center gap-2 text-xs">
+                  <span className="font-mono text-foreground">{unitLabel(c)}</span>
+                  <Button
+                    type="button" size="sm" variant="ghost" className="ml-auto text-destructive"
+                    onClick={() => onSetParent(c.id, null)}
+                  >
+                    Desatar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {suggestions.length > 0 && (
+            <div className="pt-2 border-t border-border space-y-1">
+              <p className="text-[11px] text-secondary">
+                Sugerencias según la plantilla del modelo (accesorios libres):
+              </p>
+              {suggestions.map((u: any) => (
+                <div key={u.id} className="flex items-center gap-2 text-xs">
+                  <span className="font-mono text-foreground">{unitLabel(u)}</span>
+                  <Button
+                    type="button" size="sm" variant="outline" className="ml-auto"
+                    onClick={() => onSetParent(u.id, draft.id!)}
+                  >
+                    Atar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <Label className="text-xs">Notas</Label>
         <Input value={draft.notes} onChange={(e) => onChange({ ...draft, notes: e.target.value })} />
