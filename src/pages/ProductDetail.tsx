@@ -393,40 +393,8 @@ const ProductDetail = () => {
 
       <div className="grid lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16">
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="aspect-square rounded-sm bg-surface border border-border overflow-hidden">
-            {images.length > 0 ? (
-              <SmartImage
-                src={images[Math.min(activeImageIdx, images.length - 1)]}
-                alt={name}
-                priority
-                className="transition-opacity duration-300"
-              />
-            ) : (
-              <div className="w-full h-full grid place-items-center text-secondary/30">
-                <ImageOff className="h-16 w-16" />
-              </div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className="mt-3 grid grid-cols-5 gap-2">
-              {images.map((url, idx) => (
-                <button
-                  key={url + idx}
-                  type="button"
-                  onClick={() => setActiveImageIdx(idx)}
-                  className={cn(
-                    "aspect-square rounded-sm overflow-hidden border bg-muted transition-all",
-                    idx === activeImageIdx
-                      ? "border-accent ring-1 ring-accent/40"
-                      : "border-border opacity-70 hover:opacity-100 hover:border-accent/40"
-                  )}
-                  aria-label={`${name} - ${idx + 1}`}
-                >
-                  <SmartImage src={url} alt="" />
-                </button>
-              ))}
-            </div>
-          )}
+          <ProductMediaGallery images={images} videos={videos as any} name={name} />
+
         </div>
 
 
