@@ -112,9 +112,24 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("inventory_units")
-        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active")
+        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active, parent_unit_id, product:products(name_es)")
         .eq("active", true)
         .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: bookingItemUnits = [] } = useQuery({
+    queryKey: ["booking-item-units", bookingId],
+    enabled: !!bookingId,
+    queryFn: async () => {
+      const itemIds = ((booking as any)?.items ?? []).map((i: any) => i.id);
+      if (!itemIds.length) return [];
+      const { data, error } = await (supabase as any)
+        .from("booking_item_units")
+        .select("id, booking_item_id, inventory_unit_id, included")
+        .in("booking_item_id", itemIds);
       if (error) throw error;
       return data ?? [];
     },
@@ -257,6 +272,11 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       pricing_multipliers: null,
       override_reason: it.override_reason ?? null,
       inventory_unit_id: it.inventory_unit_id ?? null,
+      accessories: Object.fromEntries(
+        (bookingItemUnits as any[])
+          .filter((bu) => bu.booking_item_id === it.id)
+          .map((bu) => [bu.inventory_unit_id, bu.included !== false])
+      ),
     }));
     setDraft({
       items,
@@ -273,7 +293,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking, pricingSettings, isCreatingNew, bookingId]);
+  }, [booking, pricingSettings, isCreatingNew, bookingId, bookingItemUnits]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
@@ -281,6 +301,28 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   }, [draft]);
 
 
+
+  /** Accessory units physically tied to the selected parent unit of a line. */
+  const accessoriesForUnit = (unitId?: string | null) =>
+    unitId ? (inventoryUnits as any[]).filter((u) => u.parent_unit_id === unitId) : [];
+
+  const unitLabel = (u: any) =>
+    `${u.product?.name_es ? u.product.name_es + " · " : ""}${u.serial || u.internal_code || u.id.slice(0, 8)}`;
+
+  /** Persist the accessory checklist for a booking item (operational info only). */
+  const syncItemUnits = async (bookingItemId: string, item: EditableItem) => {
+    const accs = accessoriesForUnit(item.inventory_unit_id);
+    if (!accs.length) return;
+    const rows = accs.map((a) => ({
+      booking_item_id: bookingItemId,
+      inventory_unit_id: a.id,
+      included: item.accessories?.[a.id] !== false,
+    }));
+    const { error } = await (supabase as any)
+      .from("booking_item_units")
+      .upsert(rows, { onConflict: "booking_item_id,inventory_unit_id" });
+    if (error) throw error;
+  };
 
   const updateItem = (idx: number, patch: Partial<EditableItem>) => {
     setDraft((d) => {
