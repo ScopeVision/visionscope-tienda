@@ -1031,6 +1031,38 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                                       ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
                                       : "El payout y owner se resuelven desde la unidad seleccionada."}
                                   </div>
+
+                                  {(() => {
+                                    const accs = accessoriesForUnit(item.inventory_unit_id);
+                                    if (!accs.length) return null;
+                                    return (
+                                      <div className="col-span-12 rounded-md border border-border p-3 space-y-2">
+                                        <Label className="text-xs">Accesorios incluidos en este pedido</Label>
+                                        <div className="space-y-1.5">
+                                          {accs.map((a: any) => {
+                                            const checked = item.accessories?.[a.id] !== false;
+                                            return (
+                                              <label key={a.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                                                <Checkbox
+                                                  checked={checked}
+                                                  onCheckedChange={(v) =>
+                                                    updateItem(idx, {
+                                                      accessories: { ...(item.accessories ?? {}), [a.id]: v === true },
+                                                    })
+                                                  }
+                                                />
+                                                <span className="font-mono">{unitLabel(a)}</span>
+                                              </label>
+                                            );
+                                          })}
+                                        </div>
+                                        <p className="text-[11px] text-secondary">
+                                          Solo información operativa: desmarcar no cambia el precio ni libera
+                                          disponibilidad (el accesorio sigue bloqueado con su unidad-padre).
+                                        </p>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               );
                             })()}
