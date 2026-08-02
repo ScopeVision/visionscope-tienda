@@ -541,7 +541,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </div>
 
-            {product?.id && (
+            {product?.id && kitMode === "individual" && (
               <div className="rounded-md border border-border p-3 space-y-3">
                 <Label className="text-xs uppercase tracking-wider text-secondary">
                   Accesorios incluidos (plantilla del modelo)
