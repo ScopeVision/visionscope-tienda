@@ -754,6 +754,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               onChange={(urls) => form.setValue("images", urls, { shouldDirty: true })}
             />
           </TabsContent>
+
+          {/* VIDEOS */}
+          <TabsContent value="videos" className="mt-0">
+            <ProductVideosManager productId={product?.id ?? null} />
+          </TabsContent>
+
         </div>
       </Tabs>
 
