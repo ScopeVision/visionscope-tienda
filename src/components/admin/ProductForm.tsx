@@ -372,6 +372,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
           )}
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
+          <TabsTrigger value="videos">Vídeos</TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto pr-1 mt-5 space-y-6">
