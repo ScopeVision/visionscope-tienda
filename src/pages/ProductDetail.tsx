@@ -6,6 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ImageOff, Check, Sparkles } from "lucide-react";
 import { SmartImage } from "@/components/SmartImage";
+import { ProductMediaGallery, youtubeThumb } from "@/components/ProductMediaGallery";
 import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,22 @@ const ProductDetail = () => {
       return data ?? [];
     },
   });
+
+  const { data: videos = [] } = useQuery({
+    queryKey: ["product-videos", product?.id],
+    enabled: !!product?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_videos")
+        .select("*")
+        .eq("product_id", product!.id)
+        .eq("is_published", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
 
   const hasPricedVariants = pricedVariants.length > 0;
 
@@ -353,6 +370,7 @@ const ProductDetail = () => {
 
   const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
   const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
+  const firstVideo: any = (videos as any[]).find((v) => v.video_id);
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -362,6 +380,19 @@ const ProductDetail = () => {
     sku: product.id,
     category: cat || undefined,
     brand: { "@type": "Brand", name: "The Vision Scope" },
+    ...(firstVideo
+      ? {
+          video: {
+            "@type": "VideoObject",
+            name: firstVideo.title || name,
+            description: metaDesc,
+            thumbnailUrl: youtubeThumb(firstVideo),
+            contentUrl: firstVideo.url,
+            embedUrl: `https://www.youtube.com/embed/${firstVideo.video_id}`,
+            uploadDate: firstVideo.created_at,
+          },
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       priceCurrency: "EUR",
@@ -370,6 +401,7 @@ const ProductDetail = () => {
       url: canonicalUrl,
     },
   };
+
 
   return (
     <article className="container-page py-10">
@@ -393,40 +425,8 @@ const ProductDetail = () => {
 
       <div className="grid lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16">
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="aspect-square rounded-sm bg-surface border border-border overflow-hidden">
-            {images.length > 0 ? (
-              <SmartImage
-                src={images[Math.min(activeImageIdx, images.length - 1)]}
-                alt={name}
-                priority
-                className="transition-opacity duration-300"
-              />
-            ) : (
-              <div className="w-full h-full grid place-items-center text-secondary/30">
-                <ImageOff className="h-16 w-16" />
-              </div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className="mt-3 grid grid-cols-5 gap-2">
-              {images.map((url, idx) => (
-                <button
-                  key={url + idx}
-                  type="button"
-                  onClick={() => setActiveImageIdx(idx)}
-                  className={cn(
-                    "aspect-square rounded-sm overflow-hidden border bg-muted transition-all",
-                    idx === activeImageIdx
-                      ? "border-accent ring-1 ring-accent/40"
-                      : "border-border opacity-70 hover:opacity-100 hover:border-accent/40"
-                  )}
-                  aria-label={`${name} - ${idx + 1}`}
-                >
-                  <SmartImage src={url} alt="" />
-                </button>
-              ))}
-            </div>
-          )}
+          <ProductMediaGallery images={images} videos={videos as any} name={name} />
+
         </div>
 
 

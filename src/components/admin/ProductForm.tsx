@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_FILTERS } from "@/lib/rentalFilters";
 import { KitComponentsManager } from "./KitComponentsManager";
 import { ProductVariantsManager } from "./ProductVariantsManager";
+import { ProductVideosManager } from "./ProductVideosManager";
 import { ProductInventoryUnits } from "./ProductInventoryUnits";
 import { ProductOwnerSummary } from "./ProductOwnerSummary";
 
@@ -372,6 +373,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
           )}
           <TabsTrigger value="content">{t("admin.products.tabs.content")}</TabsTrigger>
           <TabsTrigger value="images">{t("admin.products.tabs.images")}</TabsTrigger>
+          <TabsTrigger value="videos">Vídeos</TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto pr-1 mt-5 space-y-6">
@@ -753,6 +755,12 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               onChange={(urls) => form.setValue("images", urls, { shouldDirty: true })}
             />
           </TabsContent>
+
+          {/* VIDEOS */}
+          <TabsContent value="videos" className="mt-0">
+            <ProductVideosManager productId={product?.id ?? null} />
+          </TabsContent>
+
         </div>
       </Tabs>
 
