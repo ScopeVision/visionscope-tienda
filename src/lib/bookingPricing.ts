@@ -26,6 +26,8 @@ export interface EditableItem {
   pricing_multipliers?: number[] | null;
   override_reason?: string | null;
   inventory_unit_id?: string | null;
+  /** Accessory unit ids -> included flag. Operational only: never affects pricing. */
+  accessories?: Record<string, boolean>;
 }
 
 export interface EditableBooking {

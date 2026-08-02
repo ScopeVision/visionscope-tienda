@@ -62,6 +62,7 @@ export function useRentalCatalog() {
         .from("products")
         .select("*, category:categories(*), product_tags(tag:tags(*)), variants:product_variants(id, price_day)")
         .eq("published", true)
+        .eq("standalone_rentable", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data ?? [];

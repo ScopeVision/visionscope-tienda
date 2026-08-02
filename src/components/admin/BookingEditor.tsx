@@ -100,6 +100,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         .from("products")
         .select("id, name_es, price_day, price_week, deposit, pricing_model, pricing_multipliers, product_variants(id, name, price_day, deposit)")
         .eq("published", true)
+        .eq("standalone_rentable", true)
         .order("name_es");
       if (error) throw error;
       return data ?? [];
@@ -111,9 +112,24 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("inventory_units")
-        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active")
+        .select("id, product_id, serial, internal_code, owner_id, agreement_type, owner_split_pct, status, active, parent_unit_id, product:products(name_es)")
         .eq("active", true)
         .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: bookingItemUnits = [] } = useQuery({
+    queryKey: ["booking-item-units", bookingId],
+    enabled: !!bookingId,
+    queryFn: async () => {
+      const itemIds = ((booking as any)?.items ?? []).map((i: any) => i.id);
+      if (!itemIds.length) return [];
+      const { data, error } = await (supabase as any)
+        .from("booking_item_units")
+        .select("id, booking_item_id, inventory_unit_id, included")
+        .in("booking_item_id", itemIds);
       if (error) throw error;
       return data ?? [];
     },
@@ -256,6 +272,11 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       pricing_multipliers: null,
       override_reason: it.override_reason ?? null,
       inventory_unit_id: it.inventory_unit_id ?? null,
+      accessories: Object.fromEntries(
+        (bookingItemUnits as any[])
+          .filter((bu) => bu.booking_item_id === it.id)
+          .map((bu) => [bu.inventory_unit_id, bu.included !== false])
+      ),
     }));
     setDraft({
       items,
@@ -272,7 +293,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       notes: booking.notes ?? "",
       internal_notes: booking.internal_notes ?? "",
     });
-  }, [booking, pricingSettings, isCreatingNew, bookingId]);
+  }, [booking, pricingSettings, isCreatingNew, bookingId, bookingItemUnits]);
 
   const breakdown = useMemo(() => {
     if (!draft) return null;
@@ -280,6 +301,28 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
   }, [draft]);
 
 
+
+  /** Accessory units physically tied to the selected parent unit of a line. */
+  const accessoriesForUnit = (unitId?: string | null) =>
+    unitId ? (inventoryUnits as any[]).filter((u) => u.parent_unit_id === unitId) : [];
+
+  const unitLabel = (u: any) =>
+    `${u.product?.name_es ? u.product.name_es + " · " : ""}${u.serial || u.internal_code || u.id.slice(0, 8)}`;
+
+  /** Persist the accessory checklist for a booking item (operational info only). */
+  const syncItemUnits = async (bookingItemId: string, item: EditableItem) => {
+    const accs = accessoriesForUnit(item.inventory_unit_id);
+    if (!accs.length) return;
+    const rows = accs.map((a) => ({
+      booking_item_id: bookingItemId,
+      inventory_unit_id: a.id,
+      included: item.accessories?.[a.id] !== false,
+    }));
+    const { error } = await (supabase as any)
+      .from("booking_item_units")
+      .upsert(rows, { onConflict: "booking_item_id,inventory_unit_id" });
+    if (error) throw error;
+  };
 
   const updateItem = (idx: number, patch: Partial<EditableItem>) => {
     setDraft((d) => {
@@ -442,7 +485,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
           const isOverride =
             item.price_override != null ||
             (item.discount_type !== "none" && (item.discount_value ?? 0) > 0);
-          const { error: iErr } = await supabase.from("booking_items").insert({
+          const { data: newItem, error: iErr } = await supabase.from("booking_items").insert({
             booking_id: newBooking.id,
             product_id: item.product_id,
             variant_id: item.variant_id,
@@ -462,8 +505,9 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
             overridden_by: isOverride ? userId : null,
             overridden_at: isOverride ? new Date().toISOString() : null,
             subtotal: br.items[0].final_subtotal,
-          });
+          }).select("id").single();
           if (iErr) throw iErr;
+          if (newItem?.id) await syncItemUnits(newItem.id, item);
         }
 
         await supabase.from("booking_audit_log").insert({
@@ -624,9 +668,11 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
           }
           const { error } = await supabase.from("booking_items").update(payload).eq("id", item.id);
           if (error) throw error;
+          await syncItemUnits(item.id, item);
         } else {
-          const { error } = await supabase.from("booking_items").insert(payload);
+          const { data: inserted, error } = await supabase.from("booking_items").insert(payload).select("id").single();
           if (error) throw error;
+          if (inserted?.id) await syncItemUnits(inserted.id, item);
           if (isOverride) {
             overrideEvents.push({ item_id: null, product: item.product_name, before: null, after: payload });
           }
@@ -659,6 +705,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       qc.invalidateQueries({ queryKey: ["admin-booking-edit"] });
       qc.invalidateQueries({ queryKey: ["admin-booking-audit"] });
+      qc.invalidateQueries({ queryKey: ["booking-item-units"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
       onClose();
     } catch (e: any) {
@@ -984,6 +1031,38 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                                       ? "⚠ Sin unidades: al pagar se registrará como company-owned sin payout."
                                       : "El payout y owner se resuelven desde la unidad seleccionada."}
                                   </div>
+
+                                  {(() => {
+                                    const accs = accessoriesForUnit(item.inventory_unit_id);
+                                    if (!accs.length) return null;
+                                    return (
+                                      <div className="col-span-12 rounded-md border border-border p-3 space-y-2">
+                                        <Label className="text-xs">Accesorios incluidos en este pedido</Label>
+                                        <div className="space-y-1.5">
+                                          {accs.map((a: any) => {
+                                            const checked = item.accessories?.[a.id] !== false;
+                                            return (
+                                              <label key={a.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                                                <Checkbox
+                                                  checked={checked}
+                                                  onCheckedChange={(v) =>
+                                                    updateItem(idx, {
+                                                      accessories: { ...(item.accessories ?? {}), [a.id]: v === true },
+                                                    })
+                                                  }
+                                                />
+                                                <span className="font-mono">{unitLabel(a)}</span>
+                                              </label>
+                                            );
+                                          })}
+                                        </div>
+                                        <p className="text-[11px] text-secondary">
+                                          Solo información operativa: desmarcar no cambia el precio ni libera
+                                          disponibilidad (el accesorio sigue bloqueado con su unidad-padre).
+                                        </p>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               );
                             })()}

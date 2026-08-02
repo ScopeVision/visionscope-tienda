@@ -202,8 +202,17 @@ function BookingSummaryDialog({
     enabled: !!bookingId && open,
     queryFn: async () => (await sb
       .from("booking_items")
-      .select("product_name, quantity, days, subtotal")
+      .select("id, product_name, quantity, days, subtotal")
       .eq("booking_id", bookingId)).data || [],
+  });
+
+  const { data: itemUnits = [] } = useQuery({
+    queryKey: ["owner-booking-item-units", bookingId, items.map((i: any) => i.id).join(",")],
+    enabled: !!bookingId && open && items.length > 0,
+    queryFn: async () => (await sb
+      .from("booking_item_units")
+      .select("booking_item_id, included, unit:inventory_units(serial, internal_code, product:products(name_es))")
+      .in("booking_item_id", items.map((i: any) => i.id))).data || [],
   });
 
   const { data: ownerRows = [] } = useQuery({
@@ -264,7 +273,24 @@ function BookingSummaryDialog({
                 <TableBody>
                   {items.map((it: any, i: number) => (
                     <TableRow key={i}>
-                      <TableCell className="text-xs">{it.product_name}</TableCell>
+                      <TableCell className="text-xs">
+                        {it.product_name}
+                        {(() => {
+                          const accs = (itemUnits as any[]).filter((u) => u.booking_item_id === it.id);
+                          if (!accs.length) return null;
+                          return (
+                            <ul className="mt-1 space-y-0.5 text-[11px] text-secondary">
+                              {accs.map((a: any, k: number) => (
+                                <li key={k} className={a.included === false ? "line-through opacity-60" : ""}>
+                                  + {a.unit?.product?.name_es ? a.unit.product.name_es + " · " : ""}
+                                  {a.unit?.serial || a.unit?.internal_code || "accesorio"}
+                                  {a.included === false ? " (no incluido)" : ""}
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="text-right text-xs">{it.quantity}</TableCell>
                       <TableCell className="text-right text-xs">{it.days}</TableCell>
                       <TableCell className="text-right text-xs">{fmt(it.subtotal)}</TableCell>

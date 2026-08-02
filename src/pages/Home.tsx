@@ -16,6 +16,7 @@ const Home = () => {
         .from("products")
         .select("*, category:categories(*), product_tags(tag:tags(*))")
         .eq("published", true)
+        .eq("standalone_rentable", true)
         .eq("is_featured", true)
         .order("featured_rank", { ascending: true, nullsFirst: false });
       if (e1) throw e1;
@@ -41,6 +42,7 @@ const Home = () => {
         .from("products")
         .select("*, category:categories(*), product_tags(tag:tags(*))")
         .eq("published", true)
+        .eq("standalone_rentable", true)
         .in("id", topPopularIds)
         .order("name_es", { ascending: true });
       if (e2) throw e2;
