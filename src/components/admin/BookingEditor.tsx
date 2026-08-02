@@ -485,7 +485,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
           const isOverride =
             item.price_override != null ||
             (item.discount_type !== "none" && (item.discount_value ?? 0) > 0);
-          const { error: iErr } = await supabase.from("booking_items").insert({
+          const { data: newItem, error: iErr } = await supabase.from("booking_items").insert({
             booking_id: newBooking.id,
             product_id: item.product_id,
             variant_id: item.variant_id,
@@ -505,8 +505,9 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
             overridden_by: isOverride ? userId : null,
             overridden_at: isOverride ? new Date().toISOString() : null,
             subtotal: br.items[0].final_subtotal,
-          });
+          }).select("id").single();
           if (iErr) throw iErr;
+          if (newItem?.id) await syncItemUnits(newItem.id, item);
         }
 
         await supabase.from("booking_audit_log").insert({
@@ -667,9 +668,11 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
           }
           const { error } = await supabase.from("booking_items").update(payload).eq("id", item.id);
           if (error) throw error;
+          await syncItemUnits(item.id, item);
         } else {
-          const { error } = await supabase.from("booking_items").insert(payload);
+          const { data: inserted, error } = await supabase.from("booking_items").insert(payload).select("id").single();
           if (error) throw error;
+          if (inserted?.id) await syncItemUnits(inserted.id, item);
           if (isOverride) {
             overrideEvents.push({ item_id: null, product: item.product_name, before: null, after: payload });
           }
@@ -702,6 +705,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       qc.invalidateQueries({ queryKey: ["admin-bookings"] });
       qc.invalidateQueries({ queryKey: ["admin-booking-edit"] });
       qc.invalidateQueries({ queryKey: ["admin-booking-audit"] });
+      qc.invalidateQueries({ queryKey: ["booking-item-units"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
       onClose();
     } catch (e: any) {
