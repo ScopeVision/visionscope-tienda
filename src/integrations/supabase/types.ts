@@ -158,6 +158,45 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_item_units: {
+        Row: {
+          booking_item_id: string
+          created_at: string
+          id: string
+          included: boolean
+          inventory_unit_id: string
+        }
+        Insert: {
+          booking_item_id: string
+          created_at?: string
+          id?: string
+          included?: boolean
+          inventory_unit_id: string
+        }
+        Update: {
+          booking_item_id?: string
+          created_at?: string
+          id?: string
+          included?: boolean
+          inventory_unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_item_units_booking_item_id_fkey"
+            columns: ["booking_item_id"]
+            isOneToOne: false
+            referencedRelation: "booking_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_item_units_inventory_unit_id_fkey"
+            columns: ["inventory_unit_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_items: {
         Row: {
           auto_subtotal: number | null
@@ -1302,6 +1341,7 @@ export type Database = {
           notes: string | null
           owner_id: string | null
           owner_split_pct: number
+          parent_unit_id: string | null
           product_id: string
           serial: string | null
           status: Database["public"]["Enums"]["inventory_unit_status"]
@@ -1320,6 +1360,7 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           owner_split_pct?: number
+          parent_unit_id?: string | null
           product_id: string
           serial?: string | null
           status?: Database["public"]["Enums"]["inventory_unit_status"]
@@ -1338,6 +1379,7 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           owner_split_pct?: number
+          parent_unit_id?: string | null
           product_id?: string
           serial?: string | null
           status?: Database["public"]["Enums"]["inventory_unit_status"]
@@ -1346,6 +1388,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_units_parent_unit_id_fkey"
+            columns: ["parent_unit_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_units_variant_id_fkey"
             columns: ["variant_id"]
@@ -1810,6 +1859,7 @@ export type Database = {
           series: string | null
           slug: string
           sort_order: number
+          standalone_rentable: boolean
           stock: number
           updated_at: string
           year: number | null
@@ -1855,6 +1905,7 @@ export type Database = {
           series?: string | null
           slug: string
           sort_order?: number
+          standalone_rentable?: boolean
           stock?: number
           updated_at?: string
           year?: number | null
@@ -1900,6 +1951,7 @@ export type Database = {
           series?: string | null
           slug?: string
           sort_order?: number
+          standalone_rentable?: boolean
           stock?: number
           updated_at?: string
           year?: number | null
