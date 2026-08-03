@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, UserPlus, X } from "lucide-react";
+import { CUSTOMER_FIELDS, buildCustomerPayload, isValidEmail } from "@/lib/customerFields";
 
 type SelectedCustomer = {
   id: string;
@@ -26,12 +28,10 @@ export default function CustomerPicker({ value, onChange }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selected, setSelected] = useState<SelectedCustomer | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const [newCompany, setNewCompany] = useState("");
+  const [newForm, setNewForm] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
