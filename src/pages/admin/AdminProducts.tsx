@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -26,29 +28,29 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProductForm } from "@/components/admin/ProductForm";
-import InventoryPanel from "@/components/admin/InventoryPanel";
-import { Plus, Pencil, Trash2, Search, ImageOff, Copy, FileSpreadsheet } from "lucide-react";
+import { ExpandedDetail, SignalBadge } from "@/components/admin/InventoryPanel";
+import {
+  Plus, Pencil, Trash2, Search, ImageOff, Copy, FileSpreadsheet, FileDown,
+  ChevronDown, ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useInventoryAudit } from "@/hooks/useInventoryAudit";
-import { buildExportRows, exportInventoryXlsx } from "@/lib/inventoryExport";
+import { buildExportRows, exportInventoryCsv, exportInventoryXlsx } from "@/lib/inventoryExport";
+import type { ProductAudit } from "@/lib/inventoryAudit";
+import { cn } from "@/lib/utils";
 
 const AdminProducts = () => {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
+  const [publishedFilter, setPublishedFilter] = useState<string>("__all__");
+  const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
+  const [onlyErrors, setOnlyErrors] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<any | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<any | null>(null);
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["admin-categories-filter"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("*").order("sort_order");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -81,19 +83,57 @@ const AdminProducts = () => {
     return m;
   }, [popularity]);
 
-  const { audits, categoryName } = useInventoryAudit();
+  const {
+    audits, categories, owners, categoryName, lang,
+    componentsByParent, accessoryProductIds, isLoading: auditLoading,
+  } = useInventoryAudit();
 
+  const auditByProductId = useMemo(() => {
+    const m = new Map<string, ProductAudit>();
+    for (const a of audits) m.set(a.product.id, a);
+    return m;
+  }, [audits]);
+
+  /** Filas de primer nivel: solo productos padre (sin accesorios internos). */
   const filtered = useMemo(() => {
-    return products.filter((p: any) => {
-      if (categoryFilter && p.category_id !== categoryFilter) return false;
+    return (products as any[]).filter((p: any) => {
+      if (accessoryProductIds.has(p.id)) return false;
+      const a = auditByProductId.get(p.id);
+      if (categoryFilter !== "__all__" && p.category_id !== categoryFilter) return false;
+      if (publishedFilter === "published" && !p.published) return false;
+      if (publishedFilter === "unpublished" && p.published) return false;
+      if (ownerFilter !== "__all__") {
+        const units = a?.units ?? [];
+        if (ownerFilter === "__none__") {
+          if (units.some((u: any) => u.owner_id)) return false;
+        } else if (!units.some((u: any) => u.owner_id === ownerFilter)) {
+          return false;
+        }
+      }
+      if (onlyErrors && (a?.signals.length ?? 0) === 0) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
-        const name = localized(p, "name", i18n.language).toLowerCase();
-        if (!name.includes(q) && !p.slug.toLowerCase().includes(q)) return false;
+        const name = (localized(p, "name", i18n.language) || "").toLowerCase();
+        const code = (p.internal_code ?? "").toLowerCase();
+        const slug = (p.slug ?? "").toLowerCase();
+        if (!name.includes(q) && !code.includes(q) && !slug.includes(q)) return false;
       }
       return true;
     });
-  }, [products, categoryFilter, search, i18n.language]);
+  }, [products, accessoryProductIds, auditByProductId, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, i18n.language]);
+
+  const totalErrors = filtered.reduce((n, p: any) => n + (auditByProductId.get(p.id)?.signals.length ?? 0), 0);
+  const criticalErrors = filtered.reduce(
+    (n, p: any) =>
+      n + (auditByProductId.get(p.id)?.signals.filter((s) => s.severity === "critical").length ?? 0),
+    0
+  );
+
+  const toggleRow = (id: string) => {
+    const next = new Set(expanded);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setExpanded(next);
+  };
 
   const togglePublished = async (p: any) => {
     const { error } = await supabase
@@ -150,18 +190,37 @@ const AdminProducts = () => {
     else qc.invalidateQueries({ queryKey: ["admin-products"] });
   };
 
-  const exportListToXlsx = async () => {
-    const filteredIds = new Set(filtered.map((p: any) => p.id));
-    const rows = buildExportRows(
-      audits.filter((a) => filteredIds.has(a.product.id)),
-      categoryName,
-      i18n.language
-    );
+  /** Export: padres visibles + sus accesorios internos justo detrás (sin perder filas). */
+  const doExport = async (fmt: "csv" | "xlsx") => {
+    const list: ProductAudit[] = [];
+    const parentByChildId = new Map<string, { name: string; internal_code?: string | null }>();
+    const seen = new Set<string>();
+    for (const p of filtered as any[]) {
+      const a = auditByProductId.get(p.id);
+      if (!a) continue;
+      if (!seen.has(a.product.id)) {
+        seen.add(a.product.id);
+        list.push(a);
+      }
+      for (const acc of componentsByParent.get(a.product.id) ?? []) {
+        if (!parentByChildId.has(acc.audit.product.id)) {
+          parentByChildId.set(acc.audit.product.id, {
+            name: localized(a.product, "name", lang),
+            internal_code: a.product.internal_code,
+          });
+        }
+        if (!seen.has(acc.audit.product.id)) {
+          seen.add(acc.audit.product.id);
+          list.push(acc.audit);
+        }
+      }
+    }
+    const rows = buildExportRows(list, categoryName, lang, parentByChildId);
     if (rows.length === 0) {
       toast.error("Nada que exportar");
       return;
     }
-    await exportInventoryXlsx(rows);
+    fmt === "csv" ? exportInventoryCsv(rows) : await exportInventoryXlsx(rows);
   };
 
   const confirmDelete = async () => {
@@ -184,6 +243,8 @@ const AdminProducts = () => {
     setEditing(null);
   };
 
+  const COLS = 11;
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -198,75 +259,111 @@ const AdminProducts = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="list">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="list">Listado</TabsTrigger>
-          <TabsTrigger value="inventory">Inventario</TabsTrigger>
-        </TabsList>
+      {/* Filtros unificados */}
+      <div className="rounded-md bg-surface border border-border p-3 grid gap-3 sm:grid-cols-[1fr_180px_160px_180px_auto] mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+          <Input
+            placeholder="Buscar producto, código, slug…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger><SelectValue placeholder="Categoría" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todas las categorías</SelectItem>
+            {categories.map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{localized(c, "name", lang)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={publishedFilter} onValueChange={setPublishedFilter}>
+          <SelectTrigger><SelectValue placeholder="Publicación" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos</SelectItem>
+            <SelectItem value="published">Publicados</SelectItem>
+            <SelectItem value="unpublished">No publicados</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+          <SelectTrigger><SelectValue placeholder="Owner" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los owners</SelectItem>
+            <SelectItem value="__none__">Sin owner (empresa)</SelectItem>
+            {owners.map((o: any) => (
+              <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
+          <Switch checked={onlyErrors} onCheckedChange={setOnlyErrors} />
+          <span className="text-xs text-secondary uppercase tracking-wider">Solo con errores</span>
+        </div>
+      </div>
 
-        <TabsContent value="list" className="mt-5">
-          {/* Filter bar */}
-          <div className="grid sm:grid-cols-[1fr_240px_auto] gap-3 mb-5">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-              <Input
-                placeholder={t("common.search")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-10 px-3 rounded-md bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <option value="">{t("common.all")}</option>
-              {categories.map((c: any) => (
-                <option key={c.id} value={c.id}>
-                  {localized(c, "name", i18n.language)}
-                </option>
-              ))}
-            </select>
-            <Button variant="outline" onClick={exportListToXlsx} className="gap-1.5">
-              <FileSpreadsheet className="h-4 w-4" /> Exportar a Excel
-            </Button>
-          </div>
+      {/* Resumen + export */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="text-sm text-secondary">
+          {filtered.length} productos · {totalErrors} alertas
+          {criticalErrors > 0 && (
+            <span className="text-destructive font-medium"> · {criticalErrors} críticas</span>
+          )}
+        </div>
+        <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => doExport("csv")} className="gap-1.5">
+            <FileDown className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("xlsx")} className="gap-1.5">
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+          </Button>
+        </div>
+      </div>
 
-          <div className="rounded-md bg-surface border border-border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16"></TableHead>
-                  <TableHead>{t("common.name")}</TableHead>
-                  <TableHead>{t("admin.categories")}</TableHead>
-                  <TableHead className="text-right">{t("common.perDay")}</TableHead>
-                  <TableHead className="text-right">{t("common.deposit")}</TableHead>
-                  <TableHead className="text-right">{t("admin.stock")}</TableHead>
-                  <TableHead className="text-right w-20">Orden</TableHead>
-                  <TableHead className="text-center w-28">Destacado</TableHead>
-                  <TableHead className="text-right w-24">Alquileres</TableHead>
-                  <TableHead className="text-center">{t("admin.published")}</TableHead>
-                  <TableHead className="text-right">{t("common.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="text-center text-secondary py-10">
-                      {t("common.loading")}
-                    </TableCell>
-                  </TableRow>
-                ) : filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="text-center text-secondary py-10">
-                      —
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((p: any) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
+      <div className="rounded-md bg-surface border border-border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8"></TableHead>
+              <TableHead className="w-16"></TableHead>
+              <TableHead>{t("common.name")}</TableHead>
+              <TableHead>{t("admin.categories")}</TableHead>
+              <TableHead className="text-right">{t("common.perDay")}</TableHead>
+              <TableHead className="text-right">{t("admin.stock")}</TableHead>
+              <TableHead className="text-right">Unidades</TableHead>
+              <TableHead className="text-center w-28">Destacado</TableHead>
+              <TableHead className="text-center">{t("admin.published")}</TableHead>
+              <TableHead>Alertas</TableHead>
+              <TableHead className="text-right">{t("common.actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading || auditLoading ? (
+              <TableRow>
+                <TableCell colSpan={COLS} className="text-center text-secondary py-10">
+                  {t("common.loading")}
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={COLS} className="text-center text-secondary py-10">—</TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((p: any) => {
+                const audit = auditByProductId.get(p.id);
+                const isOpen = expanded.has(p.id);
+                const stockMismatch = audit?.signals.some((s) => s.code === "stock_mismatch");
+                const pop = popularityMap.get(p.id);
+                return (
+                  <Fragment key={p.id}>
+                    <TableRow>
+                      <TableCell className="cursor-pointer" onClick={() => toggleRow(p.id)}>
+                        {isOpen
+                          ? <ChevronDown className="h-4 w-4 text-secondary" />
+                          : <ChevronRight className="h-4 w-4 text-secondary" />}
+                      </TableCell>
+                      <TableCell className="cursor-pointer" onClick={() => toggleRow(p.id)}>
                         <div className="w-12 h-12 rounded-sm bg-muted overflow-hidden grid place-items-center">
                           {p.images?.[0] ? (
                             <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
@@ -277,26 +374,25 @@ const AdminProducts = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {localized(p, "name", i18n.language)}
-                        <div className="text-[10px] font-mono text-secondary mt-0.5">{p.slug}</div>
+                        <div className="text-[10px] font-mono text-secondary mt-0.5">
+                          {p.internal_code ?? "—"} · {p.slug}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-secondary">
+                      <TableCell className="text-secondary text-xs">
                         {p.category ? localized(p.category, "name", i18n.language) : "—"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right tabular-nums">
                         {formatCurrency(Number(p.price_day), i18n.language)}
+                        <div className="text-[10px] text-secondary">
+                          Fianza {formatCurrency(Number(p.deposit), i18n.language)}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(Number(p.deposit), i18n.language)}
-                      </TableCell>
-                      <TableCell className="text-right">{p.stock}</TableCell>
-                      <TableCell className="text-right">
-                        <Input
-                          type="number"
-                          defaultValue={p.sort_order ?? 0}
-                          className="w-16 h-7 text-right text-xs px-1"
-                          onBlur={(e) => updateSortOrder(p.id, Number(e.target.value))}
-                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                        />
+                      <TableCell className="text-right tabular-nums">{p.stock}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className={cn(stockMismatch && "text-amber-500 font-medium")}>
+                          {audit?.real_units_in_service ?? 0}
+                        </span>
+                        <span className="text-secondary"> / {audit?.real_units_total ?? 0}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
@@ -316,18 +412,20 @@ const AdminProducts = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-xs text-secondary tabular-nums">
-                        {(() => {
-                          const pop = popularityMap.get(p.id);
-                          if (!pop) return "—";
-                          return `${pop.rentals_12m} / ${pop.rentals_total}`;
-                        })()}
-                      </TableCell>
                       <TableCell className="text-center">
                         <Switch
                           checked={p.published}
                           onCheckedChange={() => togglePublished(p)}
                         />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {!audit || audit.signals.length === 0 ? (
+                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400">OK</span>
+                          ) : (
+                            audit.signals.map((s) => <SignalBadge key={s.code} signal={s} />)
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="inline-flex gap-1">
@@ -360,17 +458,45 @@ const AdminProducts = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="mt-5">
-          <InventoryPanel />
-        </TabsContent>
-      </Tabs>
+                    {isOpen && (
+                      <TableRow className="bg-muted/20 hover:bg-muted/20">
+                        <TableCell colSpan={COLS} className="p-4">
+                          <div className="flex flex-wrap gap-6 text-xs text-secondary mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="uppercase tracking-wider">Orden</span>
+                              <Input
+                                type="number"
+                                defaultValue={p.sort_order ?? 0}
+                                className="w-20 h-7 text-right text-xs px-1"
+                                onBlur={(e) => updateSortOrder(p.id, Number(e.target.value))}
+                                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                              />
+                            </div>
+                            <div>
+                              <span className="uppercase tracking-wider">Alquileres (12m / total)</span>{" "}
+                              <span className="tabular-nums text-foreground">
+                                {pop ? `${pop.rentals_12m} / ${pop.rentals_total}` : "—"}
+                              </span>
+                            </div>
+                          </div>
+                          {audit && (
+                            <ExpandedDetail
+                              audit={audit}
+                              owners={owners}
+                              accessories={componentsByParent.get(p.id) ?? []}
+                              lang={lang}
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Create / Edit dialog */}
       <Dialog open={openDialog} onOpenChange={(o) => !o && closeDialog()}>

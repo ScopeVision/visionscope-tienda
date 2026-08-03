@@ -29,7 +29,7 @@ const SIGNAL_LABEL: Record<string, string> = {
   variant_coverage_gap: "Variante sin cubrir",
 };
 
-function SignalBadge({ signal }: { signal: Signal }) {
+export function SignalBadge({ signal }: { signal: Signal }) {
   const isCritical = signal.severity === "critical";
   return (
     <Badge
@@ -288,7 +288,7 @@ function PanelRow({
   );
 }
 
-function ExpandedDetail({
+export function ExpandedDetail({
   audit, owners, accessories, lang,
 }: {
   audit: ProductAudit;
