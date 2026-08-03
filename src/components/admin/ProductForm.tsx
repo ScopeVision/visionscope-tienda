@@ -584,9 +584,10 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
                   Define qué accesorios incluye este modelo. Sirve como sugerencia al atar unidades físicas
                   concretas (cargador #3 → cámara #1).
                 </p>
-                <KitComponentsManager parentProductId={product.id} />
+                <AccessoriesManager parentProductId={product.id} />
               </div>
             )}
+
 
             <Field label="Contenido del kit / maletín (opcional, solo interno)">
               <Textarea rows={3} {...form.register("contents_es")} placeholder="Ej. Cuerpo, 2 baterías, cargador, cable USB-C…" />
