@@ -203,14 +203,17 @@ const AdminCustomers = () => {
         </Table>
       </div>
 
-      <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+      <Sheet open={sheetOpen} onOpenChange={(o) => !o && closeSheet()}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="font-display">Editar cliente</SheetTitle>
+            <SheetTitle className="font-display">{creating ? "Nuevo cliente" : "Editar cliente"}</SheetTitle>
             <SheetDescription>
-              Alta: {formatDateTime(editing?.created_at)} · Última actualización: {formatDateTime(editing?.updated_at)}
+              {creating
+                ? "Rellena los datos del cliente. Nombre y email son obligatorios."
+                : `Alta: ${formatDateTime(editing?.created_at)} · Última actualización: ${formatDateTime(editing?.updated_at)}`}
             </SheetDescription>
           </SheetHeader>
+
 
           <div className="mt-5 space-y-4">
             <div>
