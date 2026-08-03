@@ -463,8 +463,21 @@ const AdminProducts = () => {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={COLS} className="text-center text-secondary py-10">—</TableCell>
+                <TableCell colSpan={COLS} className="text-center text-secondary py-10">
+                  {activeFilterLabels.length > 0 ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm">Ningún producto coincide con los filtros activos.</p>
+                      <p className="text-xs text-secondary">{activeFilterLabels.join(" · ")}</p>
+                      <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                        Quitar todos los filtros
+                      </Button>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
               </TableRow>
+
             ) : (
               filtered.map((p: any) => {
                 const audit = auditByProductId.get(p.id);
