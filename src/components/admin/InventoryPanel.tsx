@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useInventoryAudit } from "@/hooks/useInventoryAudit";
+import { useInventoryAudit, type AccessoryEntry } from "@/hooks/useInventoryAudit";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,10 @@ function SignalBadge({ signal }: { signal: Signal }) {
 }
 
 export default function InventoryPanel() {
-  const { audits, categories, owners, categoryName, lang, isLoading } = useInventoryAudit();
+  const {
+    audits, categories, owners, categoryName, lang, isLoading,
+    componentsByParent, accessoryProductIds,
+  } = useInventoryAudit();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
@@ -57,6 +60,7 @@ export default function InventoryPanel() {
   const filtered = useMemo(() => {
     return audits.filter((a) => {
       const p = a.product;
+      if (accessoryProductIds.has(p.id)) return false;
       if (categoryFilter !== "__all__" && p.category_id !== categoryFilter) return false;
       if (publishedFilter === "published" && !p.published) return false;
       if (publishedFilter === "unpublished" && p.published) return false;
@@ -77,7 +81,7 @@ export default function InventoryPanel() {
       }
       return true;
     });
-  }, [audits, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, lang]);
+  }, [audits, accessoryProductIds, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, lang]);
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
@@ -86,7 +90,28 @@ export default function InventoryPanel() {
   };
 
   const doExport = async (fmt: "csv" | "xlsx") => {
-    const rows = buildExportRows(filtered, categoryName, lang);
+    const list: ProductAudit[] = [];
+    const parentByChildId = new Map<string, { name: string; internal_code?: string | null }>();
+    const seen = new Set<string>();
+    for (const a of filtered) {
+      if (!seen.has(a.product.id)) {
+        seen.add(a.product.id);
+        list.push(a);
+      }
+      for (const acc of componentsByParent.get(a.product.id) ?? []) {
+        if (!parentByChildId.has(acc.audit.product.id)) {
+          parentByChildId.set(acc.audit.product.id, {
+            name: localized(a.product, "name", lang),
+            internal_code: a.product.internal_code,
+          });
+        }
+        if (!seen.has(acc.audit.product.id)) {
+          seen.add(acc.audit.product.id);
+          list.push(acc.audit);
+        }
+      }
+    }
+    const rows = buildExportRows(list, categoryName, lang, parentByChildId);
     fmt === "csv" ? exportInventoryCsv(rows) : await exportInventoryXlsx(rows);
   };
 
@@ -95,6 +120,7 @@ export default function InventoryPanel() {
     (n, a) => n + a.signals.filter((s) => s.severity === "critical").length,
     0
   );
+
 
   return (
     <div className="space-y-4">
@@ -188,7 +214,7 @@ export default function InventoryPanel() {
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={11} className="text-center text-secondary py-10">—</TableCell></TableRow>
             ) : (
-              filtered.map((a) => <PanelRow key={a.product.id} audit={a} expanded={expanded.has(a.product.id)} onToggle={() => toggleRow(a.product.id)} categoryName={categoryName} lang={lang} owners={owners} />)
+              filtered.map((a) => <PanelRow key={a.product.id} audit={a} expanded={expanded.has(a.product.id)} onToggle={() => toggleRow(a.product.id)} categoryName={categoryName} lang={lang} owners={owners} accessories={componentsByParent.get(a.product.id) ?? []} />)
             )}
           </TableBody>
         </Table>
@@ -198,7 +224,7 @@ export default function InventoryPanel() {
 }
 
 function PanelRow({
-  audit, expanded, onToggle, categoryName, lang, owners,
+  audit, expanded, onToggle, categoryName, lang, owners, accessories,
 }: {
   audit: ProductAudit;
   expanded: boolean;
@@ -206,6 +232,7 @@ function PanelRow({
   categoryName: (id?: string | null) => string;
   lang: string;
   owners: any[];
+  accessories: AccessoryEntry[];
 }) {
   const p = audit.product;
   const name = localized(p, "name", lang);
@@ -253,7 +280,7 @@ function PanelRow({
       {expanded && (
         <TableRow className="bg-muted/20 hover:bg-muted/20">
           <TableCell colSpan={11} className="p-4">
-            <ExpandedDetail audit={audit} owners={owners} />
+            <ExpandedDetail audit={audit} owners={owners} accessories={accessories} lang={lang} />
           </TableCell>
         </TableRow>
       )}
@@ -261,48 +288,106 @@ function PanelRow({
   );
 }
 
-function ExpandedDetail({ audit, owners }: { audit: ProductAudit; owners: any[] }) {
-  if (audit.units.length === 0) {
-    return (
-      <div className="text-xs text-secondary flex items-center gap-2">
-        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-        Este producto no tiene unidades físicas registradas.
-      </div>
-    );
+function ExpandedDetail({
+  audit, owners, accessories, lang,
+}: {
+  audit: ProductAudit;
+  owners: any[];
+  accessories: AccessoryEntry[];
+  lang: string;
+}) {
+  const groups = new Map<string, AccessoryEntry[]>();
+  for (const acc of accessories) {
+    const key = acc.variant_name ?? "__none__";
+    const list = groups.get(key) ?? [];
+    list.push(acc);
+    groups.set(key, list);
   }
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="text-secondary uppercase tracking-wider">
-          <tr>
-            <th className="text-left font-medium py-1 pr-3">Cód. interno</th>
-            <th className="text-left font-medium py-1 pr-3">Variante</th>
-            <th className="text-left font-medium py-1 pr-3">Owner</th>
-            <th className="text-right font-medium py-1 pr-3">% Split</th>
-            <th className="text-left font-medium py-1 pr-3">Estado</th>
-            <th className="text-left font-medium py-1 pr-3">Serial</th>
-          </tr>
-        </thead>
-        <tbody>
-          {audit.units.map((u) => {
-            const variant = audit.variants.find((v) => v.id === u.variant_id);
-            const owner = owners.find((o: any) => o.id === u.owner_id);
-            return (
-              <tr key={u.id} className="border-t border-border/40">
-                <td className="py-1.5 pr-3 font-mono">{u.internal_code ?? "—"}</td>
-                <td className="py-1.5 pr-3">{variant?.name ?? "—"}</td>
-                <td className="py-1.5 pr-3">{owner?.name ?? (u.owner_id ? u.owner_id : "Empresa")}</td>
-                <td className="py-1.5 pr-3 text-right tabular-nums">{Number(u.owner_split_pct ?? 0)}%</td>
-                <td className="py-1.5 pr-3">
-                  <Badge variant="outline" className="text-[10px]">{u.status}</Badge>
-                  {u.active === false && <span className="text-secondary ml-1">(inactivo)</span>}
-                </td>
-                <td className="py-1.5 pr-3 font-mono text-secondary">{u.serial ?? "—"}</td>
+    <div className="space-y-4">
+      {audit.units.length === 0 ? (
+        <div className="text-xs text-secondary flex items-center gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+          Este producto no tiene unidades físicas registradas.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-secondary uppercase tracking-wider">
+              <tr>
+                <th className="text-left font-medium py-1 pr-3">Cód. interno</th>
+                <th className="text-left font-medium py-1 pr-3">Variante</th>
+                <th className="text-left font-medium py-1 pr-3">Owner</th>
+                <th className="text-right font-medium py-1 pr-3">% Split</th>
+                <th className="text-left font-medium py-1 pr-3">Estado</th>
+                <th className="text-left font-medium py-1 pr-3">Serial</th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {audit.units.map((u) => {
+                const variant = audit.variants.find((v) => v.id === u.variant_id);
+                const owner = owners.find((o: any) => o.id === u.owner_id);
+                return (
+                  <tr key={u.id} className="border-t border-border/40">
+                    <td className="py-1.5 pr-3 font-mono">{u.internal_code ?? "—"}</td>
+                    <td className="py-1.5 pr-3">{variant?.name ?? "—"}</td>
+                    <td className="py-1.5 pr-3">{owner?.name ?? (u.owner_id ? u.owner_id : "Empresa")}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{Number(u.owner_split_pct ?? 0)}%</td>
+                    <td className="py-1.5 pr-3">
+                      <Badge variant="outline" className="text-[10px]">{u.status}</Badge>
+                      {u.active === false && <span className="text-secondary ml-1">(inactivo)</span>}
+                    </td>
+                    <td className="py-1.5 pr-3 font-mono text-secondary">{u.serial ?? "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {accessories.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-xs font-medium uppercase tracking-wider text-secondary">
+            Accesorios internos incluidos
+          </div>
+          {Array.from(groups.entries()).map(([key, list]) => (
+            <div key={key} className="space-y-1">
+              {key !== "__none__" && (
+                <div className="text-[11px] font-medium text-foreground">{key}</div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-secondary uppercase tracking-wider">
+                    <tr>
+                      <th className="text-left font-medium py-1 pr-3">Cód. interno</th>
+                      <th className="text-left font-medium py-1 pr-3">Accesorio</th>
+                      <th className="text-right font-medium py-1 pr-3">Cantidad</th>
+                      <th className="text-right font-medium py-1 pr-3">Piezas físicas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.map((acc, i) => (
+                      <tr key={`${acc.audit.product.id}-${i}`} className="border-t border-border/40">
+                        <td className="py-1.5 pr-3 font-mono text-[11px]">
+                          {acc.audit.product.internal_code ?? "—"}
+                        </td>
+                        <td className="py-1.5 pr-3">{localized(acc.audit.product, "name", lang)}</td>
+                        <td className="py-1.5 pr-3 text-right tabular-nums">{acc.quantity}</td>
+                        <td className="py-1.5 pr-3 text-right tabular-nums">
+                          {acc.audit.real_units_in_service}
+                          <span className="text-secondary"> / {acc.audit.real_units_total}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

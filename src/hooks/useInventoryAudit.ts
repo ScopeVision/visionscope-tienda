@@ -7,6 +7,12 @@ import { auditInventory, ProductAudit } from "@/lib/inventoryAudit";
 
 const sb = supabase as any;
 
+export type AccessoryEntry = {
+  audit: ProductAudit;
+  quantity: number;
+  variant_name: string | null;
+};
+
 export function useInventoryAudit() {
   const { i18n } = useTranslation();
   const lang = i18n.language;
@@ -37,6 +43,17 @@ export function useInventoryAudit() {
     queryFn: async () => (await sb.from("categories").select("*").order("sort_order")).data ?? [],
   });
 
+  const componentsQ = useQuery({
+    queryKey: ["inv-audit-components"],
+    queryFn: async () =>
+      (
+        await sb
+          .from("product_components")
+          .select("parent_product_id, child_product_id, quantity, variant_name, sort_order")
+          .order("sort_order")
+      ).data ?? [],
+  });
+
   const audits: ProductAudit[] = useMemo(
     () =>
       auditInventory({
@@ -48,6 +65,37 @@ export function useInventoryAudit() {
     [productsQ.data, unitsQ.data, variantsQ.data, ownersQ.data]
   );
 
+  const auditById = useMemo(() => {
+    const m = new Map<string, ProductAudit>();
+    for (const a of audits) m.set(a.product.id, a);
+    return m;
+  }, [audits]);
+
+  const componentsByParent = useMemo(() => {
+    const m = new Map<string, AccessoryEntry[]>();
+    const rows = [...(componentsQ.data ?? [])].sort(
+      (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    );
+    for (const r of rows) {
+      const child = auditById.get(r.child_product_id);
+      if (!child) continue;
+      const list = m.get(r.parent_product_id) ?? [];
+      list.push({
+        audit: child,
+        quantity: Number(r.quantity ?? 1),
+        variant_name: r.variant_name ?? null,
+      });
+      m.set(r.parent_product_id, list);
+    }
+    return m;
+  }, [componentsQ.data, auditById]);
+
+  const accessoryProductIds = useMemo(
+    () => new Set<string>((componentsQ.data ?? []).map((r: any) => r.child_product_id)),
+    [componentsQ.data]
+  );
+
+
   const categoryName = (id?: string | null): string => {
     if (!id) return "—";
     const c = (categoriesQ.data ?? []).find((x: any) => x.id === id);
@@ -56,6 +104,8 @@ export function useInventoryAudit() {
 
   return {
     audits,
+    componentsByParent,
+    accessoryProductIds,
     categories: categoriesQ.data ?? [],
     owners: ownersQ.data ?? [],
     variants: variantsQ.data ?? [],
@@ -64,6 +114,6 @@ export function useInventoryAudit() {
     categoryName,
     lang,
     isLoading:
-      productsQ.isLoading || unitsQ.isLoading || variantsQ.isLoading || ownersQ.isLoading || categoriesQ.isLoading,
+      productsQ.isLoading || unitsQ.isLoading || variantsQ.isLoading || ownersQ.isLoading || categoriesQ.isLoading || componentsQ.isLoading,
   };
 }
