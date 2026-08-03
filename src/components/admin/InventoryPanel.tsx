@@ -214,7 +214,7 @@ export default function InventoryPanel() {
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={11} className="text-center text-secondary py-10">—</TableCell></TableRow>
             ) : (
-              filtered.map((a) => <PanelRow key={a.product.id} audit={a} expanded={expanded.has(a.product.id)} onToggle={() => toggleRow(a.product.id)} categoryName={categoryName} lang={lang} owners={owners} />)
+              filtered.map((a) => <PanelRow key={a.product.id} audit={a} expanded={expanded.has(a.product.id)} onToggle={() => toggleRow(a.product.id)} categoryName={categoryName} lang={lang} owners={owners} accessories={componentsByParent.get(a.product.id) ?? []} />)
             )}
           </TableBody>
         </Table>
