@@ -47,7 +47,7 @@ const AdminProducts = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
   const [publishedFilter, setPublishedFilter] = useState<string>("__all__");
   const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
-  const [onlyErrors, setOnlyErrors] = useState(false);
+  const [materialFilter, setMaterialFilter] = useState<string>("__all__");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<any | null>(null);
   const [creating, setCreating] = useState(false);
