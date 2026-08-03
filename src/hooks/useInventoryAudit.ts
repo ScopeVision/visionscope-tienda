@@ -11,7 +11,10 @@ export type AccessoryEntry = {
   audit: ProductAudit;
   quantity: number;
   variant_name: string | null;
+  component_id: string;
+  sort_order: number;
 };
+
 
 export function useInventoryAudit() {
   const { i18n } = useTranslation();
