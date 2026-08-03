@@ -404,7 +404,7 @@ const AdminProducts = () => {
           {(attentionTotals.maintenance + attentionTotals.lost) > 0 && (
             <button
               type="button"
-              onClick={() => setMaterialFilter("attention")}
+              onClick={() => { clearFilters(); setMaterialFilter("attention"); }}
               className="text-amber-600 dark:text-amber-400 font-medium hover:underline"
             >
               {" "}· {[
@@ -413,7 +413,20 @@ const AdminProducts = () => {
               ].filter(Boolean).join(" · ")}
             </button>
           )}
+          {activeFilterLabels.length > 0 && (
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-secondary hover:underline"
+              >
+                Quitar filtros ({activeFilterLabels.length})
+              </button>
+            </>
+          )}
         </div>
+
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="outline" onClick={() => doExport("csv")} className="gap-1.5">
             <FileDown className="h-3.5 w-3.5" /> CSV
