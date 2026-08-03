@@ -14,6 +14,7 @@ import BookingCommunications from "./BookingCommunications";
 import CustomerPicker from "./CustomerPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { UNIT_STATUS_LABEL } from "@/lib/accessoryCreation";
 import { toast } from "sonner";
 import { formatCurrency, daysBetween, PRICING_MODEL_LABELS, type PricingModel } from "@/lib/rental";
 import {
@@ -316,7 +317,10 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
     const rows = accs.map((a) => ({
       booking_item_id: bookingItemId,
       inventory_unit_id: a.id,
-      included: item.accessories?.[a.id] !== false,
+      included:
+        item.accessories?.[a.id] === undefined
+          ? (a.status ?? "active") === "active"
+          : item.accessories[a.id] !== false,
     }));
     const { error } = await (supabase as any)
       .from("booking_item_units")
