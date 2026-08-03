@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Search, Save } from "lucide-react";
+import { Search, Save, UserPlus } from "lucide-react";
+import { CUSTOMER_FIELDS, CUSTOMER_SELECT, buildCustomerPayload, isValidEmail } from "@/lib/customerFields";
 
 const STATUSES = [
   { value: "active", label: "Activo", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
