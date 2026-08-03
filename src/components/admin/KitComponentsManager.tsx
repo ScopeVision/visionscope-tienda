@@ -96,6 +96,7 @@ export const KitComponentsManager = ({
         .from("products")
         .select("id, slug, name_es, name_ca, name_en, name_fr, images, price_day, kit_mode")
         .eq("kit_mode", "individual")
+        .eq("standalone_rentable", true)
         .order("name_es");
       if (catData?.id) q = q.eq("category_id", catData.id);
       const { data, error } = await q.limit(200);
