@@ -92,52 +92,55 @@ const AdminCustomers = () => {
   }, [data, search, statusFilter]);
 
   const openEditor = (c: Customer) => {
+    setCreating(false);
     setEditing(c);
     setForm({ ...c });
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ status: "active" });
+    setCreating(true);
+  };
+
+  const closeSheet = () => {
+    setCreating(false);
+    setEditing(null);
   };
 
   const setField = (key: keyof Customer, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const save = async () => {
-    if (!editing) return;
-    const name = (form.full_name ?? "").trim();
-    const email = (form.email ?? "").trim();
-    if (!name) return toast.error("El nombre es obligatorio");
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error("Email no válido");
+    const payload = buildCustomerPayload(form as Record<string, unknown>);
+    if (!payload.full_name) return toast.error("El nombre es obligatorio");
+    if (!payload.email || !isValidEmail(payload.email)) return toast.error("Email no válido");
 
     setSaving(true);
-    const { error } = await supabase
-      .from("customers")
-      .update({
-        full_name: name,
-        email: email.toLowerCase(),
-        phone: form.phone?.trim() || null,
-        company: form.company?.trim() || null,
-        tax_id: form.tax_id?.trim() || null,
-        address_line1: form.address_line1?.trim() || null,
-        address_line2: form.address_line2?.trim() || null,
-        city: form.city?.trim() || null,
-        postal_code: form.postal_code?.trim() || null,
-        country: form.country?.trim() || null,
-        notes: form.notes?.trim() || null,
-        status: form.status ?? "active",
-      } as any)
-      .eq("id", editing.id);
+    const body = { ...payload, status: (form.status as string) ?? "active" };
+    const { error } = creating
+      ? await supabase.from("customers").insert(body as any).select().single()
+      : await supabase.from("customers").update(body as any).eq("id", editing!.id);
     setSaving(false);
 
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Guardado");
-    setEditing(null);
+    toast.success(creating ? "Cliente creado" : "Guardado");
+    closeSheet();
     queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-medium mb-6">{t("admin.customers")}</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-display font-medium">{t("admin.customers")}</h1>
+        <Button onClick={openCreate} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
+          <UserPlus className="h-4 w-4" /> Nuevo cliente
+        </Button>
+      </div>
+
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
