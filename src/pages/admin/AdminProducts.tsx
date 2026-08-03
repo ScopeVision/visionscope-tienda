@@ -459,6 +459,28 @@ const AdminProducts = () => {
                           {audit?.real_units_in_service ?? 0}
                         </span>
                         <span className="text-secondary"> / {audit?.real_units_total ?? 0}</span>
+                        {(() => {
+                          const c = materialByProductId.get(p.id);
+                          if (!c || c.maintenance + c.lost + c.retired === 0) return null;
+                          const items = [
+                            c.maintenance > 0 ? `${c.maintenance} en reparación` : null,
+                            c.lost > 0 ? `${c.lost} ${c.lost === 1 ? "perdida" : "perdidas"}` : null,
+                            c.retired > 0 ? `${c.retired} ${c.retired === 1 ? "retirada" : "retiradas"}` : null,
+                          ].filter(Boolean) as string[];
+                          return (
+                            <div className="flex flex-wrap justify-end gap-1 mt-1">
+                              {items.map((label) => (
+                                <Badge
+                                  key={label}
+                                  variant="outline"
+                                  className="text-[10px] font-medium border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                >
+                                  {label}
+                                </Badge>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
