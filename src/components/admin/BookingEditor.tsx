@@ -1040,7 +1040,9 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                                         <Label className="text-xs">Accesorios incluidos en este pedido</Label>
                                         <div className="space-y-1.5">
                                           {accs.map((a: any) => {
-                                            const checked = item.accessories?.[a.id] !== false;
+                                            const explicit = item.accessories?.[a.id];
+                                            const isActive = (a.status ?? "active") === "active";
+                                            const checked = explicit === undefined ? isActive : explicit !== false;
                                             return (
                                               <label key={a.id} className="flex items-center gap-2 text-xs cursor-pointer">
                                                 <Checkbox
@@ -1052,9 +1054,15 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
                                                   }
                                                 />
                                                 <span className="font-mono">{unitLabel(a)}</span>
+                                                {!isActive && (
+                                                  <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                                                    {UNIT_STATUS_LABEL[a.status] ?? a.status}
+                                                  </span>
+                                                )}
                                               </label>
                                             );
                                           })}
+
                                         </div>
                                         <p className="text-[11px] text-secondary">
                                           Solo información operativa: desmarcar no cambia el precio ni libera
