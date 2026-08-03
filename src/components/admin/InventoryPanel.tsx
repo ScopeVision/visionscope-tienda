@@ -1,10 +1,17 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useInventoryAudit, type AccessoryEntry } from "@/hooks/useInventoryAudit";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -12,11 +19,15 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  ChevronDown, ChevronRight, FileSpreadsheet, FileDown, AlertTriangle, Loader2, Search,
+  ChevronDown, ChevronRight, FileSpreadsheet, FileDown, AlertTriangle, Loader2, Search, Plus, Unlink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProductAudit, Signal } from "@/lib/inventoryAudit";
+import {
+  createAccessoryForParent, addAccessoryPieces, UNIT_STATUS_LABEL, UNIT_STATUS_OPTIONS,
+} from "@/lib/accessoryCreation";
 import { buildExportRows, exportInventoryCsv, exportInventoryXlsx } from "@/lib/inventoryExport";
+
 
 const SIGNAL_LABEL: Record<string, string> = {
   stock_mismatch: "Stock ≠ unidades",
