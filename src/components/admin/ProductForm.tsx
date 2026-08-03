@@ -530,16 +530,27 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             <div className="rounded-md border border-border p-3">
               <div className="flex items-center gap-3">
                 <Switch
-                  checked={form.watch("standalone_rentable")}
-                  onCheckedChange={(v) => form.setValue("standalone_rentable", v, { shouldDirty: true })}
+                  checked={isAccessory ? false : form.watch("standalone_rentable")}
+                  disabled={isAccessory}
+                  onCheckedChange={(v) => {
+                    if (isAccessory) return;
+                    form.setValue("standalone_rentable", v, { shouldDirty: true });
+                  }}
                 />
-                <span className="text-sm">Se alquila suelto</span>
+                <span className="text-sm">Se puede alquilar por separado</span>
               </div>
               <p className="text-[11px] text-secondary mt-1.5">
-                Desactívalo para accesorios: no aparecerán en el catálogo público ni en el buscador de
-                productos del editor de reservas. Solo saldrán atados a una unidad-padre.
+                Actívalo para productos que el cliente puede alquilar por su cuenta. Desactivado, el
+                producto solo sale enganchado a otro (accesorios): no aparece en el catálogo web ni en el
+                buscador de productos al crear una reserva.
               </p>
+              {isAccessory && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5">
+                  Es un accesorio de {parentProductName ?? "otro producto"}: no se alquila por separado.
+                </p>
+              )}
             </div>
+
 
             {product?.id && kitMode === "individual" && (
               <div className="rounded-md border border-border p-3 space-y-3">
