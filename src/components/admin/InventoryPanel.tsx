@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -587,8 +587,8 @@ export function ExpandedDetail({
                       const units = acc.audit.units;
                       const notActive = units.filter((u) => (u.status ?? "active") !== "active");
                       return (
-                        <>
-                          <tr key={acc.component_id} className="border-t border-border/40 align-top">
+                        <Fragment key={acc.component_id}>
+                          <tr className="border-t border-border/40 align-top">
                             <td className="py-1.5 pr-3 font-mono text-[11px]">
                               {acc.audit.product.internal_code ?? "—"}
                             </td>
@@ -630,7 +630,7 @@ export function ExpandedDetail({
                               </td>
                             </tr>
                           ))}
-                        </>
+                        </Fragment>
                       );
                     })}
                   </tbody>
