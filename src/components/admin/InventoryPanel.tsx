@@ -46,7 +46,10 @@ function SignalBadge({ signal }: { signal: Signal }) {
 }
 
 export default function InventoryPanel() {
-  const { audits, categories, owners, categoryName, lang, isLoading } = useInventoryAudit();
+  const {
+    audits, categories, owners, categoryName, lang, isLoading,
+    componentsByParent, accessoryProductIds,
+  } = useInventoryAudit();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
@@ -57,6 +60,7 @@ export default function InventoryPanel() {
   const filtered = useMemo(() => {
     return audits.filter((a) => {
       const p = a.product;
+      if (accessoryProductIds.has(p.id)) return false;
       if (categoryFilter !== "__all__" && p.category_id !== categoryFilter) return false;
       if (publishedFilter === "published" && !p.published) return false;
       if (publishedFilter === "unpublished" && p.published) return false;
@@ -77,7 +81,7 @@ export default function InventoryPanel() {
       }
       return true;
     });
-  }, [audits, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, lang]);
+  }, [audits, accessoryProductIds, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, lang]);
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
@@ -86,7 +90,28 @@ export default function InventoryPanel() {
   };
 
   const doExport = async (fmt: "csv" | "xlsx") => {
-    const rows = buildExportRows(filtered, categoryName, lang);
+    const list: ProductAudit[] = [];
+    const parentByChildId = new Map<string, { name: string; internal_code?: string | null }>();
+    const seen = new Set<string>();
+    for (const a of filtered) {
+      if (!seen.has(a.product.id)) {
+        seen.add(a.product.id);
+        list.push(a);
+      }
+      for (const acc of componentsByParent.get(a.product.id) ?? []) {
+        if (!parentByChildId.has(acc.audit.product.id)) {
+          parentByChildId.set(acc.audit.product.id, {
+            name: localized(a.product, "name", lang),
+            internal_code: a.product.internal_code,
+          });
+        }
+        if (!seen.has(acc.audit.product.id)) {
+          seen.add(acc.audit.product.id);
+          list.push(acc.audit);
+        }
+      }
+    }
+    const rows = buildExportRows(list, categoryName, lang, parentByChildId);
     fmt === "csv" ? exportInventoryCsv(rows) : await exportInventoryXlsx(rows);
   };
 
@@ -95,6 +120,7 @@ export default function InventoryPanel() {
     (n, a) => n + a.signals.filter((s) => s.severity === "critical").length,
     0
   );
+
 
   return (
     <div className="space-y-4">
