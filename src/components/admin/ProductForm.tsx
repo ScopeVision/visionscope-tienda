@@ -127,7 +127,9 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         .eq("product_id", product?.id);
       return data ?? [];
     },
+  });
   const { data: parentLink = null } = useQuery({
+
     enabled: !!product?.id,
     queryKey: ["product-form-parent-link", product?.id],
     queryFn: async () => {
