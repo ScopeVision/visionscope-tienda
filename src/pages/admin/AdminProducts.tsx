@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { Badge } from "@/components/ui/badge";
 import { ExpandedDetail, SignalBadge } from "@/components/admin/InventoryPanel";
 import {
   Plus, Pencil, Trash2, Search, ImageOff, Copy, FileSpreadsheet, FileDown,
@@ -46,6 +47,7 @@ const AdminProducts = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
   const [publishedFilter, setPublishedFilter] = useState<string>("__all__");
   const [ownerFilter, setOwnerFilter] = useState<string>("__all__");
+  const [materialFilter, setMaterialFilter] = useState<string>("__all__");
   const [onlyErrors, setOnlyErrors] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<any | null>(null);
@@ -94,6 +96,29 @@ const AdminProducts = () => {
     return m;
   }, [audits]);
 
+  /** Recuento de piezas no operativas por producto padre (incluye sus accesorios). */
+  const materialByProductId = useMemo(() => {
+    const m = new Map<string, { maintenance: number; lost: number; retired: number }>();
+    for (const p of products as any[]) {
+      if (accessoryProductIds.has(p.id)) continue;
+      const seen = new Set<string>();
+      const counts = { maintenance: 0, lost: 0, retired: 0 };
+      const addUnits = (units: any[] = []) => {
+        for (const u of units) {
+          if (!u?.id || seen.has(u.id)) continue;
+          seen.add(u.id);
+          if (u.status === "maintenance") counts.maintenance++;
+          else if (u.status === "lost") counts.lost++;
+          else if (u.status === "retired") counts.retired++;
+        }
+      };
+      addUnits(auditByProductId.get(p.id)?.units ?? []);
+      for (const acc of componentsByParent.get(p.id) ?? []) addUnits(acc.audit.units ?? []);
+      m.set(p.id, counts);
+    }
+    return m;
+  }, [products, accessoryProductIds, auditByProductId, componentsByParent]);
+
   /** Filas de primer nivel: solo productos padre (sin accesorios internos). */
   const filtered = useMemo(() => {
     return (products as any[]).filter((p: any) => {
@@ -110,6 +135,13 @@ const AdminProducts = () => {
           return false;
         }
       }
+      if (materialFilter !== "__all__") {
+        const c = materialByProductId.get(p.id) ?? { maintenance: 0, lost: 0, retired: 0 };
+        if (materialFilter === "attention" && c.maintenance + c.lost === 0) return false;
+        if (materialFilter === "maintenance" && c.maintenance === 0) return false;
+        if (materialFilter === "lost" && c.lost === 0) return false;
+        if (materialFilter === "retired" && c.retired === 0) return false;
+      }
       if (onlyErrors && (a?.signals.length ?? 0) === 0) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -120,7 +152,7 @@ const AdminProducts = () => {
       }
       return true;
     });
-  }, [products, accessoryProductIds, auditByProductId, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, i18n.language]);
+  }, [products, accessoryProductIds, auditByProductId, categoryFilter, publishedFilter, ownerFilter, materialFilter, materialByProductId, onlyErrors, search, i18n.language]);
 
   const totalErrors = filtered.reduce((n, p: any) => n + (auditByProductId.get(p.id)?.signals.length ?? 0), 0);
   const criticalErrors = filtered.reduce(
@@ -128,6 +160,18 @@ const AdminProducts = () => {
       n + (auditByProductId.get(p.id)?.signals.filter((s) => s.severity === "critical").length ?? 0),
     0
   );
+
+  /** Total de piezas que necesitan atención en todo el catálogo (no depende del filtro de material). */
+  const attentionTotals = useMemo(() => {
+    let maintenance = 0;
+    let lost = 0;
+    for (const c of materialByProductId.values()) {
+      maintenance += c.maintenance;
+      lost += c.lost;
+    }
+    return { maintenance, lost };
+  }, [materialByProductId]);
+
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
@@ -260,7 +304,7 @@ const AdminProducts = () => {
       </div>
 
       {/* Filtros unificados */}
-      <div className="rounded-md bg-surface border border-border p-3 grid gap-3 sm:grid-cols-[1fr_180px_160px_180px_auto] mb-4">
+      <div className="rounded-md bg-surface border border-border p-3 grid gap-3 sm:grid-cols-[1fr_180px_160px_180px_180px_auto] mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
           <Input
@@ -297,6 +341,16 @@ const AdminProducts = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={materialFilter} onValueChange={setMaterialFilter}>
+          <SelectTrigger><SelectValue placeholder="Estado del material" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todo el material</SelectItem>
+            <SelectItem value="attention">Necesita atención</SelectItem>
+            <SelectItem value="maintenance">En reparación</SelectItem>
+            <SelectItem value="lost">Perdidas</SelectItem>
+            <SelectItem value="retired">Retiradas</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
           <Switch checked={onlyErrors} onCheckedChange={setOnlyErrors} />
           <span className="text-xs text-secondary uppercase tracking-wider">Solo con errores</span>
@@ -309,6 +363,18 @@ const AdminProducts = () => {
           {filtered.length} productos · {totalErrors} alertas
           {criticalErrors > 0 && (
             <span className="text-destructive font-medium"> · {criticalErrors} críticas</span>
+          )}
+          {(attentionTotals.maintenance + attentionTotals.lost) > 0 && (
+            <button
+              type="button"
+              onClick={() => setMaterialFilter("attention")}
+              className="text-amber-600 dark:text-amber-400 font-medium hover:underline"
+            >
+              {" "}· {[
+                attentionTotals.maintenance > 0 ? `${attentionTotals.maintenance} en reparación` : null,
+                attentionTotals.lost > 0 ? `${attentionTotals.lost} ${attentionTotals.lost === 1 ? "perdida" : "perdidas"}` : null,
+              ].filter(Boolean).join(" · ")}
+            </button>
           )}
         </div>
         <div className="ml-auto flex gap-2">
@@ -393,6 +459,28 @@ const AdminProducts = () => {
                           {audit?.real_units_in_service ?? 0}
                         </span>
                         <span className="text-secondary"> / {audit?.real_units_total ?? 0}</span>
+                        {(() => {
+                          const c = materialByProductId.get(p.id);
+                          if (!c || c.maintenance + c.lost + c.retired === 0) return null;
+                          const items = [
+                            c.maintenance > 0 ? `${c.maintenance} en reparación` : null,
+                            c.lost > 0 ? `${c.lost} ${c.lost === 1 ? "perdida" : "perdidas"}` : null,
+                            c.retired > 0 ? `${c.retired} ${c.retired === 1 ? "retirada" : "retiradas"}` : null,
+                          ].filter(Boolean) as string[];
+                          return (
+                            <div className="flex flex-wrap justify-end gap-1 mt-1">
+                              {items.map((label) => (
+                                <Badge
+                                  key={label}
+                                  variant="outline"
+                                  className="text-[10px] font-medium border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                >
+                                  {label}
+                                </Badge>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
