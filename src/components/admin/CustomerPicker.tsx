@@ -185,29 +185,35 @@ export default function CustomerPicker({ value, onChange }: Props) {
         <div className="rounded-md border border-border p-3 space-y-2 bg-muted/30">
           <p className="text-sm font-medium">Nuevo cliente</p>
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Nombre <span className="text-destructive">*</span></Label>
-              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nombre completo" />
-            </div>
-            <div>
-              <Label className="text-xs">Email <span className="text-destructive">*</span></Label>
-              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@ejemplo.com" />
-            </div>
-            <div>
-              <Label className="text-xs">Teléfono</Label>
-              <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="+34…" />
-            </div>
-            <div>
-              <Label className="text-xs">Empresa</Label>
-              <Input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="Opcional" />
-            </div>
+            {CUSTOMER_FIELDS.map((f) => (
+              <div key={f.key}>
+                <Label className="text-xs">
+                  {f.label}{f.required && <span className="text-destructive"> *</span>}
+                </Label>
+                <Input
+                  type={f.type ?? "text"}
+                  value={newForm[f.key] ?? ""}
+                  placeholder={f.placeholder}
+                  onChange={(e) => setNewForm((s) => ({ ...s, [f.key]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </div>
+          <div>
+            <Label className="text-xs">Notas</Label>
+            <Textarea
+              rows={3}
+              value={newForm.notes ?? ""}
+              onChange={(e) => setNewForm((s) => ({ ...s, notes: e.target.value }))}
+            />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button size="sm" variant="outline" onClick={() => setShowCreateForm(false)}>Cancelar</Button>
-            <Button size="sm" onClick={createAndPick} disabled={creating}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setShowCreateForm(false)}>Cancelar</Button>
+            <Button type="button" size="sm" onClick={createAndPick} disabled={creating}>
               {creating ? "Creando…" : "Crear y seleccionar"}
             </Button>
           </div>
+
         </div>
       )}
     </div>
