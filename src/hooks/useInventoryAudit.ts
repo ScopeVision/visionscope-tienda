@@ -52,8 +52,9 @@ export function useInventoryAudit() {
       (
         await sb
           .from("product_components")
-          .select("parent_product_id, child_product_id, quantity, variant_name, sort_order")
+          .select("id, parent_product_id, child_product_id, quantity, variant_name, sort_order")
           .order("sort_order")
+
       ).data ?? [],
   });
 
