@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useInventoryAudit } from "@/hooks/useInventoryAudit";
+import { useInventoryAudit, type AccessoryEntry } from "@/hooks/useInventoryAudit";
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
