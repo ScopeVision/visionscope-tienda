@@ -231,14 +231,18 @@ const AdminCustomers = () => {
             <div className="grid sm:grid-cols-2 gap-3">
               {EDITABLE_FIELDS.map((f) => (
                 <div key={f.key}>
-                  <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">{f.label}</Label>
+                  <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">
+                    {f.label}{f.required && <span className="text-destructive"> *</span>}
+                  </Label>
                   <Input
                     type={f.type ?? "text"}
-                    value={((form[f.key] as string) ?? "")}
-                    onChange={(e) => setField(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    value={((form[f.key as keyof Customer] as string) ?? "")}
+                    onChange={(e) => setField(f.key as keyof Customer, e.target.value)}
                   />
                 </div>
               ))}
+
             </div>
 
             <div>
