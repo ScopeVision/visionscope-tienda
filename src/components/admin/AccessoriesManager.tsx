@@ -6,6 +6,7 @@ import { useInventoryAudit, type AccessoryEntry } from "@/hooks/useInventoryAudi
 import { localized } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -13,11 +14,19 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Unlink } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, Plus, Unlink } from "lucide-react";
 import type { ProductAudit } from "@/lib/inventoryAudit";
 import {
   createAccessoryForParent, addAccessoryPieces, UNIT_STATUS_LABEL, UNIT_STATUS_OPTIONS,
 } from "@/lib/accessoryCreation";
+
+/** Enter inside these inputs must never submit the surrounding product form. */
+const stopEnter = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) {
+    e.preventDefault();
+    (e.target as HTMLElement).blur();
+  }
+};
 
 /** Small inline selector to change the status of one physical unit. */
 export function UnitStatusSelect({ unit, onDone }: { unit: any; onDone: () => void }) {
@@ -102,16 +111,16 @@ export function AddAccessoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader><DialogTitle>Añadir accesorio</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
             <Label className="text-xs">Nombre del accesorio</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Motor, Cargador NP…" />
+            <Input value={name} onKeyDown={stopEnter} onChange={(e) => setName(e.target.value)} placeholder="Motor, Cargador NP…" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Cantidad de piezas</Label>
-            <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} />
+            <Input type="number" min={1} value={quantity} onKeyDown={stopEnter} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} />
           </div>
           {variantNames.length > 0 && (
             <div className="space-y-1">
@@ -148,8 +157,8 @@ export function AddAccessoryDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button type="button" onClick={submit} disabled={saving}>
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}Crear accesorio
           </Button>
         </DialogFooter>
@@ -158,10 +167,123 @@ export function AddAccessoryDialog({
   );
 }
 
+/** Inline editable detail fields for one physical piece. */
+function UnitDetailFields({ unit, onSaved }: { unit: any; onSaved: () => void }) {
+  const save = async (field: string, raw: string) => {
+    let value: any = raw.trim() === "" ? null : raw.trim();
+    if (field === "acquisition_value") {
+      value = raw.trim() === "" ? null : Number(raw.replace(",", "."));
+      if (value !== null && Number.isNaN(value)) return toast.error("Valor no válido");
+    }
+    const current = unit[field] ?? null;
+    if (String(current ?? "") === String(value ?? "")) return;
+    const { error } = await (supabase as any)
+      .from("inventory_units")
+      .update({ [field]: value })
+      .eq("id", unit.id);
+    if (error) return toast.error("No se pudo guardar: " + error.message);
+    toast.success("Guardado");
+    onSaved();
+  };
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-3 py-2 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
+      <div className="space-y-1">
+        <Label className="text-[11px]">Serial</Label>
+        <Input
+          className="h-7 text-xs"
+          defaultValue={unit.serial ?? ""}
+          onKeyDown={stopEnter}
+          onBlur={(e) => save("serial", e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[11px]">Notas</Label>
+        <Input
+          className="h-7 text-xs"
+          defaultValue={unit.notes ?? ""}
+          onKeyDown={stopEnter}
+          onBlur={(e) => save("notes", e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[11px]">Valor de reposición (€)</Label>
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          className="h-7 text-xs"
+          defaultValue={unit.acquisition_value ?? ""}
+          onKeyDown={stopEnter}
+          onBlur={(e) => save("acquisition_value", e.target.value)}
+        />
+        <p className="text-[10px] text-secondary">
+          Lo que cuesta reponer esta pieza. Se usa para cobrar daños y para el seguro.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Inline editable detail fields for the accessory product itself. */
+function AccessoryDetailFields({ product, onSaved }: { product: any; onSaved: () => void }) {
+  const save = async (field: string, raw: string) => {
+    const value = raw.trim() === "" ? null : raw.trim();
+    if (String(product[field] ?? "") === String(value ?? "")) return;
+    const { error } = await (supabase as any)
+      .from("products")
+      .update({ [field]: value })
+      .eq("id", product.id);
+    if (error) return toast.error("No se pudo guardar: " + error.message);
+    toast.success("Guardado");
+    onSaved();
+  };
+
+  return (
+    <div className="space-y-2 py-2 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label className="text-[11px]">Marca</Label>
+          <Input
+            className="h-7 text-xs"
+            defaultValue={product.brand ?? ""}
+            onKeyDown={stopEnter}
+            onBlur={(e) => save("brand", e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Modelo</Label>
+          <Input
+            className="h-7 text-xs"
+            defaultValue={product.model ?? ""}
+            onKeyDown={stopEnter}
+            onBlur={(e) => save("model", e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[11px]">Descripción</Label>
+        <Textarea
+          rows={3}
+          className="text-xs"
+          defaultValue={product.description_es ?? ""}
+          onKeyDown={stopEnter}
+          onBlur={(e) => save("description_es", e.target.value)}
+        />
+        <p className="text-[10px] text-secondary">
+          Medidas, compatibilidad o particularidades de esta pieza.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** Single, shared UI to manage the internal accessories of a parent product. */
 export function AccessoriesManager({ parentProductId }: { parentProductId: string }) {
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
+  const [openAcc, setOpenAcc] = useState<Record<string, boolean>>({});
+  const [openUnit, setOpenUnit] = useState<Record<string, boolean>>({});
   const { audits, componentsByParent, lang, isLoading } = useInventoryAudit();
 
   const audit = audits.find((a) => a.product.id === parentProductId) ?? null;
@@ -236,6 +358,7 @@ export function AccessoriesManager({ parentProductId }: { parentProductId: strin
             Accesorios internos incluidos
           </div>
           <Button
+            type="button"
             size="sm"
             variant="outline"
             className="h-7 gap-1 text-xs"
@@ -274,11 +397,22 @@ export function AccessoriesManager({ parentProductId }: { parentProductId: strin
                   {list.map((acc) => {
                     const units = acc.audit.units;
                     const notActive = units.filter((u) => (u.status ?? "active") !== "active");
+                    const accOpen = !!openAcc[acc.component_id];
                     return (
                       <Fragment key={acc.component_id}>
                         <tr className="border-t border-border/40 align-top">
                           <td className="py-1.5 pr-3 font-mono text-[11px]">
-                            {acc.audit.product.internal_code ?? "—"}
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 hover:text-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenAcc((s) => ({ ...s, [acc.component_id]: !s[acc.component_id] }));
+                              }}
+                            >
+                              {accOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                              {acc.audit.product.internal_code ?? "—"}
+                            </button>
                           </td>
                           <td className="py-1.5 pr-3">{localized(acc.audit.product, "name", lang)}</td>
                           <td className="py-1.5 pr-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -287,6 +421,7 @@ export function AccessoriesManager({ parentProductId }: { parentProductId: strin
                               min={1}
                               defaultValue={acc.quantity}
                               className="h-7 w-16 text-xs text-right ml-auto"
+                              onKeyDown={stopEnter}
                               onBlur={(e) => changeQuantity(acc, parseInt(e.target.value) || acc.quantity)}
                             />
                           </td>
@@ -300,24 +435,54 @@ export function AccessoriesManager({ parentProductId }: { parentProductId: strin
                             )}
                           </td>
                           <td className="py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive"
+                            <Button type="button" size="sm" variant="ghost" className="h-7 text-xs text-destructive"
                               onClick={() => unhook(acc)}>
                               <Unlink className="h-3.5 w-3.5" />
                             </Button>
                           </td>
                         </tr>
-                        {units.map((u) => (
-                          <tr key={u.id} className="border-t border-border/20">
-                            <td className="py-1 pr-3 pl-4 font-mono text-[10px] text-secondary">
-                              {u.internal_code ?? u.id.slice(0, 8)}
-                            </td>
-                            <td className="py-1 pr-3 text-secondary text-[11px]">pieza</td>
-                            <td></td>
-                            <td className="py-1 pr-3" colSpan={2} onClick={(e) => e.stopPropagation()}>
-                              <UnitStatusSelect unit={u} onDone={refresh} />
+                        {accOpen && (
+                          <tr className="border-t border-border/20 bg-muted/20">
+                            <td colSpan={5}>
+                              <AccessoryDetailFields product={acc.audit.product} onSaved={refresh} />
                             </td>
                           </tr>
-                        ))}
+                        )}
+                        {units.map((u) => {
+                          const uOpen = !!openUnit[u.id];
+                          return (
+                            <Fragment key={u.id}>
+                              <tr className="border-t border-border/20">
+                                <td className="py-1 pr-3 pl-4 font-mono text-[10px] text-secondary">
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenUnit((s) => ({ ...s, [u.id]: !s[u.id] }));
+                                    }}
+                                  >
+                                    {uOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                    {u.internal_code ?? u.id.slice(0, 8)}
+                                    {u.serial && <span className="opacity-70">· {u.serial}</span>}
+                                  </button>
+                                </td>
+                                <td className="py-1 pr-3 text-secondary text-[11px]">pieza</td>
+                                <td></td>
+                                <td className="py-1 pr-3" colSpan={2} onClick={(e) => e.stopPropagation()}>
+                                  <UnitStatusSelect unit={u} onDone={refresh} />
+                                </td>
+                              </tr>
+                              {uOpen && (
+                                <tr className="border-t border-border/10 bg-muted/10">
+                                  <td colSpan={5}>
+                                    <UnitDetailFields unit={u} onSaved={refresh} />
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
                       </Fragment>
                     );
                   })}
