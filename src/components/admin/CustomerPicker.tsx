@@ -85,33 +85,28 @@ export default function CustomerPicker({ value, onChange }: Props) {
   };
 
   const createAndPick = async () => {
-    if (!newName.trim() || !newEmail.trim()) {
-      toast.error("Nombre y email son obligatorios");
-      return;
-    }
+    const payload = buildCustomerPayload(newForm);
+    if (!payload.full_name) return toast.error("El nombre es obligatorio");
+    if (!payload.email || !isValidEmail(payload.email)) return toast.error("Email no válido");
     setCreating(true);
     try {
       const { data, error } = await supabase
         .from("customers")
-        .insert({
-          full_name: newName.trim(),
-          email: newEmail.trim().toLowerCase(),
-          phone: newPhone.trim() || null,
-          company: newCompany.trim() || null,
-        })
+        .insert({ ...payload, status: "active" } as any)
         .select("id, full_name, email, phone, company")
         .single();
       if (error) throw error;
       toast.success("Cliente creado");
-      pick(data);
+      pick(data as SelectedCustomer);
       setShowCreateForm(false);
-      setNewName(""); setNewEmail(""); setNewPhone(""); setNewCompany("");
+      setNewForm({});
     } catch (e: any) {
       toast.error(e.message || "Error al crear cliente");
     } finally {
       setCreating(false);
     }
   };
+
 
   return (
     <div ref={wrapperRef} className="space-y-2">
