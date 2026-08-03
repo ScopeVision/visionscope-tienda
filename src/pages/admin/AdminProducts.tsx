@@ -172,6 +172,43 @@ const AdminProducts = () => {
     return { maintenance, lost };
   }, [materialByProductId]);
 
+  const clearFilters = () => {
+    setSearch("");
+    setCategoryFilter("__all__");
+    setPublishedFilter("__all__");
+    setOwnerFilter("__all__");
+    setMaterialFilter("__all__");
+    setOnlyErrors(false);
+  };
+
+  /** Descripción en lenguaje llano de los filtros activos. */
+  const activeFilterLabels = useMemo(() => {
+    const labels: string[] = [];
+    if (search.trim()) labels.push(`Búsqueda: "${search.trim()}"`);
+    if (categoryFilter !== "__all__") {
+      const c = categories.find((x: any) => x.id === categoryFilter);
+      labels.push(`Categoría: ${c ? localized(c, "name", lang) : categoryFilter}`);
+    }
+    if (publishedFilter !== "__all__") {
+      labels.push(`Publicación: ${publishedFilter === "published" ? "Publicados" : "No publicados"}`);
+    }
+    if (ownerFilter !== "__all__") {
+      const o = owners.find((x: any) => x.id === ownerFilter);
+      labels.push(`Owner: ${ownerFilter === "__none__" ? "Sin owner (empresa)" : o?.name ?? ownerFilter}`);
+    }
+    if (materialFilter !== "__all__") {
+      const map: Record<string, string> = {
+        attention: "Necesita atención",
+        maintenance: "En reparación",
+        lost: "Perdidas",
+        retired: "Retiradas",
+      };
+      labels.push(`Material: ${map[materialFilter] ?? materialFilter}`);
+    }
+    if (onlyErrors) labels.push("Solo con errores");
+    return labels;
+  }, [search, categoryFilter, publishedFilter, ownerFilter, materialFilter, onlyErrors, categories, owners, lang]);
+
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
@@ -367,7 +404,7 @@ const AdminProducts = () => {
           {(attentionTotals.maintenance + attentionTotals.lost) > 0 && (
             <button
               type="button"
-              onClick={() => setMaterialFilter("attention")}
+              onClick={() => { clearFilters(); setMaterialFilter("attention"); }}
               className="text-amber-600 dark:text-amber-400 font-medium hover:underline"
             >
               {" "}· {[
@@ -376,7 +413,20 @@ const AdminProducts = () => {
               ].filter(Boolean).join(" · ")}
             </button>
           )}
+          {activeFilterLabels.length > 0 && (
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-secondary hover:underline"
+              >
+                Quitar filtros ({activeFilterLabels.length})
+              </button>
+            </>
+          )}
         </div>
+
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="outline" onClick={() => doExport("csv")} className="gap-1.5">
             <FileDown className="h-3.5 w-3.5" /> CSV
@@ -413,8 +463,21 @@ const AdminProducts = () => {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={COLS} className="text-center text-secondary py-10">—</TableCell>
+                <TableCell colSpan={COLS} className="text-center text-secondary py-10">
+                  {activeFilterLabels.length > 0 ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm">Ningún producto coincide con los filtros activos.</p>
+                      <p className="text-xs text-secondary">{activeFilterLabels.join(" · ")}</p>
+                      <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                        Quitar todos los filtros
+                      </Button>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
               </TableRow>
+
             ) : (
               filtered.map((p: any) => {
                 const audit = auditByProductId.get(p.id);
