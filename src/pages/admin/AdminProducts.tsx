@@ -341,6 +341,16 @@ const AdminProducts = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={materialFilter} onValueChange={setMaterialFilter}>
+          <SelectTrigger><SelectValue placeholder="Estado del material" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todo el material</SelectItem>
+            <SelectItem value="attention">Necesita atención</SelectItem>
+            <SelectItem value="maintenance">En reparación</SelectItem>
+            <SelectItem value="lost">Perdidas</SelectItem>
+            <SelectItem value="retired">Retiradas</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
           <Switch checked={onlyErrors} onCheckedChange={setOnlyErrors} />
           <span className="text-xs text-secondary uppercase tracking-wider">Solo con errores</span>
@@ -353,6 +363,18 @@ const AdminProducts = () => {
           {filtered.length} productos · {totalErrors} alertas
           {criticalErrors > 0 && (
             <span className="text-destructive font-medium"> · {criticalErrors} críticas</span>
+          )}
+          {(attentionTotals.maintenance + attentionTotals.lost) > 0 && (
+            <button
+              type="button"
+              onClick={() => setMaterialFilter("attention")}
+              className="text-amber-600 dark:text-amber-400 font-medium hover:underline"
+            >
+              {" "}· {[
+                attentionTotals.maintenance > 0 ? `${attentionTotals.maintenance} en reparación` : null,
+                attentionTotals.lost > 0 ? `${attentionTotals.lost} ${attentionTotals.lost === 1 ? "perdida" : "perdidas"}` : null,
+              ].filter(Boolean).join(" · ")}
+            </button>
           )}
         </div>
         <div className="ml-auto flex gap-2">
