@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Search, Save } from "lucide-react";
+import { Search, Save, UserPlus } from "lucide-react";
+import { CUSTOMER_FIELDS, CUSTOMER_SELECT, buildCustomerPayload, isValidEmail } from "@/lib/customerFields";
 
 const STATUSES = [
   { value: "active", label: "Activo", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
@@ -40,6 +41,7 @@ type Customer = {
   address_line1: string | null;
   address_line2: string | null;
   city: string | null;
+  region: string | null;
   postal_code: string | null;
   country: string | null;
   notes: string | null;
@@ -49,18 +51,7 @@ type Customer = {
   bookings?: { id: string }[];
 };
 
-const EDITABLE_FIELDS: { key: keyof Customer; label: string; type?: string }[] = [
-  { key: "full_name", label: "Nombre" },
-  { key: "email", label: "Email", type: "email" },
-  { key: "phone", label: "Teléfono" },
-  { key: "company", label: "Empresa" },
-  { key: "tax_id", label: "NIF/CIF" },
-  { key: "address_line1", label: "Dirección" },
-  { key: "address_line2", label: "Dirección (línea 2)" },
-  { key: "city", label: "Ciudad" },
-  { key: "postal_code", label: "Código postal" },
-  { key: "country", label: "País" },
-];
+const EDITABLE_FIELDS = CUSTOMER_FIELDS;
 
 const AdminCustomers = () => {
   const { t } = useTranslation();
@@ -68,8 +59,11 @@ const AdminCustomers = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Customer>>({});
   const [saving, setSaving] = useState(false);
+
+  const sheetOpen = creating || !!editing;
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-customers"],
@@ -77,7 +71,8 @@ const AdminCustomers = () => {
       const { data, error } = await supabase
         .from("customers")
         .select(
-          "id, full_name, email, phone, company, tax_id, address_line1, address_line2, city, postal_code, country, notes, status, created_at, updated_at, bookings:bookings(id)"
+          `${CUSTOMER_SELECT}, created_at, updated_at, bookings:bookings(id)`
+
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -97,52 +92,55 @@ const AdminCustomers = () => {
   }, [data, search, statusFilter]);
 
   const openEditor = (c: Customer) => {
+    setCreating(false);
     setEditing(c);
     setForm({ ...c });
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ status: "active" });
+    setCreating(true);
+  };
+
+  const closeSheet = () => {
+    setCreating(false);
+    setEditing(null);
   };
 
   const setField = (key: keyof Customer, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const save = async () => {
-    if (!editing) return;
-    const name = (form.full_name ?? "").trim();
-    const email = (form.email ?? "").trim();
-    if (!name) return toast.error("El nombre es obligatorio");
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error("Email no válido");
+    const payload = buildCustomerPayload(form as Record<string, unknown>);
+    if (!payload.full_name) return toast.error("El nombre es obligatorio");
+    if (!payload.email || !isValidEmail(payload.email)) return toast.error("Email no válido");
 
     setSaving(true);
-    const { error } = await supabase
-      .from("customers")
-      .update({
-        full_name: name,
-        email: email.toLowerCase(),
-        phone: form.phone?.trim() || null,
-        company: form.company?.trim() || null,
-        tax_id: form.tax_id?.trim() || null,
-        address_line1: form.address_line1?.trim() || null,
-        address_line2: form.address_line2?.trim() || null,
-        city: form.city?.trim() || null,
-        postal_code: form.postal_code?.trim() || null,
-        country: form.country?.trim() || null,
-        notes: form.notes?.trim() || null,
-        status: form.status ?? "active",
-      } as any)
-      .eq("id", editing.id);
+    const body = { ...payload, status: (form.status as string) ?? "active" };
+    const { error } = creating
+      ? await supabase.from("customers").insert(body as any).select().single()
+      : await supabase.from("customers").update(body as any).eq("id", editing!.id);
     setSaving(false);
 
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Guardado");
-    setEditing(null);
+    toast.success(creating ? "Cliente creado" : "Guardado");
+    closeSheet();
     queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-medium mb-6">{t("admin.customers")}</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-display font-medium">{t("admin.customers")}</h1>
+        <Button onClick={openCreate} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
+          <UserPlus className="h-4 w-4" /> Nuevo cliente
+        </Button>
+      </div>
+
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
@@ -205,14 +203,17 @@ const AdminCustomers = () => {
         </Table>
       </div>
 
-      <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+      <Sheet open={sheetOpen} onOpenChange={(o) => !o && closeSheet()}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="font-display">Editar cliente</SheetTitle>
+            <SheetTitle className="font-display">{creating ? "Nuevo cliente" : "Editar cliente"}</SheetTitle>
             <SheetDescription>
-              Alta: {formatDateTime(editing?.created_at)} · Última actualización: {formatDateTime(editing?.updated_at)}
+              {creating
+                ? "Rellena los datos del cliente. Nombre y email son obligatorios."
+                : `Alta: ${formatDateTime(editing?.created_at)} · Última actualización: ${formatDateTime(editing?.updated_at)}`}
             </SheetDescription>
           </SheetHeader>
+
 
           <div className="mt-5 space-y-4">
             <div>
@@ -230,14 +231,18 @@ const AdminCustomers = () => {
             <div className="grid sm:grid-cols-2 gap-3">
               {EDITABLE_FIELDS.map((f) => (
                 <div key={f.key}>
-                  <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">{f.label}</Label>
+                  <Label className="text-xs uppercase tracking-wider text-secondary mb-1.5 block">
+                    {f.label}{f.required && <span className="text-destructive"> *</span>}
+                  </Label>
                   <Input
                     type={f.type ?? "text"}
-                    value={((form[f.key] as string) ?? "")}
-                    onChange={(e) => setField(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    value={((form[f.key as keyof Customer] as string) ?? "")}
+                    onChange={(e) => setField(f.key as keyof Customer, e.target.value)}
                   />
                 </div>
               ))}
+
             </div>
 
             <div>
@@ -250,7 +255,7 @@ const AdminCustomers = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setEditing(null)}>{t("common.cancel")}</Button>
+              <Button variant="outline" onClick={closeSheet}>{t("common.cancel")}</Button>
               <Button onClick={save} disabled={saving} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
                 <Save className="h-4 w-4" /> {saving ? t("common.loading") : t("common.save")}
               </Button>

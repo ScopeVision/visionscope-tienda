@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, UserPlus, X } from "lucide-react";
+import { CUSTOMER_FIELDS, buildCustomerPayload, isValidEmail } from "@/lib/customerFields";
 
 type SelectedCustomer = {
   id: string;
@@ -26,12 +28,10 @@ export default function CustomerPicker({ value, onChange }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selected, setSelected] = useState<SelectedCustomer | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const [newCompany, setNewCompany] = useState("");
+  const [newForm, setNewForm] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -85,33 +85,28 @@ export default function CustomerPicker({ value, onChange }: Props) {
   };
 
   const createAndPick = async () => {
-    if (!newName.trim() || !newEmail.trim()) {
-      toast.error("Nombre y email son obligatorios");
-      return;
-    }
+    const payload = buildCustomerPayload(newForm);
+    if (!payload.full_name) return toast.error("El nombre es obligatorio");
+    if (!payload.email || !isValidEmail(payload.email)) return toast.error("Email no válido");
     setCreating(true);
     try {
       const { data, error } = await supabase
         .from("customers")
-        .insert({
-          full_name: newName.trim(),
-          email: newEmail.trim().toLowerCase(),
-          phone: newPhone.trim() || null,
-          company: newCompany.trim() || null,
-        })
+        .insert({ ...payload, status: "active" } as any)
         .select("id, full_name, email, phone, company")
         .single();
       if (error) throw error;
       toast.success("Cliente creado");
-      pick(data);
+      pick(data as SelectedCustomer);
       setShowCreateForm(false);
-      setNewName(""); setNewEmail(""); setNewPhone(""); setNewCompany("");
+      setNewForm({});
     } catch (e: any) {
       toast.error(e.message || "Error al crear cliente");
     } finally {
       setCreating(false);
     }
   };
+
 
   return (
     <div ref={wrapperRef} className="space-y-2">
@@ -190,29 +185,35 @@ export default function CustomerPicker({ value, onChange }: Props) {
         <div className="rounded-md border border-border p-3 space-y-2 bg-muted/30">
           <p className="text-sm font-medium">Nuevo cliente</p>
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Nombre <span className="text-destructive">*</span></Label>
-              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nombre completo" />
-            </div>
-            <div>
-              <Label className="text-xs">Email <span className="text-destructive">*</span></Label>
-              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@ejemplo.com" />
-            </div>
-            <div>
-              <Label className="text-xs">Teléfono</Label>
-              <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="+34…" />
-            </div>
-            <div>
-              <Label className="text-xs">Empresa</Label>
-              <Input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="Opcional" />
-            </div>
+            {CUSTOMER_FIELDS.map((f) => (
+              <div key={f.key}>
+                <Label className="text-xs">
+                  {f.label}{f.required && <span className="text-destructive"> *</span>}
+                </Label>
+                <Input
+                  type={f.type ?? "text"}
+                  value={newForm[f.key] ?? ""}
+                  placeholder={f.placeholder}
+                  onChange={(e) => setNewForm((s) => ({ ...s, [f.key]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </div>
+          <div>
+            <Label className="text-xs">Notas</Label>
+            <Textarea
+              rows={3}
+              value={newForm.notes ?? ""}
+              onChange={(e) => setNewForm((s) => ({ ...s, notes: e.target.value }))}
+            />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button size="sm" variant="outline" onClick={() => setShowCreateForm(false)}>Cancelar</Button>
-            <Button size="sm" onClick={createAndPick} disabled={creating}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setShowCreateForm(false)}>Cancelar</Button>
+            <Button type="button" size="sm" onClick={createAndPick} disabled={creating}>
               {creating ? "Creando…" : "Crear y seleccionar"}
             </Button>
           </div>
+
         </div>
       )}
     </div>
