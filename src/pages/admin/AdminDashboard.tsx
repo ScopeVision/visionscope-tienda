@@ -31,7 +31,7 @@ const AdminDashboard = () => {
       const [{ count: products }, { count: bookings }, { count: customers }, { count: pending }] = await Promise.all([
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("bookings").select("*", { count: "exact", head: true }),
-        supabase.from("customers").select("*", { count: "exact", head: true }),
+        supabase.from("customers").select("*", { count: "exact", head: true }).neq("status", "test"),
         supabase.from("bookings").select("*", { count: "exact", head: true }).eq("status", "nuevo"),
       ]);
       return { products: products ?? 0, bookings: bookings ?? 0, customers: customers ?? 0, pending: pending ?? 0 };
