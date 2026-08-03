@@ -224,7 +224,7 @@ export default function InventoryPanel() {
 }
 
 function PanelRow({
-  audit, expanded, onToggle, categoryName, lang, owners,
+  audit, expanded, onToggle, categoryName, lang, owners, accessories,
 }: {
   audit: ProductAudit;
   expanded: boolean;
@@ -232,6 +232,7 @@ function PanelRow({
   categoryName: (id?: string | null) => string;
   lang: string;
   owners: any[];
+  accessories: AccessoryEntry[];
 }) {
   const p = audit.product;
   const name = localized(p, "name", lang);
