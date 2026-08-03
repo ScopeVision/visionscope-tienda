@@ -9,7 +9,8 @@ const yesNo = (v: any) => (v ? "sí" : "no");
 export function buildExportRows(
   audits: ProductAudit[],
   categoryName: (id?: string | null) => string,
-  lang: string
+  lang: string,
+  parentByChildId?: Map<string, { name: string; internal_code?: string | null }>
 ): ExportRow[] {
   const rows: ExportRow[] = [];
 
@@ -19,11 +20,13 @@ export function buildExportRows(
     const cat = categoryName(p.category_id);
     const variantesCount = a.variants.length;
     const alertas = a.signals.map((s) => `${s.severity}:${s.code}`).join(" | ");
+    const parent = parentByChildId?.get(p.id);
 
     const base = {
       categoria: cat,
       codigo_interno_producto: p.internal_code ?? "",
       producto: productName,
+      pertenece_a: parent ? `${parent.name}${parent.internal_code ? ` (${parent.internal_code})` : ""}` : "",
       publicado: yesNo(p.published),
       precio_dia: Number(p.price_day ?? 0),
       stock_declarado: Number(p.stock ?? 0),
@@ -32,6 +35,7 @@ export function buildExportRows(
       variantes: variantesCount,
       alertas,
     };
+
 
     if (a.units.length === 0) {
       rows.push({
