@@ -104,6 +104,8 @@ export function useInventoryAudit() {
 
   return {
     audits,
+    componentsByParent,
+    accessoryProductIds,
     categories: categoriesQ.data ?? [],
     owners: ownersQ.data ?? [],
     variants: variantsQ.data ?? [],
@@ -112,6 +114,6 @@ export function useInventoryAudit() {
     categoryName,
     lang,
     isLoading:
-      productsQ.isLoading || unitsQ.isLoading || variantsQ.isLoading || ownersQ.isLoading || categoriesQ.isLoading,
+      productsQ.isLoading || unitsQ.isLoading || variantsQ.isLoading || ownersQ.isLoading || categoriesQ.isLoading || componentsQ.isLoading,
   };
 }
