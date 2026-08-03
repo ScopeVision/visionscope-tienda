@@ -172,6 +172,43 @@ const AdminProducts = () => {
     return { maintenance, lost };
   }, [materialByProductId]);
 
+  const clearFilters = () => {
+    setSearch("");
+    setCategoryFilter("__all__");
+    setPublishedFilter("__all__");
+    setOwnerFilter("__all__");
+    setMaterialFilter("__all__");
+    setOnlyErrors(false);
+  };
+
+  /** Descripción en lenguaje llano de los filtros activos. */
+  const activeFilterLabels = useMemo(() => {
+    const labels: string[] = [];
+    if (search.trim()) labels.push(`Búsqueda: "${search.trim()}"`);
+    if (categoryFilter !== "__all__") {
+      const c = categories.find((x: any) => x.id === categoryFilter);
+      labels.push(`Categoría: ${c ? localized(c, "name", lang) : categoryFilter}`);
+    }
+    if (publishedFilter !== "__all__") {
+      labels.push(`Publicación: ${publishedFilter === "published" ? "Publicados" : "No publicados"}`);
+    }
+    if (ownerFilter !== "__all__") {
+      const o = owners.find((x: any) => x.id === ownerFilter);
+      labels.push(`Owner: ${ownerFilter === "__none__" ? "Sin owner (empresa)" : o?.name ?? ownerFilter}`);
+    }
+    if (materialFilter !== "__all__") {
+      const map: Record<string, string> = {
+        attention: "Necesita atención",
+        maintenance: "En reparación",
+        lost: "Perdidas",
+        retired: "Retiradas",
+      };
+      labels.push(`Material: ${map[materialFilter] ?? materialFilter}`);
+    }
+    if (onlyErrors) labels.push("Solo con errores");
+    return labels;
+  }, [search, categoryFilter, publishedFilter, ownerFilter, materialFilter, onlyErrors, categories, owners, lang]);
+
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
