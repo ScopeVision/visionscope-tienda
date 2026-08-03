@@ -7,6 +7,12 @@ import { auditInventory, ProductAudit } from "@/lib/inventoryAudit";
 
 const sb = supabase as any;
 
+export type AccessoryEntry = {
+  audit: ProductAudit;
+  quantity: number;
+  variant_name: string | null;
+};
+
 export function useInventoryAudit() {
   const { i18n } = useTranslation();
   const lang = i18n.language;
