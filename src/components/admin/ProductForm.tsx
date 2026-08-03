@@ -129,21 +129,27 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
     },
   });
   const { data: parentLink = null } = useQuery({
-
     enabled: !!product?.id,
     queryKey: ["product-form-parent-link", product?.id],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("product_components")
-        .select("parent_product_id, parent:products!product_components_parent_product_id_fkey(name_es)")
+        .select("parent_product_id")
         .eq("child_product_id", product?.id)
         .limit(1)
         .maybeSingle();
-      return data ?? null;
+      if (!data?.parent_product_id) return null;
+      const { data: parent } = await (supabase as any)
+        .from("products")
+        .select("name_es")
+        .eq("id", data.parent_product_id)
+        .maybeSingle();
+      return { parent_product_id: data.parent_product_id, name_es: parent?.name_es ?? null };
     },
   });
   const isAccessory = !!parentLink;
-  const parentProductName: string | null = (parentLink as any)?.parent?.name_es ?? null;
+  const parentProductName: string | null = (parentLink as any)?.name_es ?? null;
+
 
   const unitsInService = useMemo(
     () =>
