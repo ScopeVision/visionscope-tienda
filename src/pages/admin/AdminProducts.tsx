@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { Badge } from "@/components/ui/badge";
 import { ExpandedDetail, SignalBadge } from "@/components/admin/InventoryPanel";
 import {
   Plus, Pencil, Trash2, Search, ImageOff, Copy, FileSpreadsheet, FileDown,
