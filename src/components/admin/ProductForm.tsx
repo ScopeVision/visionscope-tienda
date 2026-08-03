@@ -320,7 +320,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         deposit: Number(values.deposit),
         stock: Number(values.stock),
         published: values.published,
-        standalone_rentable: values.standalone_rentable ?? true,
+        standalone_rentable: isAccessory ? false : (values.standalone_rentable ?? true),
         images: values.images,
         brand: values.brand || null,
         model: values.model || null,
