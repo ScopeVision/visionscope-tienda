@@ -41,6 +41,7 @@ type Customer = {
   address_line1: string | null;
   address_line2: string | null;
   city: string | null;
+  region: string | null;
   postal_code: string | null;
   country: string | null;
   notes: string | null;
@@ -50,18 +51,6 @@ type Customer = {
   bookings?: { id: string }[];
 };
 
-const EDITABLE_FIELDS: { key: keyof Customer; label: string; type?: string }[] = [
-  { key: "full_name", label: "Nombre" },
-  { key: "email", label: "Email", type: "email" },
-  { key: "phone", label: "Teléfono" },
-  { key: "company", label: "Empresa" },
-  { key: "tax_id", label: "NIF/CIF" },
-  { key: "address_line1", label: "Dirección" },
-  { key: "address_line2", label: "Dirección (línea 2)" },
-  { key: "city", label: "Ciudad" },
-  { key: "postal_code", label: "Código postal" },
-  { key: "country", label: "País" },
-];
 
 const AdminCustomers = () => {
   const { t } = useTranslation();
