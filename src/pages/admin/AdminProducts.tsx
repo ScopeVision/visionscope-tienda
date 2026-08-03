@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -243,7 +243,7 @@ const AdminProducts = () => {
     setEditing(null);
   };
 
-  const COLS = 12;
+  const COLS = 11;
 
   return (
     <div>
@@ -356,8 +356,8 @@ const AdminProducts = () => {
                 const stockMismatch = audit?.signals.some((s) => s.code === "stock_mismatch");
                 const pop = popularityMap.get(p.id);
                 return (
-                  <>
-                    <TableRow key={p.id}>
+                  <Fragment key={p.id}>
+                    <TableRow>
                       <TableCell className="cursor-pointer" onClick={() => toggleRow(p.id)}>
                         {isOpen
                           ? <ChevronDown className="h-4 w-4 text-secondary" />
@@ -459,7 +459,7 @@ const AdminProducts = () => {
                       </TableCell>
                     </TableRow>
                     {isOpen && (
-                      <TableRow key={`${p.id}-detail`} className="bg-muted/20 hover:bg-muted/20">
+                      <TableRow className="bg-muted/20 hover:bg-muted/20">
                         <TableCell colSpan={COLS} className="p-4">
                           <div className="flex flex-wrap gap-6 text-xs text-secondary mb-4">
                             <div className="flex items-center gap-2">
@@ -490,7 +490,7 @@ const AdminProducts = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 );
               })
             )}
