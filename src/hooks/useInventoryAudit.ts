@@ -88,7 +88,10 @@ export function useInventoryAudit() {
         audit: child,
         quantity: Number(r.quantity ?? 1),
         variant_name: r.variant_name ?? null,
+        component_id: r.id,
+        sort_order: Number(r.sort_order ?? 0),
       });
+
       m.set(r.parent_product_id, list);
     }
     return m;
