@@ -51,6 +51,7 @@ type Customer = {
   bookings?: { id: string }[];
 };
 
+const EDITABLE_FIELDS = CUSTOMER_FIELDS;
 
 const AdminCustomers = () => {
   const { t } = useTranslation();
@@ -58,8 +59,11 @@ const AdminCustomers = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Customer>>({});
   const [saving, setSaving] = useState(false);
+
+  const sheetOpen = creating || !!editing;
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-customers"],
@@ -67,7 +71,8 @@ const AdminCustomers = () => {
       const { data, error } = await supabase
         .from("customers")
         .select(
-          "id, full_name, email, phone, company, tax_id, address_line1, address_line2, city, postal_code, country, notes, status, created_at, updated_at, bookings:bookings(id)"
+          `${CUSTOMER_SELECT}, created_at, updated_at, bookings:bookings(id)`
+
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
