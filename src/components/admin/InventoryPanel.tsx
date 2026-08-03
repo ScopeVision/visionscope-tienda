@@ -23,10 +23,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProductAudit, Signal } from "@/lib/inventoryAudit";
-import {
-  createAccessoryForParent, addAccessoryPieces, UNIT_STATUS_LABEL, UNIT_STATUS_OPTIONS,
-} from "@/lib/accessoryCreation";
+import { AccessoriesManager, UnitStatusSelect } from "./AccessoriesManager";
 import { buildExportRows, exportInventoryCsv, exportInventoryXlsx } from "@/lib/inventoryExport";
+
 
 
 const SIGNAL_LABEL: Record<string, string> = {
