@@ -96,6 +96,29 @@ const AdminProducts = () => {
     return m;
   }, [audits]);
 
+  /** Recuento de piezas no operativas por producto padre (incluye sus accesorios). */
+  const materialByProductId = useMemo(() => {
+    const m = new Map<string, { maintenance: number; lost: number; retired: number }>();
+    for (const p of products as any[]) {
+      if (accessoryProductIds.has(p.id)) continue;
+      const seen = new Set<string>();
+      const counts = { maintenance: 0, lost: 0, retired: 0 };
+      const addUnits = (units: any[] = []) => {
+        for (const u of units) {
+          if (!u?.id || seen.has(u.id)) continue;
+          seen.add(u.id);
+          if (u.status === "maintenance") counts.maintenance++;
+          else if (u.status === "lost") counts.lost++;
+          else if (u.status === "retired") counts.retired++;
+        }
+      };
+      addUnits(auditByProductId.get(p.id)?.units ?? []);
+      for (const acc of componentsByParent.get(p.id) ?? []) addUnits(acc.audit.units ?? []);
+      m.set(p.id, counts);
+    }
+    return m;
+  }, [products, accessoryProductIds, auditByProductId, componentsByParent]);
+
   /** Filas de primer nivel: solo productos padre (sin accesorios internos). */
   const filtered = useMemo(() => {
     return (products as any[]).filter((p: any) => {
@@ -112,6 +135,13 @@ const AdminProducts = () => {
           return false;
         }
       }
+      if (materialFilter !== "__all__") {
+        const c = materialByProductId.get(p.id) ?? { maintenance: 0, lost: 0, retired: 0 };
+        if (materialFilter === "attention" && c.maintenance + c.lost === 0) return false;
+        if (materialFilter === "maintenance" && c.maintenance === 0) return false;
+        if (materialFilter === "lost" && c.lost === 0) return false;
+        if (materialFilter === "retired" && c.retired === 0) return false;
+      }
       if (onlyErrors && (a?.signals.length ?? 0) === 0) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -122,7 +152,7 @@ const AdminProducts = () => {
       }
       return true;
     });
-  }, [products, accessoryProductIds, auditByProductId, categoryFilter, publishedFilter, ownerFilter, onlyErrors, search, i18n.language]);
+  }, [products, accessoryProductIds, auditByProductId, categoryFilter, publishedFilter, ownerFilter, materialFilter, materialByProductId, onlyErrors, search, i18n.language]);
 
   const totalErrors = filtered.reduce((n, p: any) => n + (auditByProductId.get(p.id)?.signals.length ?? 0), 0);
   const criticalErrors = filtered.reduce(
@@ -130,6 +160,18 @@ const AdminProducts = () => {
       n + (auditByProductId.get(p.id)?.signals.filter((s) => s.severity === "critical").length ?? 0),
     0
   );
+
+  /** Total de piezas que necesitan atención en todo el catálogo (no depende del filtro de material). */
+  const attentionTotals = useMemo(() => {
+    let maintenance = 0;
+    let lost = 0;
+    for (const c of materialByProductId.values()) {
+      maintenance += c.maintenance;
+      lost += c.lost;
+    }
+    return { maintenance, lost };
+  }, [materialByProductId]);
+
 
   const toggleRow = (id: string) => {
     const next = new Set(expanded);
