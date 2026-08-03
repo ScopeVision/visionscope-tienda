@@ -37,6 +37,17 @@ export function useInventoryAudit() {
     queryFn: async () => (await sb.from("categories").select("*").order("sort_order")).data ?? [],
   });
 
+  const componentsQ = useQuery({
+    queryKey: ["inv-audit-components"],
+    queryFn: async () =>
+      (
+        await sb
+          .from("product_components")
+          .select("parent_product_id, child_product_id, quantity, variant_name, sort_order")
+          .order("sort_order")
+      ).data ?? [],
+  });
+
   const audits: ProductAudit[] = useMemo(
     () =>
       auditInventory({
@@ -47,6 +58,37 @@ export function useInventoryAudit() {
       }),
     [productsQ.data, unitsQ.data, variantsQ.data, ownersQ.data]
   );
+
+  const auditById = useMemo(() => {
+    const m = new Map<string, ProductAudit>();
+    for (const a of audits) m.set(a.product.id, a);
+    return m;
+  }, [audits]);
+
+  const componentsByParent = useMemo(() => {
+    const m = new Map<string, AccessoryEntry[]>();
+    const rows = [...(componentsQ.data ?? [])].sort(
+      (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    );
+    for (const r of rows) {
+      const child = auditById.get(r.child_product_id);
+      if (!child) continue;
+      const list = m.get(r.parent_product_id) ?? [];
+      list.push({
+        audit: child,
+        quantity: Number(r.quantity ?? 1),
+        variant_name: r.variant_name ?? null,
+      });
+      m.set(r.parent_product_id, list);
+    }
+    return m;
+  }, [componentsQ.data, auditById]);
+
+  const accessoryProductIds = useMemo(
+    () => new Set<string>((componentsQ.data ?? []).map((r: any) => r.child_product_id)),
+    [componentsQ.data]
+  );
+
 
   const categoryName = (id?: string | null): string => {
     if (!id) return "—";
