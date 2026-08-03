@@ -255,7 +255,7 @@ const AdminCustomers = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setEditing(null)}>{t("common.cancel")}</Button>
+              <Button variant="outline" onClick={closeSheet}>{t("common.cancel")}</Button>
               <Button onClick={save} disabled={saving} className="gap-2 bg-foreground text-background hover:bg-foreground/90">
                 <Save className="h-4 w-4" /> {saving ? t("common.loading") : t("common.save")}
               </Button>
