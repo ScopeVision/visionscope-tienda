@@ -230,20 +230,26 @@ export function AccessoriesManager({ parentProductId }: { parentProductId: strin
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <div className="text-xs font-medium uppercase tracking-wider text-secondary">
-          Accesorios internos incluidos
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-3">
+          <div className="text-xs font-medium uppercase tracking-wider text-secondary">
+            Accesorios internos incluidos
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 text-xs"
+            disabled={!audit}
+            onClick={(e) => { e.stopPropagation(); setAddOpen(true); }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Añadir accesorio
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1 text-xs"
-          disabled={!audit}
-          onClick={(e) => { e.stopPropagation(); setAddOpen(true); }}
-        >
-          <Plus className="h-3.5 w-3.5" /> Añadir accesorio
-        </Button>
+        <p className="text-[11px] text-secondary">
+          Piezas que viajan con este producto y no se alquilan por separado. Al crear una, se genera sola su código y sus piezas físicas.
+        </p>
       </div>
+
 
       {accessories.length === 0 ? (
         <p className="text-[11px] text-secondary">Este producto no tiene accesorios internos.</p>

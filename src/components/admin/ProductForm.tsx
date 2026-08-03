@@ -578,17 +578,11 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
 
 
             {product?.id && kitMode === "individual" && (
-              <div className="rounded-md border border-border p-3 space-y-3">
-                <Label className="text-xs uppercase tracking-wider text-secondary">
-                  Accesorios incluidos (plantilla del modelo)
-                </Label>
-                <p className="text-[11px] text-secondary">
-                  Define qué accesorios incluye este modelo. Sirve como sugerencia al atar unidades físicas
-                  concretas (cargador #3 → cámara #1).
-                </p>
+              <div className="rounded-md border border-border p-3">
                 <AccessoriesManager parentProductId={product.id} />
               </div>
             )}
+
 
 
             <Field label="Contenido del kit / maletín (opcional, solo interno)">
