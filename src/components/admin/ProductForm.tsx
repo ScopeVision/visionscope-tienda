@@ -128,6 +128,29 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       return data ?? [];
     },
   });
+  const { data: parentLink = null } = useQuery({
+    enabled: !!product?.id,
+    queryKey: ["product-form-parent-link", product?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("product_components")
+        .select("parent_product_id")
+        .eq("child_product_id", product?.id)
+        .limit(1)
+        .maybeSingle();
+      if (!data?.parent_product_id) return null;
+      const { data: parent } = await (supabase as any)
+        .from("products")
+        .select("name_es")
+        .eq("id", data.parent_product_id)
+        .maybeSingle();
+      return { parent_product_id: data.parent_product_id, name_es: parent?.name_es ?? null };
+    },
+  });
+  const isAccessory = !!parentLink;
+  const parentProductName: string | null = (parentLink as any)?.name_es ?? null;
+
+
   const unitsInService = useMemo(
     () =>
       liveUnits.filter(
@@ -297,7 +320,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         deposit: Number(values.deposit),
         stock: Number(values.stock),
         published: values.published,
-        standalone_rentable: values.standalone_rentable ?? true,
+        standalone_rentable: isAccessory ? false : (values.standalone_rentable ?? true),
         images: values.images,
         brand: values.brand || null,
         model: values.model || null,
@@ -530,16 +553,27 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             <div className="rounded-md border border-border p-3">
               <div className="flex items-center gap-3">
                 <Switch
-                  checked={form.watch("standalone_rentable")}
-                  onCheckedChange={(v) => form.setValue("standalone_rentable", v, { shouldDirty: true })}
+                  checked={isAccessory ? false : form.watch("standalone_rentable")}
+                  disabled={isAccessory}
+                  onCheckedChange={(v) => {
+                    if (isAccessory) return;
+                    form.setValue("standalone_rentable", v, { shouldDirty: true });
+                  }}
                 />
-                <span className="text-sm">Se alquila suelto</span>
+                <span className="text-sm">Se puede alquilar por separado</span>
               </div>
               <p className="text-[11px] text-secondary mt-1.5">
-                Desactívalo para accesorios: no aparecerán en el catálogo público ni en el buscador de
-                productos del editor de reservas. Solo saldrán atados a una unidad-padre.
+                Actívalo para productos que el cliente puede alquilar por su cuenta. Desactivado, el
+                producto solo sale enganchado a otro (accesorios): no aparece en el catálogo web ni en el
+                buscador de productos al crear una reserva.
               </p>
+              {isAccessory && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5">
+                  Es un accesorio de {parentProductName ?? "otro producto"}: no se alquila por separado.
+                </p>
+              )}
             </div>
+
 
             {product?.id && kitMode === "individual" && (
               <div className="rounded-md border border-border p-3 space-y-3">

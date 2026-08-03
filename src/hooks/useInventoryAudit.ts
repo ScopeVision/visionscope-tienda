@@ -11,7 +11,10 @@ export type AccessoryEntry = {
   audit: ProductAudit;
   quantity: number;
   variant_name: string | null;
+  component_id: string;
+  sort_order: number;
 };
+
 
 export function useInventoryAudit() {
   const { i18n } = useTranslation();
@@ -49,8 +52,9 @@ export function useInventoryAudit() {
       (
         await sb
           .from("product_components")
-          .select("parent_product_id, child_product_id, quantity, variant_name, sort_order")
+          .select("id, parent_product_id, child_product_id, quantity, variant_name, sort_order")
           .order("sort_order")
+
       ).data ?? [],
   });
 
@@ -84,7 +88,10 @@ export function useInventoryAudit() {
         audit: child,
         quantity: Number(r.quantity ?? 1),
         variant_name: r.variant_name ?? null,
+        component_id: r.id,
+        sort_order: Number(r.sort_order ?? 0),
       });
+
       m.set(r.parent_product_id, list);
     }
     return m;
