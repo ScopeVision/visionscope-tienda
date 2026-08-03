@@ -304,7 +304,7 @@ const AdminProducts = () => {
       </div>
 
       {/* Filtros unificados */}
-      <div className="rounded-md bg-surface border border-border p-3 grid gap-3 sm:grid-cols-[1fr_180px_160px_180px_auto] mb-4">
+      <div className="rounded-md bg-surface border border-border p-3 grid gap-3 sm:grid-cols-[1fr_180px_160px_180px_180px_auto] mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
           <Input
