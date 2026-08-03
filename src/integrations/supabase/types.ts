@@ -429,6 +429,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           postal_code: string | null
+          region: string | null
           status: string
           tax_id: string | null
           updated_at: string
@@ -446,6 +447,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          region?: string | null
           status?: string
           tax_id?: string | null
           updated_at?: string
@@ -463,6 +465,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          region?: string | null
           status?: string
           tax_id?: string | null
           updated_at?: string
