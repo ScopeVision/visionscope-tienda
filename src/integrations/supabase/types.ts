@@ -1481,54 +1481,159 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           active?: boolean
           created_at?: string
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           active?: boolean
           created_at?: string
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: []
+      }
+      op_task_assignment_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_partner: string | null
+          id: string
+          task_id: string
+          to_partner: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_partner?: string | null
+          id?: string
+          task_id: string
+          to_partner?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_partner?: string | null
+          id?: string
+          task_id?: string
+          to_partner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_task_assignment_history_from_partner_fkey"
+            columns: ["from_partner"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_task_assignment_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_task_assignment_history_to_partner_fkey"
+            columns: ["to_partner"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_task_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["op_task_status"] | null
+          id: string
+          note: string | null
+          task_id: string
+          to_status: Database["public"]["Enums"]["op_task_status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["op_task_status"] | null
+          id?: string
+          note?: string | null
+          task_id: string
+          to_status: Database["public"]["Enums"]["op_task_status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["op_task_status"] | null
+          id?: string
+          note?: string | null
+          task_id?: string
+          to_status?: Database["public"]["Enums"]["op_task_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_task_status_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       op_tasks: {
         Row: {
           assigned_to: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
           initiative_id: string | null
           priority: Database["public"]["Enums"]["op_task_priority"]
+          started_at: string | null
           status: Database["public"]["Enums"]["op_task_status"]
           title: string
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
           initiative_id?: string | null
           priority?: Database["public"]["Enums"]["op_task_priority"]
+          started_at?: string | null
           status?: Database["public"]["Enums"]["op_task_status"]
           title: string
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
           initiative_id?: string | null
           priority?: Database["public"]["Enums"]["op_task_priority"]
+          started_at?: string | null
           status?: Database["public"]["Enums"]["op_task_status"]
           title?: string
           updated_at?: string
@@ -1537,6 +1642,13 @@ export type Database = {
           {
             foreignKeyName: "op_tasks_assigned_to_fkey"
             columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "op_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_tasks_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "op_partners"
             referencedColumns: ["id"]
@@ -2761,6 +2873,44 @@ export type Database = {
         Returns: boolean
       }
       internal_code_prefix: { Args: { p_category_id: string }; Returns: string }
+      op_company_performance: {
+        Args: { p_from?: string; p_granularity?: string; p_to?: string }
+        Returns: {
+          avg_cycle_days: number
+          cancelled: number
+          committed: number
+          completed_late: number
+          delivered_on_time: number
+          delivery_rate: number
+          open_overdue: number
+          own_rate: number
+          period_closed: boolean
+          period_start: string
+          rescues_total: number
+          throughput: number
+        }[]
+      }
+      op_partner_performance: {
+        Args: { p_from?: string; p_granularity?: string; p_to?: string }
+        Returns: {
+          avg_cycle_days: number
+          cancelled: number
+          commitment_rate: number
+          committed: number
+          completed_late: number
+          completed_on_time: number
+          delivered_on_time: number
+          open_overdue: number
+          open_pending: number
+          partner_id: string
+          partner_name: string
+          period_closed: boolean
+          period_start: string
+          rescued_away: number
+          rescues: number
+          throughput: number
+        }[]
+      }
       regenerate_booking_finance: {
         Args: { _booking_id: string }
         Returns: string
@@ -2838,7 +2988,7 @@ export type Database = {
       op_initiative_status: "planning" | "active" | "paused" | "done"
       op_milestone_type: "launch" | "deadline" | "review" | "other"
       op_task_priority: "low" | "medium" | "high"
-      op_task_status: "todo" | "in_progress" | "blocked" | "done"
+      op_task_status: "todo" | "in_progress" | "blocked" | "done" | "cancelled"
       payment_status:
         | "unpaid"
         | "deposit_pending"
@@ -3022,7 +3172,7 @@ export const Constants = {
       op_initiative_status: ["planning", "active", "paused", "done"],
       op_milestone_type: ["launch", "deadline", "review", "other"],
       op_task_priority: ["low", "medium", "high"],
-      op_task_status: ["todo", "in_progress", "blocked", "done"],
+      op_task_status: ["todo", "in_progress", "blocked", "done", "cancelled"],
       payment_status: [
         "unpaid",
         "deposit_pending",
