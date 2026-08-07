@@ -59,8 +59,6 @@ function formatPeriod(iso: string, granularity: Granularity) {
   return `Semana del ${d} ${SHORT_MONTHS[m - 1]} ${y}`;
 }
 
-const num = (v: number | null | undefined) => (v === null || v === undefined ? "—" : String(v));
-
 function pct(v: number | null | undefined) {
   if (v === null || v === undefined) return "—";
   return `${Number(v).toFixed(0)}%`;
