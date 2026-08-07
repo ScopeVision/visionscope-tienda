@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Trash2, Pencil, Ban } from "lucide-react";
+import { Plus, Trash2, Pencil, Ban, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import OperationsCalendar from "@/components/admin/OperationsCalendar";
 import OperationsPerformance from "@/components/admin/OperationsPerformance";
@@ -853,7 +853,10 @@ function TaskDialog({
               <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {ALL_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                  {TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                  {status === "cancelled" && (
+                    <SelectItem value="cancelled">{TASK_STATUS_LABELS.cancelled}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1104,6 +1107,7 @@ function TaskDetailDialog({
   };
 
   return (
+    <>
     <Dialog open={!!task} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {task && (
@@ -1125,7 +1129,10 @@ function TaskDetailDialog({
                   <Select value={task.status} onValueChange={(v) => setStatus(v as TaskStatus)}>
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {ALL_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                      {TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                  {status === "cancelled" && (
+                    <SelectItem value="cancelled">{TASK_STATUS_LABELS.cancelled}</SelectItem>
+                  )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1200,6 +1207,11 @@ function TaskDetailDialog({
                     <Ban className="h-4 w-4 mr-1" /> Cancelar tarea
                   </Button>
                 )}
+                {task.status === "cancelled" && (
+                  <Button size="sm" variant="outline" onClick={() => setStatus("todo")}>
+                    <RotateCcw className="h-4 w-4 mr-1" /> Reactivar tarea
+                  </Button>
+                )}
               </div>
               <UpdatesThread
                 entityType="task"
@@ -1208,30 +1220,31 @@ function TaskDetailDialog({
                 partnersById={partnersById}
               />
             </div>
-
-            <Dialog open={cancelOpen} onOpenChange={(o) => !o && setCancelOpen(false)}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Cancelar tarea</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-2">
-                  <Label className="text-xs text-secondary">Motivo (obligatorio)</Label>
-                  <Textarea
-                    rows={3}
-                    value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="¿Por qué ya no se va a hacer?"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setCancelOpen(false)}>Volver</Button>
-                  <Button onClick={confirmCancel} disabled={!cancelReason.trim()}>Confirmar cancelación</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </>
         )}
       </DialogContent>
     </Dialog>
+
+    <Dialog open={cancelOpen} onOpenChange={(o) => !o && setCancelOpen(false)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cancelar tarea</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label className="text-xs text-secondary">Motivo (obligatorio)</Label>
+          <Textarea
+            rows={3}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="¿Por qué ya no se va a hacer?"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setCancelOpen(false)}>Volver</Button>
+          <Button onClick={confirmCancel} disabled={!cancelReason.trim()}>Confirmar cancelación</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
