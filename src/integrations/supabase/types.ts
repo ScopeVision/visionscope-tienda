@@ -1044,47 +1044,6 @@ export type Database = {
         }
         Relationships: []
       }
-      finance_payout_payments: {
-        Row: {
-          amount: number
-          created_at: string
-          created_by: string | null
-          id: string
-          method: string | null
-          notes: string | null
-          paid_at: string
-          payout_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          method?: string | null
-          notes?: string | null
-          paid_at?: string
-          payout_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          method?: string | null
-          notes?: string | null
-          paid_at?: string
-          payout_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "finance_payout_payments_payout_id_fkey"
-            columns: ["payout_id"]
-            isOneToOne: false
-            referencedRelation: "finance_payouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       finance_payouts: {
         Row: {
           agreement_type_snapshot:
@@ -1332,6 +1291,30 @@ export type Database = {
           url?: string
           zoom?: number
           zoom_mobile?: number | null
+        }
+        Relationships: []
+      }
+      integration_secrets: {
+        Row: {
+          created_at: string
+          description: string | null
+          name: string
+          secret: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          name: string
+          secret: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          name?: string
+          secret?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1828,7 +1811,10 @@ export type Database = {
           accessory_type: string | null
           brand: string | null
           category_id: string | null
+          contents_ca: string | null
+          contents_en: string | null
           contents_es: string | null
+          contents_fr: string | null
           coverage: string | null
           created_at: string
           deposit: number
@@ -1874,7 +1860,10 @@ export type Database = {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          contents_ca?: string | null
+          contents_en?: string | null
           contents_es?: string | null
+          contents_fr?: string | null
           coverage?: string | null
           created_at?: string
           deposit?: number
@@ -1920,7 +1909,10 @@ export type Database = {
           accessory_type?: string | null
           brand?: string | null
           category_id?: string | null
+          contents_ca?: string | null
+          contents_en?: string | null
           contents_es?: string | null
+          contents_fr?: string | null
           coverage?: string | null
           created_at?: string
           deposit?: number
@@ -2518,6 +2510,50 @@ export type Database = {
           },
         ]
       }
+      finance_payout_coverage: {
+        Row: {
+          amount: number | null
+          covered_amount: number | null
+          created_at: string | null
+          derived_status: string | null
+          entry_id: string | null
+          owner_id: string | null
+          owner_label: string | null
+          payout_id: string | null
+          pending_amount: number | null
+          product_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payouts_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "finance_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payouts_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "finance_period_v"
+            referencedColumns: ["entry_id"]
+          },
+          {
+            foreignKeyName: "finance_payouts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owner_balances"
+            referencedColumns: ["owner_id"]
+          },
+          {
+            foreignKeyName: "finance_payouts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "finance_owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_period_v: {
         Row: {
           agreement_type_snapshot:
@@ -2691,10 +2727,6 @@ export type Database = {
         Returns: boolean
       }
       internal_code_prefix: { Args: { p_category_id: string }; Returns: string }
-      recompute_payout_status: {
-        Args: { _payout_id: string }
-        Returns: undefined
-      }
       regenerate_booking_finance: {
         Args: { _booking_id: string }
         Returns: string
@@ -2739,6 +2771,7 @@ export type Database = {
         | "awaiting_confirmation"
         | "ready_for_pickup"
         | "returned"
+        | "devuelto"
       finance_agreement_type:
         | "company_owned"
         | "split_70_30"
@@ -2918,6 +2951,7 @@ export const Constants = {
         "awaiting_confirmation",
         "ready_for_pickup",
         "returned",
+        "devuelto",
       ],
       finance_agreement_type: [
         "company_owned",
