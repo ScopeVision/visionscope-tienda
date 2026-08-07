@@ -22,9 +22,9 @@ type Props = {
   monthStartISO: string;
 };
 
-const ACTIVE_STATUSES = ["confirmado", "preparacion", "ready_for_pickup", "alquiler"];
-const COMPLETED_STATUSES = ["returned", "finalizado"];
-const PENDING_STATUSES = ["nuevo", "pending_review", "awaiting_confirmation"];
+const ACTIVE_STATUSES = ["confirmado", "preparacion", "alquiler"];
+const COMPLETED_STATUSES = ["devuelto", "finalizado"];
+const PENDING_STATUSES = ["nuevo"];
 
 function Card({ icon: Icon, label, value, hint, tone = "default" }: any) {
   const toneCls =
