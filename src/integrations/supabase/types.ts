@@ -2701,6 +2701,10 @@ export type Database = {
         Args: { p_category_id: string }
         Returns: string
       }
+      generate_unit_internal_code: {
+        Args: { p_product_id: string }
+        Returns: string
+      }
       get_pricing_multipliers: {
         Args: {
           _custom: Json
