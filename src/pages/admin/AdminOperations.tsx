@@ -1068,10 +1068,38 @@ function TaskDetailDialog({
   const task = taskId ? tasks.find((t) => t.id === taskId) || null : null;
   const init = task?.initiative_id ? initiativesById[task.initiative_id] : null;
 
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
   const setStatus = async (status: TaskStatus) => {
     if (!task) return;
     const { error } = await sb.from("op_tasks").update({ status }).eq("id", task.id);
     if (error) return toast.error(error.message);
+    onChanged();
+  };
+
+  const setCompletedBy = async (value: string) => {
+    if (!task) return;
+    const { error } = await sb
+      .from("op_tasks")
+      .update({ completed_by: value === "none" ? null : value })
+      .eq("id", task.id);
+    if (error) return toast.error(error.message);
+    onChanged();
+  };
+
+  const confirmCancel = async () => {
+    if (!task) return;
+    const reason = cancelReason.trim();
+    if (!reason) return toast.error("El motivo es obligatorio");
+    const { error } = await sb
+      .from("op_tasks")
+      .update({ status: "cancelled", cancel_reason: reason })
+      .eq("id", task.id);
+    if (error) return toast.error(error.message);
+    toast.success("Tarea cancelada");
+    setCancelOpen(false);
+    setCancelReason("");
     onChanged();
   };
 
@@ -1121,8 +1149,57 @@ function TaskDetailDialog({
               {task.description && (
                 <div className="text-sm whitespace-pre-wrap bg-muted/40 rounded-md p-3">{task.description}</div>
               )}
-              <div>
+              {task.status === "done" && (
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-end gap-3 flex-wrap">
+                    <div className="w-56">
+                      <div className="text-xs text-secondary mb-1">Completada por</div>
+                      <Select value={task.completed_by || "none"} onValueChange={setCompletedBy}>
+                        <SelectTrigger className="h-8"><SelectValue placeholder="Sin definir" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin definir</SelectItem>
+                          {partners.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {task.completed_by && task.assigned_to && task.completed_by !== task.assigned_to && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="border bg-amber-100 text-amber-800 border-amber-200 mb-1">
+                              Rescate
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>Esta tarea estaba asignada a otra persona.</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    <div className="mb-1">
+                      <div className="text-xs text-secondary">Fecha de cierre</div>
+                      <div className="text-sm">
+                        {task.completed_at ? new Date(task.completed_at).toLocaleString("es-ES") : "—"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {task.status === "cancelled" && task.cancel_reason && (
+                <div className="rounded-md border border-border bg-muted/40 p-3 text-sm text-secondary">
+                  <span className="font-medium">Motivo de cancelación:</span> {task.cancel_reason}
+                </div>
+              )}
+              <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => onEdit(task)}>Editar tarea</Button>
+                {task.status !== "cancelled" && task.status !== "done" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-secondary"
+                    onClick={() => { setCancelReason(""); setCancelOpen(true); }}
+                  >
+                    <Ban className="h-4 w-4 mr-1" /> Cancelar tarea
+                  </Button>
+                )}
               </div>
               <UpdatesThread
                 entityType="task"
@@ -1131,6 +1208,27 @@ function TaskDetailDialog({
                 partnersById={partnersById}
               />
             </div>
+
+            <Dialog open={cancelOpen} onOpenChange={(o) => !o && setCancelOpen(false)}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Cancelar tarea</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <Label className="text-xs text-secondary">Motivo (obligatorio)</Label>
+                  <Textarea
+                    rows={3}
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="¿Por qué ya no se va a hacer?"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCancelOpen(false)}>Volver</Button>
+                  <Button onClick={confirmCancel} disabled={!cancelReason.trim()}>Confirmar cancelación</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </DialogContent>
