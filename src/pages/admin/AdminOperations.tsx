@@ -12,16 +12,19 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, Trash2, Pencil, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import OperationsCalendar from "@/components/admin/OperationsCalendar";
+import OperationsPerformance from "@/components/admin/OperationsPerformance";
 
 const sb = supabase as any;
 
 type Partner = { id: string; name: string; active: boolean };
 type InitiativeCategory = "growth" | "rnd" | "operations" | "finance";
 type InitiativeStatus = "planning" | "active" | "paused" | "done";
-type TaskStatus = "todo" | "in_progress" | "blocked" | "done";
+type TaskStatus = "todo" | "in_progress" | "blocked" | "done" | "cancelled";
 type TaskPriority = "low" | "medium" | "high";
 
 type Initiative = {
@@ -47,6 +50,11 @@ type Task = {
   due_date: string | null;
   created_at: string;
   updated_at: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
+  completed_by?: string | null;
 };
 
 type Update = {
@@ -84,9 +92,13 @@ const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   in_progress: "In progress",
   blocked: "Blocked",
   done: "Done",
+  cancelled: "Cancelada",
 };
 
+// Columnas del Kanban (las canceladas no ocupan columna)
 const TASK_STATUSES: TaskStatus[] = ["todo", "in_progress", "blocked", "done"];
+// Todos los estados seleccionables en desplegables
+const ALL_TASK_STATUSES: TaskStatus[] = ["todo", "in_progress", "blocked", "done", "cancelled"];
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: "Baja",
@@ -156,6 +168,7 @@ export default function AdminOperations() {
           <TabsTrigger value="initiatives">Iniciativas</TabsTrigger>
           <TabsTrigger value="tasks">Tareas</TabsTrigger>
           <TabsTrigger value="calendar">Calendario</TabsTrigger>
+          <TabsTrigger value="performance">Rendimiento</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
         </TabsList>
 
@@ -188,6 +201,10 @@ export default function AdminOperations() {
             onOpenTask={(id) => setOpenTask(id)}
             onOpenInitiative={(id) => setOpenInitiative(id)}
           />
+        </TabsContent>
+
+        <TabsContent value="performance" className="mt-4">
+          <OperationsPerformance />
         </TabsContent>
 
         <TabsContent value="team" className="mt-4">
@@ -367,6 +384,7 @@ function TasksTab({
   const qc = useQueryClient();
   const [category, setCategory] = useState<string>("all");
   const [assignee, setAssignee] = useState<string>("all");
+  const [showCancelled, setShowCancelled] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
 
   const filtered = tasks.filter((t) => {
@@ -378,8 +396,9 @@ function TasksTab({
     return true;
   });
 
-  const byStatus: Record<TaskStatus, Task[]> = { todo: [], in_progress: [], blocked: [], done: [] };
-  for (const t of filtered) byStatus[t.status].push(t);
+  const byStatus: Record<TaskStatus, Task[]> = { todo: [], in_progress: [], blocked: [], done: [], cancelled: [] };
+  for (const t of filtered) byStatus[t.status]?.push(t);
+  const cancelledTasks = byStatus.cancelled;
 
   const moveTask = async (id: string, status: TaskStatus) => {
     const { error } = await sb.from("op_tasks").update({ status }).eq("id", id);
@@ -409,6 +428,10 @@ function TasksTab({
               ))}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-2 pl-2">
+            <Switch id="show-cancelled" checked={showCancelled} onCheckedChange={setShowCancelled} />
+            <label htmlFor="show-cancelled" className="text-sm text-secondary cursor-pointer">Ver canceladas</label>
+          </div>
           <div className="ml-auto flex gap-2">
             <Button variant="outline" onClick={() => onNewTask(null)}>
               <Plus className="h-4 w-4 mr-1" /> Nueva tarea
@@ -495,6 +518,35 @@ function TasksTab({
           </div>
         ))}
       </div>
+
+      {showCancelled && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Canceladas ({cancelledTasks.length})</CardTitle></CardHeader>
+          <CardContent>
+            {cancelledTasks.length === 0 ? (
+              <div className="text-sm text-secondary py-4 text-center">No hay tareas canceladas.</div>
+            ) : (
+              <div className="space-y-2">
+                {cancelledTasks.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => onOpen(t.id)}
+                    className="w-full text-left border border-border rounded-md px-3 py-2 bg-muted/40 text-secondary hover:bg-muted"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm line-through">{t.title}</span>
+                      <span className="text-xs">{t.assigned_to ? partnersById[t.assigned_to]?.name || "—" : "—"}</span>
+                    </div>
+                    {t.cancel_reason && (
+                      <div className="text-xs mt-1">Motivo: {t.cancel_reason}</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -753,7 +805,7 @@ function TaskDialog({
 
   const remove = async () => {
     if (!editing) return;
-    if (!confirm("¿Eliminar tarea?")) return;
+    if (!confirm("¿Eliminar la tarea permanentemente? Se perderá su historial. Si la tarea simplemente ya no se va a hacer, es mejor cancelarla.")) return;
     const { error } = await sb.from("op_tasks").delete().eq("id", editing.id);
     if (error) return toast.error(error.message);
     toast.success("Tarea eliminada");
@@ -801,7 +853,7 @@ function TaskDialog({
               <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                  {ALL_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -1045,7 +1097,7 @@ function TaskDetailDialog({
                   <Select value={task.status} onValueChange={(v) => setStatus(v as TaskStatus)}>
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+                      {ALL_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
