@@ -1964,6 +1964,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          job_title: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          job_title?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_items: {
         Row: {
           category: string
@@ -2699,6 +2729,10 @@ export type Database = {
       }
       generate_internal_code: {
         Args: { p_category_id: string }
+        Returns: string
+      }
+      generate_unit_internal_code: {
+        Args: { p_product_id: string }
         Returns: string
       }
       get_pricing_multipliers: {
