@@ -27,28 +27,22 @@ import {
 
 export const BOOKING_STATUSES = [
   "nuevo",
-  "pending_review",
-  "awaiting_confirmation",
   "confirmado",
   "preparacion",
-  "ready_for_pickup",
   "alquiler",
-  "returned",
   "finalizado",
   "cancelado",
+  "devuelto",
 ] as const;
 
 export const STATUS_LABELS: Record<string, string> = {
   nuevo: "New",
-  pending_review: "Pending Review",
-  awaiting_confirmation: "Awaiting Confirmation",
   confirmado: "Confirmed",
   preparacion: "In Preparation",
-  ready_for_pickup: "Ready for Pickup",
   alquiler: "Active Rental",
-  returned: "Returned",
   finalizado: "Completed",
   cancelado: "Cancelled",
+  devuelto: "Returned (pending invoice)",
 };
 
 export const PAYMENT_STATUSES = [
