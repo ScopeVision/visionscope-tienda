@@ -347,6 +347,8 @@ const ProductDetail = () => {
 
     cart.add({
       productId: product.id,
+      variantId: activePricedVariant?.id ?? null,
+      variantName: activePricedVariant?.name ?? null,
       slug: product.slug,
       name: activePricedVariant ? `${name} · ${activePricedVariant.name}` : name,
       image: img,

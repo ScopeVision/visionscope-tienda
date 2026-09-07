@@ -63,7 +63,7 @@ const Cart = () => {
             });
             return (
               <div
-                key={item.productId}
+                key={`${item.productId}::${item.variantId ?? ""}`}
                 className="flex gap-4 p-4 rounded-xl bg-surface border border-border"
               >
                 <div className="w-20 h-20 rounded-lg bg-muted shrink-0 overflow-hidden">
@@ -73,6 +73,9 @@ const Cart = () => {
                   <Link to={`/product/${item.slug}`} className="font-medium hover:text-accent">
                     {item.name}
                   </Link>
+                  {item.variantName && (
+                    <div className="text-xs text-secondary mt-0.5">{item.variantName}</div>
+                  )}
                   <div className="text-xs text-secondary mt-1">
                     {formatCurrency(item.priceDay, i18n.language)} {t("common.perDay")} · {t("common.deposit")}{" "}
                     {formatCurrency(item.deposit, i18n.language)}
@@ -84,7 +87,7 @@ const Cart = () => {
                       min={1}
                       max={20}
                       value={item.quantity}
-                      onChange={(e) => cart.updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                      onChange={(e) => cart.updateQuantity(item.productId, item.variantId, parseInt(e.target.value) || 1)}
                       className="w-16 h-8 px-2 rounded-md border border-border bg-background text-sm"
                     />
                   </div>
@@ -93,7 +96,7 @@ const Cart = () => {
                   <div className="font-medium">{formatCurrency(calc.subtotal, i18n.language)}</div>
                   <WeeklyDiscountBadge priceDay={item.priceDay} variant="pill" className="mt-1" />
                   <button
-                    onClick={() => cart.remove(item.productId)}
+                    onClick={() => cart.remove(item.productId, item.variantId)}
                     className="mt-2 text-secondary hover:text-destructive"
                     aria-label={t("cart.remove")}
                   >

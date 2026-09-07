@@ -3,6 +3,8 @@ import { calcItemPrice, daysBetween, type PricingModel } from "@/lib/rental";
 
 export type CartItem = {
   productId: string;
+  variantId?: string | null;
+  variantName?: string | null;
   slug: string;
   name: string;
   image?: string;
@@ -20,8 +22,8 @@ type CartCtx = {
   endDate: string | null;
   setDates: (start: string | null, end: string | null) => void;
   add: (item: CartItem) => void;
-  updateQuantity: (productId: string, qty: number) => void;
-  remove: (productId: string) => void;
+  updateQuantity: (productId: string, variantId: string | null | undefined, qty: number) => void;
+  remove: (productId: string, variantId: string | null | undefined) => void;
   clear: () => void;
   days: number;
   subtotal: number;
@@ -32,6 +34,8 @@ type CartCtx = {
 const CartContext = createContext<CartCtx | null>(null);
 
 const STORAGE_KEY = "lillo-cart-v1";
+
+const lineKey = (productId: string, variantId?: string | null) => `${productId}::${variantId ?? ""}`;
 
 type Persisted = { items: CartItem[]; startDate: string | null; endDate: string | null };
 
@@ -101,7 +105,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     },
     add: (item) =>
       setItems((curr) => {
-        const idx = curr.findIndex((c) => c.productId === item.productId);
+        const key = lineKey(item.productId, item.variantId);
+        const idx = curr.findIndex((c) => lineKey(c.productId, c.variantId) === key);
         if (idx >= 0) {
           const copy = [...curr];
           copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + item.quantity };
@@ -109,11 +114,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
         return [...curr, item];
       }),
-    updateQuantity: (productId, qty) =>
+    updateQuantity: (productId, variantId, qty) =>
       setItems((curr) =>
-        curr.map((c) => (c.productId === productId ? { ...c, quantity: Math.max(1, qty) } : c))
+        curr.map((c) =>
+          lineKey(c.productId, c.variantId) === lineKey(productId, variantId)
+            ? { ...c, quantity: Math.max(1, qty) }
+            : c
+        )
       ),
-    remove: (productId) => setItems((curr) => curr.filter((c) => c.productId !== productId)),
+    remove: (productId, variantId) =>
+      setItems((curr) =>
+        curr.filter((c) => lineKey(c.productId, c.variantId) !== lineKey(productId, variantId))
+      ),
     clear: () => {
       setItems([]);
       setStartDate(null);
