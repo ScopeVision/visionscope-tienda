@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { calcItemPrice, daysBetween, type PricingModel } from "@/lib/rental";
+import { toast } from "sonner";
+import { calcCartLinePrice, daysBetween, type PricingModel } from "@/lib/rental";
+import { toDateOnly } from "@/lib/dates";
 
 export type CartItem = {
   productId: string;

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCart, type CartItem } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
-import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { calcCartLinePrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
@@ -93,7 +93,7 @@ const Checkout = () => {
   });
 
   if (cart.items.length === 0 && !success) {
-    navigate("/catalog");
+    navigate("/rental");
     return null;
   }
   if (!cart.startDate || !cart.endDate) {
@@ -606,12 +606,8 @@ const Checkout = () => {
                   </span>
                   <span className="tabular-nums">
                     {formatCurrency(
-                      calcItemPrice({
-                        priceDay: it.priceDay,
-                        priceWeek: it.priceWeek,
-                        days: cart.days,
-                        quantity: it.quantity,
-                      }).subtotal,
+                      // TODO: cargar PricingSettings desde site_settings
+                      calcCartLinePrice(it, cart.days, undefined).subtotal,
                       i18n.language,
                     )}
                   </span>
@@ -724,12 +720,8 @@ const SuccessScreen = ({
               </span>
               <span className="tabular-nums text-secondary">
                 {formatCurrency(
-                  calcItemPrice({
-                    priceDay: it.priceDay,
-                    priceWeek: it.priceWeek,
-                    days: snapshot.days,
-                    quantity: it.quantity,
-                  }).subtotal,
+                  // TODO: cargar PricingSettings desde site_settings
+                  calcCartLinePrice(it, snapshot.days, undefined).subtotal,
                   i18n.language,
                 )}
               </span>
