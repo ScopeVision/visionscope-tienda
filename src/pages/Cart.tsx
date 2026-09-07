@@ -7,7 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Trash2, ArrowRight, CalendarIcon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { calcCartLinePrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { toDateOnly } from "@/lib/dates";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,7 @@ const Cart = () => {
   const updateDates = (s?: Date, e?: Date) => {
     setStart(s);
     setEnd(e);
-    cart.setDates(s ? s.toISOString().slice(0, 10) : null, e ? e.toISOString().slice(0, 10) : null);
+    cart.setDates(s ? toDateOnly(s) : null, e ? toDateOnly(e) : null);
   };
 
   if (cart.items.length === 0) {

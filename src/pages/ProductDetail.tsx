@@ -184,8 +184,8 @@ const ProductDetail = () => {
         ids.map(async (id) => {
           const { data, error } = await supabase.rpc("available_stock", {
             _product_id: id,
-            _start: start!.toISOString().slice(0, 10),
-            _end: end!.toISOString().slice(0, 10),
+            _start: toDateOnly(start!),
+            _end: toDateOnly(end!),
           });
           if (!error) result[id] = (data as number) ?? 0;
         })
@@ -289,7 +289,7 @@ const ProductDetail = () => {
 
   const handleAdd = () => {
     if (start && end) {
-      cart.setDates(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
+      cart.setDates(toDateOnly(start), toDateOnly(end));
     }
     if (isKit && mode === "individual") {
       const picked = visibleComponents.filter((c: any) =>

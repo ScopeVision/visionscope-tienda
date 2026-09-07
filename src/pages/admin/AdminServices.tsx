@@ -54,7 +54,7 @@ type FormState = {
   notes: string;
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => toDateOnly(new Date());
 
 const blankForm = (): FormState => ({
   service_date: todayISO(),

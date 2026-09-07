@@ -225,7 +225,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
       return;
     }
     setExpandedItems(new Set());
-    const today = new Date().toISOString().split('T')[0];
+    const today = toDateOnly(new Date());
     setDraft({
       items: [],
       discount_type: "none",
@@ -433,7 +433,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id ?? null;
         const days = daysBetween(draft.start_date, draft.end_date);
-        const today = new Date().toISOString().split('T')[0];
+        const today = toDateOnly(new Date());
         const isRetroactive = draft.start_date < today;
 
         // Stock check — non-blocking, only for prospective bookings
@@ -797,7 +797,7 @@ export default function BookingEditor({ bookingId, isCreatingNew, onClose }: Pro
               </div>
 
               {/* Retroactive warning */}
-              {draft.start_date < new Date().toISOString().split('T')[0] && (
+              {draft.start_date < toDateOnly(new Date()) && (
                 <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                   ⚠ La fecha de inicio es anterior a hoy. Se registrará como reserva retroactiva en el historial.
                 </div>
