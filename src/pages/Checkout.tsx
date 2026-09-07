@@ -596,12 +596,13 @@ const Checkout = () => {
           <div className="space-y-3 text-sm">
             {cart.items.map((it) => (
               <div
-                key={it.productId}
+                key={`${it.productId}::${it.variantId ?? ""}`}
                 className="space-y-1.5 pb-3 border-b border-border/60 last:border-0 last:pb-0"
               >
                 <div className="flex justify-between gap-3">
                   <span className="text-foreground">
                     {it.name} <span className="text-secondary">×{it.quantity}</span>
+                    {it.variantName && <span className="text-secondary text-xs block">{it.variantName}</span>}
                   </span>
                   <span className="tabular-nums">
                     {formatCurrency(
@@ -716,9 +717,10 @@ const SuccessScreen = ({
 
         <div className="border-t border-border pt-4 space-y-3 text-sm">
           {snapshot.items.map((it) => (
-            <div key={it.productId} className="flex justify-between gap-3">
+            <div key={`${it.productId}::${it.variantId ?? ""}`} className="flex justify-between gap-3">
               <span>
                 {it.name} <span className="text-secondary">×{it.quantity}</span>
+                {it.variantName && <span className="text-secondary text-xs block">{it.variantName}</span>}
               </span>
               <span className="tabular-nums text-secondary">
                 {formatCurrency(
