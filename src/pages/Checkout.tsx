@@ -107,6 +107,15 @@ const Checkout = () => {
     return null;
   }
 
+  const mensajeDeErrorParaCliente = (raw: string): { message: string; isDisponibilidad: boolean } => {
+    const prefix = "SIN_DISPONIBILIDAD:";
+    const text = String(raw || "").trim();
+    if (text.toUpperCase().startsWith(prefix)) {
+      return { message: text.slice(prefix.length).trim(), isDisponibilidad: true };
+    }
+    return { message: text, isDisponibilidad: false };
+  };
+
   const explainCustomerError = (err: any, fullName: string, email: string): string => {
     const raw = (err?.message || "").toLowerCase();
     const code = err?.code;
@@ -126,7 +135,8 @@ const Checkout = () => {
     if (raw.includes("product not found or not published")) {
       return "Uno o más productos de tu carrito ya no están disponibles. Hemos actualizado tu carrito — revísalo antes de continuar.";
     }
-    return err?.message || t("checkout.error");
+    const { message } = mensajeDeErrorParaCliente(err?.message);
+    return message || t("checkout.error");
   };
 
   const handleEmailLookup = async () => {
