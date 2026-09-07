@@ -63,7 +63,7 @@ const Cart = () => {
             });
             return (
               <div
-                key={item.productId}
+                key={`${item.productId}::${item.variantId ?? ""}`}
                 className="flex gap-4 p-4 rounded-xl bg-surface border border-border"
               >
                 <div className="w-20 h-20 rounded-lg bg-muted shrink-0 overflow-hidden">
@@ -73,6 +73,9 @@ const Cart = () => {
                   <Link to={`/product/${item.slug}`} className="font-medium hover:text-accent">
                     {item.name}
                   </Link>
+                  {item.variantName && (
+                    <div className="text-xs text-secondary mt-0.5">{item.variantName}</div>
+                  )}
                   <div className="text-xs text-secondary mt-1">
                     {formatCurrency(item.priceDay, i18n.language)} {t("common.perDay")} · {t("common.deposit")}{" "}
                     {formatCurrency(item.deposit, i18n.language)}
