@@ -214,7 +214,7 @@ const Checkout = () => {
       });
       if (unavailable.length > 0) {
         unavailable.forEach(it => {
-          cart.remove(it.productId);
+          cart.remove(it.productId, it.variantId);
           toast.error(`"${it.name}" ya no está disponible y ha sido eliminado del carrito.`, { duration: 8000 });
         });
         setSubmitting(false);

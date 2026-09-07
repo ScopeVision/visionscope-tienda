@@ -84,7 +84,7 @@ const Cart = () => {
                       min={1}
                       max={20}
                       value={item.quantity}
-                      onChange={(e) => cart.updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                      onChange={(e) => cart.updateQuantity(item.productId, item.variantId, parseInt(e.target.value) || 1)}
                       className="w-16 h-8 px-2 rounded-md border border-border bg-background text-sm"
                     />
                   </div>
@@ -93,7 +93,7 @@ const Cart = () => {
                   <div className="font-medium">{formatCurrency(calc.subtotal, i18n.language)}</div>
                   <WeeklyDiscountBadge priceDay={item.priceDay} variant="pill" className="mt-1" />
                   <button
-                    onClick={() => cart.remove(item.productId)}
+                    onClick={() => cart.remove(item.productId, item.variantId)}
                     className="mt-2 text-secondary hover:text-destructive"
                     aria-label={t("cart.remove")}
                   >
