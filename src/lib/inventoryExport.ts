@@ -1,3 +1,4 @@
+import { toDateOnly } from "@/lib/dates";
 import Papa from "papaparse";
 import { localized } from "@/i18n";
 import type { ProductAudit } from "./inventoryAudit";
@@ -79,7 +80,7 @@ const triggerDownload = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-const stamp = () => new Date().toISOString().slice(0, 10);
+const stamp = () => toDateOnly(new Date());
 
 export function exportInventoryCsv(rows: ExportRow[]) {
   const csv = Papa.unparse(rows);

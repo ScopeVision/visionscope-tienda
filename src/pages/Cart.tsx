@@ -7,7 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Trash2, ArrowRight, CalendarIcon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { calcItemPrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { calcCartLinePrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
+import { toDateOnly } from "@/lib/dates";
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,7 @@ const Cart = () => {
   const updateDates = (s?: Date, e?: Date) => {
     setStart(s);
     setEnd(e);
-    cart.setDates(s ? s.toISOString().slice(0, 10) : null, e ? e.toISOString().slice(0, 10) : null);
+    cart.setDates(s ? toDateOnly(s) : null, e ? toDateOnly(e) : null);
   };
 
   if (cart.items.length === 0) {
@@ -36,7 +37,7 @@ const Cart = () => {
       <div className="container-page py-20 text-center">
         <h1 className="text-3xl font-display font-medium">{t("cart.title")}</h1>
         <p className="text-secondary mt-3">{t("cart.empty")}</p>
-        <Link to="/catalog">
+        <Link to="/rental">
           <Button className="mt-6 bg-foreground text-background hover:bg-foreground/90">
             {t("cart.emptyAction")}
           </Button>
@@ -53,14 +54,8 @@ const Cart = () => {
       <div className="grid lg:grid-cols-[1fr_360px] gap-10">
         <div className="space-y-3">
           {cart.items.map((item) => {
-            const calc = calcItemPrice({
-              priceDay: item.priceDay,
-              priceWeek: item.priceWeek,
-              days: cart.days,
-              quantity: item.quantity,
-              model: item.pricingModel ?? "premium",
-              customMultipliers: item.customMultipliers ?? null,
-            });
+            // TODO: cargar PricingSettings desde site_settings
+            const calc = calcCartLinePrice(item, cart.days, undefined);
             return (
               <div
                 key={`${item.productId}::${item.variantId ?? ""}`}

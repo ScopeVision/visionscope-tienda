@@ -129,6 +129,33 @@ export function calcItemPrice(opts: CalcItemPriceInput): CalcItemPriceResult {
   return { subtotal, weeklyApplied, contactRequired: false, avgPerDay, perUnit, multiplier, multipliers };
 }
 
+/**
+ * Precio de una línea del carrito. Punto ÚNICO de cálculo para carrito,
+ * checkout y confirmación: garantiza que nunca se olviden `model` ni
+ * `customMultipliers` (que harían caer el cálculo en el preset "premium").
+ */
+export function calcCartLinePrice(
+  item: {
+    priceDay: number;
+    priceWeek?: number | null;
+    quantity: number;
+    pricingModel?: PricingModel | null;
+    customMultipliers?: number[] | null;
+  },
+  days: number,
+  settings?: PricingSettings | null,
+): CalcItemPriceResult {
+  return calcItemPrice({
+    priceDay: item.priceDay,
+    priceWeek: item.priceWeek,
+    days,
+    quantity: item.quantity,
+    model: item.pricingModel ?? "premium",
+    customMultipliers: item.customMultipliers ?? null,
+    settings,
+  });
+}
+
 /** Full 1-7 days pricing table (per unit). Useful for product detail UI. */
 export function calcPricingTable(opts: Omit<CalcItemPriceInput, "days">) {
   const day = Number(opts.priceDay) || 0;

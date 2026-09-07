@@ -1,3 +1,4 @@
+import { toDateOnly } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,7 @@ type FormState = {
   notes: string;
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => toDateOnly(new Date());
 
 const blankForm = (): FormState => ({
   service_date: todayISO(),
