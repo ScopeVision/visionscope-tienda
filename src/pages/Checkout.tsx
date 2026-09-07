@@ -273,11 +273,13 @@ const Checkout = () => {
       );
       if (checkoutErr) {
         console.error("Checkout function error:", checkoutErr);
-        toast.error(explainCustomerError(checkoutErr, fullName, email), { duration: 8000 });
+        const { isDisponibilidad } = mensajeDeErrorParaCliente(checkoutErr?.message);
+        toast.error(explainCustomerError(checkoutErr, fullName, email), { duration: isDisponibilidad ? 10000 : 8000 });
         return;
       }
       if (!checkoutData?.ok) {
-        toast.error(checkoutData?.error || t("checkout.error"), { duration: 8000 });
+        const { message, isDisponibilidad } = mensajeDeErrorParaCliente(checkoutData?.error);
+        toast.error(message || t("checkout.error"), { duration: isDisponibilidad ? 10000 : 8000 });
         return;
       }
       const ref = checkoutData?.reference || "";
