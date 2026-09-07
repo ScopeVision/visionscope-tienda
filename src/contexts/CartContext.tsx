@@ -3,6 +3,8 @@ import { calcItemPrice, daysBetween, type PricingModel } from "@/lib/rental";
 
 export type CartItem = {
   productId: string;
+  variantId?: string | null;
+  variantName?: string | null;
   slug: string;
   name: string;
   image?: string;
@@ -20,8 +22,8 @@ type CartCtx = {
   endDate: string | null;
   setDates: (start: string | null, end: string | null) => void;
   add: (item: CartItem) => void;
-  updateQuantity: (productId: string, qty: number) => void;
-  remove: (productId: string) => void;
+  updateQuantity: (productId: string, variantId: string | null | undefined, qty: number) => void;
+  remove: (productId: string, variantId: string | null | undefined) => void;
   clear: () => void;
   days: number;
   subtotal: number;
