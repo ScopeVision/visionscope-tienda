@@ -193,17 +193,21 @@ const ProductDetail = () => {
             _start: toDateOnly(start!),
             _end: toDateOnly(end!),
           });
-          if (!error) {
-            result[id] = (data as number) ?? 0;
-          } else {
-            errors[id] = error;
+          if (error || data == null) {
+            errors[id] = error ?? new Error("No se pudo comprobar la disponibilidad");
+            return;
           }
+          result[id] = Number(data);
         })
       );
       // Propagate errors only for the individual product path; kits keep their
       // current child.stock fallback and must not break selection rendering.
-      if (!isKit && product && errors[product.id]) {
-        throw errors[product.id];
+      // Para producto individual: si el id del producto no ha llegado al mapa de
+      // resultados, es que la consulta ha fallado. No sabemos si hay disponibilidad,
+      // así que propagamos el error en lugar de fingir que hay cero unidades.
+      if (!isKit && product && !(product.id in result)) {
+        console.error("available_stock falló para", product.id, errors[product.id]);
+        throw errors[product.id] ?? new Error("No se pudo comprobar la disponibilidad");
       }
       return result;
     },
