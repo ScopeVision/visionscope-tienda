@@ -23,13 +23,6 @@ export type FacetGroup = {
   options: FacetOption[];
 };
 
-export type PriceRange = {
-  min: number;
-  max: number;
-  low: number;
-  high: number;
-};
-
 export type ActiveChip = {
   key: string;
   value: string;
@@ -44,16 +37,6 @@ export function useRentalCatalog() {
   const selectedCategory = params.get("category") ?? "";
   const sort = (params.get("sort") ?? "recommended") as SortOption;
   const searchTerm = params.get("q") ?? "";
-  const priceParam = params.get("price") ?? "";
-
-  const priceFilter = useMemo(() => {
-    if (!priceParam) return null;
-    const parts = priceParam.split("-");
-    if (parts.length !== 2) return null;
-    const low = Number(parts[0]);
-    const high = Number(parts[1]);
-    return isNaN(low) || isNaN(high) ? null : { low, high };
-  }, [priceParam]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["rental-products"],
@@ -128,21 +111,7 @@ export function useRentalCatalog() {
     });
   }, [products, selectedCategory, searchTerm, i18n.language]);
 
-  // Price range derived from categoryFiltered
-  const priceRange = useMemo((): PriceRange => {
-    if (categoryFiltered.length === 0) return { min: 0, max: 0, low: 0, high: 0 };
-    const prices = categoryFiltered.map(effectivePrice);
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
-    return {
-      min,
-      max,
-      low: priceFilter?.low ?? min,
-      high: priceFilter?.high ?? max,
-    };
-  }, [categoryFiltered, effectivePrice, priceFilter]);
-
-  // Final filtered list: category + search + dynFilters + price
+  // Final filtered list: category + search + dynFilters
   const filtered = useMemo(() => {
     let list = categoryFiltered.filter((p: any) => {
       const specs = CATEGORY_FILTERS[selectedCategory] ?? [];
@@ -155,10 +124,6 @@ export function useRentalCatalog() {
         }
         const value = p[spec.column];
         if (!value || !active.includes(value)) return false;
-      }
-      if (priceFilter) {
-        const price = effectivePrice(p);
-        if (price < priceFilter.low || price > priceFilter.high) return false;
       }
       return true;
     });
@@ -186,7 +151,7 @@ export function useRentalCatalog() {
       }
     });
     return list;
-  }, [categoryFiltered, selectedCategory, dynFilters, priceFilter, effectivePrice, popularityMap, sort, i18n.language]);
+  }, [categoryFiltered, selectedCategory, dynFilters, effectivePrice, popularityMap, sort, i18n.language]);
 
   // Count of published products per category slug
   const categoryCounts = useMemo(() => {
@@ -230,10 +195,6 @@ export function useRentalCatalog() {
           const val = p[s.column];
           if (!val || !active.includes(val)) return false;
         }
-        if (priceFilter) {
-          const price = effectivePrice(p);
-          if (price < priceFilter.low || price > priceFilter.high) return false;
-        }
         return true;
       });
 
@@ -260,7 +221,7 @@ export function useRentalCatalog() {
 
       return { key: spec.key, column: spec.column, labelKey: spec.labelKey, kind: "multi", options };
     });
-  }, [selectedCategory, categoryFiltered, dynFilters, priceFilter, effectivePrice, t]);
+  }, [selectedCategory, categoryFiltered, dynFilters, t]);
 
   // Active chips for individual dismissal
   const activeChips = useMemo((): ActiveChip[] => {
@@ -282,11 +243,8 @@ export function useRentalCatalog() {
     if (searchTerm.trim()) {
       chips.push({ key: "q", value: searchTerm, label: `"${searchTerm}"` });
     }
-    if (priceFilter && (priceFilter.low !== priceRange.min || priceFilter.high !== priceRange.max)) {
-      chips.push({ key: "price", value: priceParam, label: `€${priceFilter.low}–€${priceFilter.high}/día` });
-    }
     return chips;
-  }, [selectedCategory, dynFilters, searchTerm, priceFilter, priceRange.min, priceRange.max, priceParam, t]);
+  }, [selectedCategory, dynFilters, searchTerm, t]);
 
   const activeCount = activeChips.length + (selectedCategory ? 1 : 0);
 
@@ -303,22 +261,12 @@ export function useRentalCatalog() {
     }, 250);
   }, [setParams]);
 
-  const setPriceRange = useCallback((low: number, high: number) => {
-    setParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (low <= priceRange.min && high >= priceRange.max) next.delete("price");
-      else next.set("price", `${low}-${high}`);
-      return next;
-    });
-  }, [setParams, priceRange.min, priceRange.max]);
-
   // Changing category preserves q, sort, price; clears only category-specific sub-filters
   const setCategory = useCallback((slug: string) => {
     setParams((prev) => {
       const next = new URLSearchParams();
       if (prev.get("q")) next.set("q", prev.get("q")!);
       if (prev.get("sort")) next.set("sort", prev.get("sort")!);
-      if (prev.get("price")) next.set("price", prev.get("price")!);
       if (slug) next.set("category", slug);
       return next;
     });
@@ -329,8 +277,6 @@ export function useRentalCatalog() {
       const next = new URLSearchParams(prev);
       if (key === "q") {
         next.delete("q");
-      } else if (key === "price") {
-        next.delete("price");
       } else {
         const current = (next.get(key) ?? "").split(",").filter(Boolean);
         const updated = current.filter((v) => v !== value);
@@ -380,14 +326,12 @@ export function useRentalCatalog() {
     sort,
     activeCount,
     searchTerm,
-    priceRange,
     facets,
     activeChips,
     categoryCounts,
     totalPublished,
     // Actions
     setSearch,
-    setPriceRange,
     setCategory,
     removeChip,
     clearFilters,

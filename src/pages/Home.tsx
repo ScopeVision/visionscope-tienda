@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { CategorySlider } from "@/components/home/CategorySlider";
+import { SITE_URL } from "@/lib/site";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -56,10 +57,10 @@ const Home = () => {
       <Helmet>
         <title>The Vision Scope — Cinematic Rental House</title>
         <meta name="description" content="Rental house de cine profesional: cámaras, ópticas, iluminación y sonido. Equipo para producciones de alto nivel con servicio premium." />
-        <link rel="canonical" href="https://thevisionscope.lovable.app/" />
+        <link rel="canonical" href={`${SITE_URL}/`} />
         <meta property="og:title" content="The Vision Scope — Cinematic Rental House" />
         <meta property="og:description" content="Capture Stories. Craft Vision. Equipo cinematográfico profesional para tu próximo rodaje." />
-        <meta property="og:url" content="https://thevisionscope.lovable.app/" />
+        <meta property="og:url" content={`${SITE_URL}/`} />
         <meta property="og:type" content="website" />
       </Helmet>
       <HeroSlider />

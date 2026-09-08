@@ -33,7 +33,9 @@
     "company": "Company",
     "address": "Address",
     "notes": "Notes",
-    "language": "Language"
+    "language": "Language",
+    "longRentalNotice": "For rentals longer than 7 days, ask us for a quote",
+    "contactUs": "Contact us"
   },
   "nav": {
     "home": "Home",
@@ -117,7 +119,17 @@
     },
     "viewGear": "View gear",
     "empty": "No gear matches your filters.",
-    "from": "From"
+    "from": "From",
+    "showResults_one": "View {{count}} result",
+    "showResults_other": "View {{count}} results",
+    "sort": {
+      "recommended": "Recommended",
+      "popular": "Most rented",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "newest": "New arrivals",
+      "az": "A-Z"
+    }
   },
   "store": {
     "eyebrow": "Super Store",
@@ -180,7 +192,7 @@
     "empty": "No items match your filters.",
     "addToCart": "Add to booking",
     "viewDetails": "View details",
-    "outOfStock": "Out of stock"
+    "outOfStock": "Not available"
   },
   "product": {
     "back": "Back to catalog",
@@ -214,7 +226,9 @@
       "costHintBody": "You save {{diff}} by choosing the full kit.",
       "chooseVariant": "Choose a variant",
       "includes": "Includes"
-    }
+    },
+    "pricingTitle": "Rates",
+    "avgPerDay": "Avg / day"
   },
   "pricing": {
     "progressiveDiscount": "Progressive discount applied",
@@ -244,7 +258,26 @@
     "submit": "Submit request",
     "success": "Request submitted! We'll contact you to confirm.",
     "successRef": "Reference",
-    "error": "Could not submit the request. Please try again."
+    "error": "Could not submit the request. Please try again.",
+    "errors": {
+      "lookupInvalidEmail": "Enter a valid email to look up your details.",
+      "lookupFailed": "We couldn't look up the customer. Please fill in the form manually.",
+      "addressConfirm": "Please confirm the address is correct before submitting.",
+      "nameRequired": "Name is required.",
+      "invalidEmail": "Invalid email. Use the format name@domain.com.",
+      "itemUnavailable": "\"{{name}}\" is no longer available and has been removed from your booking.",
+      "customerSaveFailed": "Could not save the customer:",
+      "nameEmpty": "• Name cannot be empty.",
+      "nameTooLong": "• Name exceeds the 200 character limit.",
+      "emailLength": "• Email must be between 3 and 255 characters.",
+      "emailFormat": "• Invalid email format. Use the format name@domain.com.",
+      "genericCheck": "• Check that name and email are spelled correctly.",
+      "duplicate": "A customer with those details already exists.",
+      "constraint": "Some data doesn't meet the validation rules. Check name and email.",
+      "unpublished": "One or more items in your booking are no longer available. We've updated it — please review before continuing.",
+      "countryWarning": "Note: we usually operate in Spain. If your address is correct, you can continue.",
+      "regionWarning": "Note: we usually serve orders in Catalonia. If your address is correct, you can continue."
+    }
   },
   "auth": {
     "title": "Admin access",

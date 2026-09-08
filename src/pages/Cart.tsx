@@ -142,8 +142,14 @@ const Cart = () => {
           {contactRequired && (
             <div className="mt-5 p-4 rounded-lg border border-accent bg-accent-soft">
               <p className="text-sm font-medium">
-                For rentals of 8 days or more, please contact us.
+                {t("common.longRentalNotice")}
               </p>
+              <Link
+                to="/contact"
+                className="mt-3 inline-flex items-center justify-center w-full h-10 rounded-md border border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium"
+              >
+                {t("common.contactUs")}
+              </Link>
               {siteContact?.whatsapp_url && (
                 <a
                   href={siteContact.whatsapp_url}

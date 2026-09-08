@@ -33,7 +33,9 @@
     "company": "Société",
     "address": "Adresse",
     "notes": "Notes",
-    "language": "Langue"
+    "language": "Langue",
+    "longRentalNotice": "Pour les locations de plus de 7 jours, demandez-nous un devis",
+    "contactUs": "Nous contacter"
   },
   "nav": {
     "home": "Accueil",
@@ -117,7 +119,17 @@
     },
     "viewGear": "Voir l'équipement",
     "empty": "Aucun équipement ne correspond aux filtres.",
-    "from": "Dès"
+    "from": "Dès",
+    "showResults_one": "Voir {{count}} résultat",
+    "showResults_other": "Voir {{count}} résultats",
+    "sort": {
+      "recommended": "Recommandés",
+      "popular": "Les plus loués",
+      "priceAsc": "Prix : croissant",
+      "priceDesc": "Prix : décroissant",
+      "newest": "Nouveautés",
+      "az": "A-Z"
+    }
   },
   "store": {
     "eyebrow": "Super Store",
@@ -180,7 +192,7 @@
     "empty": "Aucun équipement ne correspond à vos filtres.",
     "addToCart": "Ajouter à la réservation",
     "viewDetails": "Voir détails",
-    "outOfStock": "Rupture de stock"
+    "outOfStock": "Indisponible"
   },
   "product": {
     "back": "Retour au catalogue",
@@ -214,7 +226,9 @@
       "costHintBody": "Tu économises {{diff}} en prenant le kit complet.",
       "chooseVariant": "Choisir une variante",
       "includes": "Inclut"
-    }
+    },
+    "pricingTitle": "Tarifs",
+    "avgPerDay": "Moyenne / jour"
   },
   "pricing": {
     "progressiveDiscount": "Remise progressive appliquée",
@@ -244,7 +258,26 @@
     "submit": "Envoyer la demande",
     "success": "Demande envoyée ! Nous vous contacterons pour confirmer.",
     "successRef": "Référence",
-    "error": "Impossible d'envoyer la demande. Réessayez."
+    "error": "Impossible d'envoyer la demande. Réessayez.",
+    "errors": {
+      "lookupInvalidEmail": "Saisissez un email valide pour retrouver vos informations.",
+      "lookupFailed": "Impossible de retrouver le client. Remplissez le formulaire manuellement.",
+      "addressConfirm": "Merci de confirmer que l'adresse est correcte avant d'envoyer.",
+      "nameRequired": "Le nom est obligatoire.",
+      "invalidEmail": "Email invalide. Utilisez le format nom@domaine.com.",
+      "itemUnavailable": "« {{name}} » n'est plus disponible et a été retiré de votre réservation.",
+      "customerSaveFailed": "Impossible d'enregistrer le client :",
+      "nameEmpty": "• Le nom ne peut pas être vide.",
+      "nameTooLong": "• Le nom dépasse les 200 caractères autorisés.",
+      "emailLength": "• L'email doit comporter entre 3 et 255 caractères.",
+      "emailFormat": "• Format d'email invalide. Utilisez le format nom@domaine.com.",
+      "genericCheck": "• Vérifiez que le nom et l'email sont bien écrits.",
+      "duplicate": "Un client avec ces informations existe déjà.",
+      "constraint": "Certaines données ne respectent pas les règles de validation. Vérifiez le nom et l'email.",
+      "unpublished": "Un ou plusieurs articles de votre réservation ne sont plus disponibles. Nous l'avons mise à jour — vérifiez-la avant de continuer.",
+      "countryWarning": "Remarque : nous opérons habituellement en Espagne. Si votre adresse est correcte, vous pouvez continuer.",
+      "regionWarning": "Remarque : nous servons habituellement des commandes en Catalogne. Si votre adresse est correcte, vous pouvez continuer."
+    }
   },
   "auth": {
     "title": "Accès au panneau",

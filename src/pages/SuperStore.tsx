@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { SITE_URL } from "@/lib/site";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -93,9 +94,9 @@ const SuperStore = () => {
           name="description"
           content="Super Store de The Vision Scope: accesorios, consumibles y equipo cinematográfico a la venta. Productos seleccionados por profesionales del cine."
         />
-        <link rel="canonical" href="https://thevisionscope.lovable.app/super-store" />
+        <link rel="canonical" href={`${SITE_URL}/super-store`} />
         <meta property="og:title" content="Super Store — The Vision Scope" />
-        <meta property="og:url" content="https://thevisionscope.lovable.app/super-store" />
+        <meta property="og:url" content={`${SITE_URL}/super-store`} />
         <meta property="og:type" content="website" />
       </Helmet>
       <header className="mb-10">

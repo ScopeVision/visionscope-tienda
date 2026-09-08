@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { localized } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/rental";
 import { Search, X, ImageOff, ArrowRight, SlidersHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -15,13 +14,13 @@ import { cn } from "@/lib/utils";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { useRentalCatalog, SortOption } from "@/hooks/useRentalCatalog";
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "recommended", label: "Recomendados" },
-  { value: "popular", label: "Más alquilados" },
-  { value: "price_asc", label: "Precio: menor a mayor" },
-  { value: "price_desc", label: "Precio: mayor a menor" },
-  { value: "newest", label: "Novedades" },
-  { value: "az", label: "A-Z" },
+const SORT_OPTIONS: { value: SortOption; labelKey: string }[] = [
+  { value: "recommended", labelKey: "rental.sort.recommended" },
+  { value: "popular", labelKey: "rental.sort.popular" },
+  { value: "price_asc", labelKey: "rental.sort.priceAsc" },
+  { value: "price_desc", labelKey: "rental.sort.priceDesc" },
+  { value: "newest", labelKey: "rental.sort.newest" },
+  { value: "az", labelKey: "rental.sort.az" },
 ];
 
 const RentalHouse = () => {
@@ -35,14 +34,12 @@ const RentalHouse = () => {
     activeCount,
     activeChips,
     searchTerm,
-    priceRange,
     facets,
     selectedCategory,
     sort,
     categoryCounts,
     totalPublished,
     setSearch,
-    setPriceRange,
     setCategory,
     removeChip,
     clearFilters,
@@ -81,13 +78,11 @@ const RentalHouse = () => {
     },
   });
 
-  const hasPriceSlider = priceRange.min < priceRange.max;
-
   const FilterPanel = ({ onDone }: { onDone?: () => void }) => (
     <>
       {/* Category pills */}
       <div className="mb-5">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">Categoría</div>
+        <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-2">{t("rental.filters.category")}</div>
         <div className="flex flex-wrap gap-2">
           <CategoryPill
             active={!selectedCategory}
@@ -165,26 +160,6 @@ const RentalHouse = () => {
         </div>
       )}
 
-      {/* Price range slider */}
-      {hasPriceSlider && (
-        <div className="mb-5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-secondary mb-3">
-            Precio/día: <span className="text-foreground">€{priceRange.low} – €{priceRange.high}</span>
-          </div>
-          <Slider
-            min={priceRange.min}
-            max={priceRange.max}
-            step={1}
-            value={[priceRange.low, priceRange.high]}
-            onValueChange={([low, high]) => setPriceRange(low, high)}
-            className="w-full"
-          />
-          <div className="flex justify-between text-[10px] text-secondary mt-1">
-            <span>€{priceRange.min}</span>
-            <span>€{priceRange.max}</span>
-          </div>
-        </div>
-      )}
     </>
   );
 
@@ -233,7 +208,7 @@ const RentalHouse = () => {
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2 h-10 border-border shrink-0">
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtros
+              {t("common.filters")}
               {activeCount > 0 && (
                 <span className="bg-accent text-accent-foreground text-[10px] font-medium rounded-full h-4 w-4 grid place-items-center leading-none">
                   {activeCount}
@@ -243,7 +218,7 @@ const RentalHouse = () => {
           </SheetTrigger>
           <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-xl">
             <SheetHeader className="mb-5">
-              <SheetTitle className="text-left text-[11px] uppercase tracking-[0.28em]">Filtros</SheetTitle>
+              <SheetTitle className="text-left text-[11px] uppercase tracking-[0.28em]">{t("common.filters")}</SheetTitle>
             </SheetHeader>
             <FilterPanel onDone={() => setFilterOpen(false)} />
             {activeCount > 0 && (
@@ -252,14 +227,14 @@ const RentalHouse = () => {
                 onClick={() => { clearFilters(); setFilterOpen(false); }}
                 className="gap-2 text-secondary hover:text-accent uppercase tracking-[0.18em] text-[11px] mb-3 w-full justify-start"
               >
-                <X className="h-3 w-3" /> Limpiar filtros
+                <X className="h-3 w-3" /> {t("rental.filters.clear")}
               </Button>
             )}
             <Button
               className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 uppercase tracking-[0.2em] text-xs rounded-sm"
               onClick={() => setFilterOpen(false)}
             >
-              Ver {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+              {t("rental.showResults", { count: filtered.length })}
             </Button>
           </SheetContent>
         </Sheet>
@@ -326,7 +301,7 @@ const RentalHouse = () => {
           className="h-9 px-3 rounded-md bg-surface border border-border text-xs focus:outline-none focus:ring-2 focus:ring-accent"
         >
           {SORT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
           ))}
         </select>
       </div>

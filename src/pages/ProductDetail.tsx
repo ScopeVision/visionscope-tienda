@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SITE_URL } from "@/lib/site";
 import { calcItemPrice, calcPricingTable, daysBetween, formatCurrency, MAX_AUTO_DAYS, type PricingModel } from "@/lib/rental";
 import { useCart } from "@/contexts/CartContext";
 import { useSiteContact } from "@/hooks/useSiteContact";
@@ -421,7 +422,7 @@ const ProductDetail = () => {
               ? false
               : (disponibilidadEfectiva ?? 0) > 0;
 
-  const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
+  const canonicalUrl = `${SITE_URL}/rental/${product.slug}`;
   const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
   const firstVideo: any = (videos as any[]).find((v) => v.video_id);
   const productJsonLd = {
@@ -621,15 +622,13 @@ const ProductDetail = () => {
                 </div>
                 <div className="mt-4 rounded-md border border-border overflow-hidden">
                   <div className="px-3 py-2 bg-muted text-[10px] uppercase tracking-[0.18em] text-secondary flex items-center justify-between">
-                    <span>Pricing</span>
-                    <span className="text-accent">{productModel}</span>
+                    <span>{t("product.pricingTitle")}</span>
                   </div>
                   <table className="w-full text-xs">
                     <tbody>
                       {pricingTable.map((row) => (
                         <tr key={row.day} className={cn("border-t border-border", row.isWeek && "bg-accent-soft/40")}>
                           <td className="px-3 py-1.5 text-secondary">{row.day} {t(row.day === 1 ? "common.day" : "common.days")}</td>
-                          <td className="px-3 py-1.5 text-right text-secondary">×{row.multiplier.toFixed(2)}</td>
                           <td className="px-3 py-1.5 text-right font-medium">{formatCurrency(row.price, i18n.language)}</td>
                           <td className="px-3 py-1.5 text-right text-accent">{row.savings > 0 ? `−${Math.round(row.savingsPct*100)}%` : ""}</td>
                         </tr>
@@ -777,7 +776,7 @@ const ProductDetail = () => {
             {start && end && currentCalc.contactRequired && (
               <div className="mt-5 p-4 rounded-lg border border-accent bg-accent-soft">
                 <p className="text-sm font-medium">
-                  For rentals of 8 days or more, please contact us.
+                  {t("common.longRentalNotice")}
                 </p>
                 {siteContact?.whatsapp_url && (
                   <a
@@ -803,7 +802,7 @@ const ProductDetail = () => {
                   </span>
                 </div>
                 <div className="mt-1 flex justify-between text-xs text-secondary">
-                  <span>Avg / day</span>
+                  <span>{t("product.avgPerDay")}</span>
                   <span>{formatCurrency(currentCalc.avgPerDay, i18n.language)}</span>
                 </div>
                 <p className="mt-2 text-xs text-secondary">{t("product.depositInfo")}</p>
