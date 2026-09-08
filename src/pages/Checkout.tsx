@@ -164,6 +164,7 @@ const Checkout = () => {
         form.setValue("tax_id", c.tax_id ?? "");
         form.setValue("address_line1", c.address_line1 ?? "");
         form.setValue("city", c.city ?? "");
+        form.setValue("region", c.region ?? "");
         form.setValue("postal_code", c.postal_code ?? "");
         form.setValue("country", c.country ?? "");
         setLookupResult("found");
@@ -265,6 +266,7 @@ const Checkout = () => {
             tax_id: values.tax_id?.trim() || null,
             address_line1: values.address_line1?.trim() || null,
             city: values.city?.trim() || null,
+            region: values.region?.trim() || null,
             postal_code: values.postal_code?.trim() || null,
             country: values.country?.trim() || null,
             notes: values.notes?.trim() || null,
