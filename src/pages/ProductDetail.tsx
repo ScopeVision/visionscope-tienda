@@ -796,6 +796,27 @@ const ProductDetail = () => {
                   ? t("product.kit.addSelection")
                   : t("product.addToCart")}
             </Button>
+
+            {!isKit && mode !== "individual" && (
+              <>
+                {!start || !end ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.selectDates")}
+                  </p>
+                ) : availabilityLoading ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.checking")}
+                  </p>
+                ) : (disponibilidadEfectiva ?? 0) <= 0 ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.unavailableRange", {
+                      inicio: format(start, "dd/MM/yyyy"),
+                      fin: format(end, "dd/MM/yyyy"),
+                    })}
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
