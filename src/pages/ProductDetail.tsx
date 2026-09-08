@@ -171,7 +171,11 @@ const ProductDetail = () => {
 
   // Availability check per date range — fetches available_stock for visible items.
   const availabilityKey = visibleComponents.map((c: any) => c.child_product_id).join(",");
-  const { data: availability = {}, isFetching: availabilityLoading } = useQuery({
+  const {
+    data: availability = {},
+    isFetching: availabilityLoading,
+    isError: availabilityError,
+  } = useQuery({
     queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
     enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
     queryFn: async () => {
@@ -181,6 +185,7 @@ const ProductDetail = () => {
           ? [product.id]
           : [];
       const result: Record<string, number> = {};
+      const errors: Record<string, unknown> = {};
       await Promise.all(
         ids.map(async (id) => {
           const { data, error } = await supabase.rpc("available_stock", {
@@ -188,9 +193,18 @@ const ProductDetail = () => {
             _start: toDateOnly(start!),
             _end: toDateOnly(end!),
           });
-          if (!error) result[id] = (data as number) ?? 0;
+          if (!error) {
+            result[id] = (data as number) ?? 0;
+          } else {
+            errors[id] = error;
+          }
         })
       );
+      // Propagate errors only for the individual product path; kits keep their
+      // current child.stock fallback and must not break selection rendering.
+      if (!isKit && product && errors[product.id]) {
+        throw errors[product.id];
+      }
       return result;
     },
   });
