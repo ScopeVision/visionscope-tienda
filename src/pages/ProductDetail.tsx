@@ -171,7 +171,7 @@ const ProductDetail = () => {
 
   // Availability check per date range — fetches available_stock for visible items.
   const availabilityKey = visibleComponents.map((c: any) => c.child_product_id).join(",");
-  const { data: availability = {} } = useQuery({
+  const { data: availability = {}, isFetching: availabilityLoading } = useQuery({
     queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
     enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
     queryFn: async () => {
@@ -194,6 +194,28 @@ const ProductDetail = () => {
       return result;
     },
   });
+
+  // Real availability for this product in the selected date range.
+  // Variants share stock: availability is per PRODUCT, never per variant.
+  const disponibilidadFechas: number | null = useMemo(() => {
+    if (!start || !end || !product) return null;
+    return availability[product.id] ?? null;
+  }, [start, end, product, availability]);
+
+  // Subtract what the customer already has in the cart for THIS product
+  // (all variants), but only if the cart dates match the selected dates.
+  const cartQtyMismoProducto = useMemo(() => {
+    if (!product || !start || !end) return 0;
+    if (cart.startDate !== toDateOnly(start) || cart.endDate !== toDateOnly(end)) return 0;
+    return cart.items
+      .filter((i) => i.productId === product.id)
+      .reduce((acc, i) => acc + i.quantity, 0);
+  }, [product, start, end, cart.items, cart.startDate, cart.endDate]);
+
+  const disponibilidadEfectiva: number | null =
+    disponibilidadFechas == null
+      ? null
+      : Math.max(0, disponibilidadFechas - cartQtyMismoProducto);
 
   const days = useMemo(() => (start && end ? daysBetween(start, end) : 1), [start, end]);
 
@@ -369,7 +391,11 @@ const ProductDetail = () => {
       ? selectedComponents.size > 0
       : isKit
         ? visibleComponents.length > 0
-        : product.stock > 0;
+        : !start || !end
+          ? true
+          : availabilityLoading
+            ? false
+            : (disponibilidadEfectiva ?? 0) > 0;
 
   const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
   const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
@@ -696,8 +722,18 @@ const ProductDetail = () => {
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-secondary flex items-center justify-between">
-                  <span>{t("product.stock")}</span>
-                  <span className="text-foreground">{product.stock}</span>
+                  <span>{t("product.availability.label")}</span>
+                  <span className="text-foreground">
+                    {!start || !end
+                      ? t("product.availability.selectDates")
+                      : availabilityLoading
+                        ? t("product.availability.checking")
+                        : (disponibilidadEfectiva ?? 0) >= 2
+                          ? t("product.availability.available")
+                          : disponibilidadEfectiva === 1
+                            ? t("product.availability.lastUnits")
+                            : t("product.availability.unavailableDates")}
+                  </span>
                 </div>
               </>
             )}
@@ -760,6 +796,27 @@ const ProductDetail = () => {
                   ? t("product.kit.addSelection")
                   : t("product.addToCart")}
             </Button>
+
+            {!isKit && mode !== "individual" && (
+              <>
+                {!start || !end ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.selectDates")}
+                  </p>
+                ) : availabilityLoading ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.checking")}
+                  </p>
+                ) : (disponibilidadEfectiva ?? 0) <= 0 ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.unavailableRange", {
+                      inicio: format(start, "dd/MM/yyyy"),
+                      fin: format(end, "dd/MM/yyyy"),
+                    })}
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
