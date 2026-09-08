@@ -33,7 +33,9 @@
     "company": "Empresa",
     "address": "Adreça",
     "notes": "Notes",
-    "language": "Idioma"
+    "language": "Idioma",
+    "longRentalNotice": "Per a lloguers de més de 7 jornades, demana'ns pressupost",
+    "contactUs": "Contactar"
   },
   "nav": {
     "home": "Inici",
@@ -117,7 +119,17 @@
     },
     "viewGear": "Veure equip",
     "empty": "No hi ha equips que coincideixin amb els filtres.",
-    "from": "Des de"
+    "from": "Des de",
+    "showResults_one": "Veure {{count}} resultat",
+    "showResults_other": "Veure {{count}} resultats",
+    "sort": {
+      "recommended": "Recomanats",
+      "popular": "Més llogats",
+      "priceAsc": "Preu: de menor a major",
+      "priceDesc": "Preu: de major a menor",
+      "newest": "Novetats",
+      "az": "A-Z"
+    }
   },
   "store": {
     "eyebrow": "Super Store",
@@ -180,7 +192,7 @@
     "empty": "No hi ha equips que coincideixin amb els teus filtres.",
     "addToCart": "Afegir a la reserva",
     "viewDetails": "Veure detalls",
-    "outOfStock": "Sense estoc"
+    "outOfStock": "No disponible"
   },
   "product": {
     "back": "Tornar al catàleg",
@@ -214,7 +226,9 @@
       "costHintBody": "Estalvies {{diff}} triant el kit complet.",
       "chooseVariant": "Tria una variant",
       "includes": "Inclou"
-    }
+    },
+    "pricingTitle": "Tarifes",
+    "avgPerDay": "Mitjana / dia"
   },
   "pricing": {
     "progressiveDiscount": "Descompte progressiu aplicat",
@@ -244,7 +258,26 @@
     "submit": "Enviar sol·licitud",
     "success": "Sol·licitud enviada! Et contactarem per confirmar.",
     "successRef": "Referència",
-    "error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar."
+    "error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar.",
+    "errors": {
+      "lookupInvalidEmail": "Introdueix un email vàlid per cercar les teves dades.",
+      "lookupFailed": "No s'ha pogut cercar el client. Omple el formulari manualment.",
+      "addressConfirm": "Si us plau, confirma que l'adreça és correcta abans d'enviar.",
+      "nameRequired": "El nom és obligatori.",
+      "invalidEmail": "Email no vàlid. Fes servir el format nom@domini.com.",
+      "itemUnavailable": "\"{{name}}\" ja no està disponible i s'ha eliminat de la cistella.",
+      "customerSaveFailed": "No s'ha pogut desar el client:",
+      "nameEmpty": "• El nom no pot estar buit.",
+      "nameTooLong": "• El nom supera els 200 caràcters permesos.",
+      "emailLength": "• L'email ha de tenir entre 3 i 255 caràcters.",
+      "emailFormat": "• Format d'email no vàlid. Fes servir el format nom@domini.com.",
+      "genericCheck": "• Revisa que el nom i l'email estiguin ben escrits.",
+      "duplicate": "Ja existeix un client amb aquestes dades.",
+      "constraint": "Alguna dada no compleix les regles de validació. Revisa nom i email.",
+      "unpublished": "Un o més productes de la teva cistella ja no estan disponibles. Hem actualitzat la cistella — revisa-la abans de continuar.",
+      "countryWarning": "Nota: habitualment operem a Espanya. Si la teva adreça és correcta, pots continuar.",
+      "regionWarning": "Nota: habitualment servim comandes a Catalunya. Si la teva adreça és correcta, pots continuar."
+    }
   },
   "auth": {
     "title": "Accés al panell",
