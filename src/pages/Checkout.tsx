@@ -61,6 +61,10 @@ const STEPS = [
   { id: 3, label: "Revisar" },
 ] as const;
 
+// Google OAuth: se pondrá a true cuando existan las credenciales configuradas.
+// Mientras sea false no se renderiza el botón (un botón que no hace nada rompe la confianza).
+const GOOGLE_OAUTH_HABILITADO = false;
+
 const Checkout = () => {
   const { t, i18n } = useTranslation();
   const cart = useCart();
@@ -121,19 +125,19 @@ const Checkout = () => {
     const code = err?.code;
     if (raw.includes("row-level security") || code === "42501") {
       const reasons: string[] = [];
-      if (fullName.length < 1) reasons.push("• El nombre no puede estar vacío.");
-      else if (fullName.length > 200) reasons.push("• El nombre supera los 200 caracteres permitidos.");
-      if (email.length < 3 || email.length > 255) reasons.push("• El email debe tener entre 3 y 255 caracteres.");
+      if (fullName.length < 1) reasons.push(t("checkout.errors.nameEmpty"));
+      else if (fullName.length > 200) reasons.push(t("checkout.errors.nameTooLong"));
+      if (email.length < 3 || email.length > 255) reasons.push(t("checkout.errors.emailLength"));
       else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
-        reasons.push("• Formato de email no válido. Usa el formato nombre@dominio.com.");
-      if (reasons.length === 0) reasons.push("• Revisa que el nombre y el email estén bien escritos.");
-      return `No se pudo guardar el cliente:\n${reasons.join("\n")}`;
+        reasons.push(t("checkout.errors.emailFormat"));
+      if (reasons.length === 0) reasons.push(t("checkout.errors.genericCheck"));
+      return `${t("checkout.errors.customerSaveFailed")}\n${reasons.join("\n")}`;
     }
-    if (code === "23505") return "Ya existe un cliente con esos datos.";
+    if (code === "23505") return t("checkout.errors.duplicate");
     if (raw.includes("violates check constraint"))
-      return "Algún dato no cumple las reglas de validación. Revisa nombre y email.";
+      return t("checkout.errors.constraint");
     if (raw.includes("product not found or not published")) {
-      return "Uno o más productos de tu carrito ya no están disponibles. Hemos actualizado tu carrito — revísalo antes de continuar.";
+      return t("checkout.errors.unpublished");
     }
     const { message } = mensajeDeErrorParaCliente(err?.message);
     return message || t("checkout.error");
@@ -142,7 +146,7 @@ const Checkout = () => {
   const handleEmailLookup = async () => {
     const email = lookupEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Introduce un email válido para buscar tus datos.");
+      toast.error(t("checkout.errors.lookupInvalidEmail"));
       return;
     }
     setLookupLoading(true);
@@ -169,7 +173,7 @@ const Checkout = () => {
       }
     } catch (err: any) {
       console.error("Email lookup error:", err);
-      toast.error("No se pudo buscar el cliente. Rellena el formulario manualmente.");
+      toast.error(t("checkout.errors.lookupFailed"));
     } finally {
       setLookupLoading(false);
     }
@@ -190,10 +194,10 @@ const Checkout = () => {
       const countryVal = form.getValues("country").toLowerCase();
       const regionVal = (form.getValues("region") ?? "").toLowerCase();
       if (countryVal && !["españa", "spain", "espanya", "es"].some(v => countryVal.includes(v))) {
-        toast.warning("Nota: habitualmente operamos en España. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+        toast.warning(t("checkout.errors.countryWarning"), { duration: 6000 });
       }
       if (regionVal && !["cataluña", "catalonia", "catalunya", "cat"].some(v => regionVal.includes(v))) {
-        toast.warning("Nota: habitualmente servimos pedidos en Cataluña. Si tu dirección es correcta, puedes continuar.", { duration: 6000 });
+        toast.warning(t("checkout.errors.regionWarning"), { duration: 6000 });
       }
       setStep(3);
     }
@@ -207,7 +211,7 @@ const Checkout = () => {
 
   const onSubmit = async (values: FormValues) => {
     if (!addressConfirmed) {
-      toast.error("Por favor, confirma que la dirección es correcta antes de enviar.");
+      toast.error(t("checkout.errors.addressConfirm"));
       return;
     }
     setSubmitting(true);
@@ -225,7 +229,7 @@ const Checkout = () => {
       if (unavailable.length > 0) {
         unavailable.forEach(it => {
           cart.remove(it.productId, it.variantId);
-          toast.error(`"${it.name}" ya no está disponible y ha sido eliminado del carrito.`, { duration: 8000 });
+          toast.error(t("checkout.errors.itemUnavailable", { name: it.name }), { duration: 8000 });
         });
         setSubmitting(false);
         return;
@@ -233,9 +237,9 @@ const Checkout = () => {
 
       const fullName = values.full_name.trim();
       const email = values.email.trim().toLowerCase();
-      if (fullName.length < 1) return toast.error("El nombre es obligatorio.");
+      if (fullName.length < 1) return toast.error(t("checkout.errors.nameRequired"));
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
-        return toast.error("Email no válido. Usa el formato nombre@dominio.com.");
+        return toast.error(t("checkout.errors.invalidEmail"));
 
       // Snapshot BEFORE clearing cart so the success screen can show the recap
       const snapshot: Omit<SuccessSnapshot, "reference"> = {
@@ -358,7 +362,8 @@ const Checkout = () => {
               {/* Customer identification */}
               <div className="p-5 rounded-sm bg-surface border border-border space-y-4">
                 <div className="text-[10px] uppercase tracking-[0.28em] text-accent mb-1">¿Ya has alquilado antes?</div>
-                <div className="grid md:grid-cols-2 gap-4 items-start">
+                <div className={GOOGLE_OAUTH_HABILITADO ? "grid md:grid-cols-2 gap-4 items-start" : "grid grid-cols-1 gap-4 items-start"}>
+                  {GOOGLE_OAUTH_HABILITADO && (
                   <div className="space-y-1.5">
                     <Button
                       type="button"
@@ -376,6 +381,7 @@ const Checkout = () => {
                     </Button>
                     <p className="text-[10px] text-secondary text-center">Pre-rellena tus datos automáticamente</p>
                   </div>
+                  )}
                   <div className="space-y-1.5">
                     <div className="flex gap-2">
                       <Input
