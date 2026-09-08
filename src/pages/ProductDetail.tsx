@@ -806,11 +806,17 @@ const ProductDetail = () => {
               onClick={handleAdd}
               disabled={!canAdd || (!!start && !!end && currentCalc.contactRequired)}
             >
-              {!canAdd && !isKit
-                ? t("catalog.outOfStock")
-                : mode === "individual"
-                  ? t("product.kit.addSelection")
-                  : t("product.addToCart")}
+              {!isKit && !start || !end
+                ? t("product.addToCart")
+                : !isKit && availabilityLoading
+                  ? t("product.availability.checking")
+                  : !isKit && availabilityError
+                    ? t("product.availability.checkFailedShort")
+                    : !canAdd && !isKit
+                      ? t("catalog.outOfStock")
+                      : mode === "individual"
+                        ? t("product.kit.addSelection")
+                        : t("product.addToCart")}
             </Button>
 
             {!isKit && mode !== "individual" && (
