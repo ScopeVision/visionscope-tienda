@@ -30,7 +30,16 @@ export const CategorySlider = () => {
         .select("*")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+
+      // Vista pública: solo categorías con al menos un producto publicado.
+      const { data: pubs, error: pubErr } = await supabase
+        .from("products")
+        .select("category_id")
+        .eq("published", true)
+        .eq("standalone_rentable", true);
+      if (pubErr) throw pubErr;
+      const withProducts = new Set((pubs ?? []).map((p: any) => p.category_id).filter(Boolean));
+      return (data ?? []).filter((c: any) => withProducts.has(c.id));
     },
   });
 
