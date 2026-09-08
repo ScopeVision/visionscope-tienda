@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
       _tax_id: payload.tax_id ?? null,
       _address_line1: payload.address_line1 ?? null,
       _city: payload.city ?? null,
+      _region: payload.region ?? null,
       _postal_code: payload.postal_code ?? null,
       _country: payload.country ?? null,
       _notes: payload.notes ?? null,

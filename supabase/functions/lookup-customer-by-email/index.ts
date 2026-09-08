@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await admin
       .from("customers")
-      .select("full_name, email, phone, company, tax_id, address_line1, city, postal_code, country")
+      .select("full_name, email, phone, company, tax_id, address_line1, city, region, postal_code, country")
       .eq("email", normalizedEmail)
       .order("created_at", { ascending: true })
       .limit(1)
@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
         tax_id: data.tax_id ?? "",
         address_line1: data.address_line1 ?? "",
         city: data.city ?? "",
+        region: data.region ?? "",
         postal_code: data.postal_code ?? "",
         country: data.country ?? "",
       },

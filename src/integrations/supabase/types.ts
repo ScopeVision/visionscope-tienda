@@ -2915,27 +2915,50 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: string
       }
-      submit_checkout_request: {
-        Args: {
-          _address_line1: string
-          _city: string
-          _company: string
-          _country: string
-          _email: string
-          _end_date: string
-          _full_name: string
-          _items: Json
-          _notes: string
-          _phone: string
-          _postal_code: string
-          _start_date: string
-          _tax_id: string
-        }
-        Returns: {
-          booking_id: string
-          reference: string
-        }[]
-      }
+      submit_checkout_request:
+        | {
+            Args: {
+              _address_line1: string
+              _city: string
+              _company: string
+              _country: string
+              _email: string
+              _end_date: string
+              _full_name: string
+              _items: Json
+              _notes: string
+              _phone: string
+              _postal_code: string
+              _start_date: string
+              _tax_id: string
+            }
+            Returns: {
+              booking_id: string
+              reference: string
+            }[]
+          }
+        | {
+            Args: {
+              _address_line1: string
+              _city: string
+              _company: string
+              _country: string
+              _email: string
+              _end_date: string
+              _full_name: string
+              _items: Json
+              _notes: string
+              _phone: string
+              _postal_code: string
+              _region: string
+              _start_date: string
+              _tax_id: string
+            }
+            Returns: {
+              booking_id: string
+              reference: string
+            }[]
+          }
       update_partner_equity: { Args: { _changes: Json }; Returns: undefined }
       validate_booking_finance_invariant: {
         Args: { _booking_id: string }
