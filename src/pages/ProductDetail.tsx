@@ -21,6 +21,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 
+/**
+ * Valor centinela para "no hemos podido comprobar la disponibilidad".
+ * Se distingue de 0 (comprobado y sin unidades libres) porque un fallo de red
+ * no es una respuesta: nunca debe presentarse al cliente como falta de stock.
+ */
+export const DISPONIBILIDAD_DESCONOCIDA = -1;
+
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
@@ -174,7 +181,6 @@ const ProductDetail = () => {
   const {
     data: availability = {},
     isFetching: availabilityLoading,
-    isError: availabilityError,
   } = useQuery({
     queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
     enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
@@ -185,30 +191,26 @@ const ProductDetail = () => {
           ? [product.id]
           : [];
       const result: Record<string, number> = {};
-      const errors: Record<string, unknown> = {};
       await Promise.all(
         ids.map(async (id) => {
-          const { data, error } = await supabase.rpc("available_stock", {
-            _product_id: id,
-            _start: toDateOnly(start!),
-            _end: toDateOnly(end!),
-          });
-          if (error || data == null) {
-            errors[id] = error ?? new Error("No se pudo comprobar la disponibilidad");
-            return;
+          try {
+            const { data, error } = await supabase.rpc("available_stock", {
+              _product_id: id,
+              _start: toDateOnly(start!),
+              _end: toDateOnly(end!),
+            });
+            if (error || data == null) {
+              console.error("available_stock falló para", id, error);
+              if (!isKit) result[id] = DISPONIBILIDAD_DESCONOCIDA;
+              return;
+            }
+            result[id] = Number(data);
+          } catch (error) {
+            console.error("available_stock falló para", id, error);
+            if (!isKit) result[id] = DISPONIBILIDAD_DESCONOCIDA;
           }
-          result[id] = Number(data);
         })
       );
-      // Propagate errors only for the individual product path; kits keep their
-      // current child.stock fallback and must not break selection rendering.
-      // Para producto individual: si el id del producto no ha llegado al mapa de
-      // resultados, es que la consulta ha fallado. No sabemos si hay disponibilidad,
-      // así que propagamos el error en lugar de fingir que hay cero unidades.
-      if (!isKit && product && !(product.id in result)) {
-        console.error("available_stock falló para", product.id, errors[product.id]);
-        throw errors[product.id] ?? new Error("No se pudo comprobar la disponibilidad");
-      }
       return result;
     },
   });
@@ -219,6 +221,8 @@ const ProductDetail = () => {
     if (!start || !end || !product) return null;
     return availability[product.id] ?? null;
   }, [start, end, product, availability]);
+
+  const disponibilidadDesconocida = disponibilidadFechas === DISPONIBILIDAD_DESCONOCIDA;
 
   // Subtract what the customer already has in the cart for THIS product
   // (all variants), but only if the cart dates match the selected dates.
@@ -231,7 +235,7 @@ const ProductDetail = () => {
   }, [product, start, end, cart.items, cart.startDate, cart.endDate]);
 
   const disponibilidadEfectiva: number | null =
-    disponibilidadFechas == null
+    disponibilidadFechas == null || disponibilidadDesconocida
       ? null
       : Math.max(0, disponibilidadFechas - cartQtyMismoProducto);
 
@@ -413,7 +417,9 @@ const ProductDetail = () => {
           ? true
           : availabilityLoading
             ? false
-            : (disponibilidadEfectiva ?? 0) > 0;
+            : disponibilidadDesconocida
+              ? false
+              : (disponibilidadEfectiva ?? 0) > 0;
 
   const canonicalUrl = `https://thevisionscope.lovable.app/rental/${product.slug}`;
   const metaDesc = (desc ? desc.replace(/\s+/g, " ").trim().slice(0, 155) : `${name} en alquiler en The Vision Scope — rental house de cine profesional.`);
@@ -746,7 +752,7 @@ const ProductDetail = () => {
                       ? t("product.availability.selectDates")
                       : availabilityLoading
                         ? t("product.availability.checking")
-                        : availabilityError
+                        : disponibilidadDesconocida
                           ? t("product.availability.checkFailedShort")
                           : (disponibilidadEfectiva ?? 0) >= 2
                             ? t("product.availability.available")
@@ -814,7 +820,7 @@ const ProductDetail = () => {
                 ? t("product.addToCart")
                 : !isKit && availabilityLoading
                   ? t("product.availability.checking")
-                  : !isKit && availabilityError
+                  : !isKit && disponibilidadDesconocida
                     ? t("product.availability.checkFailedShort")
                     : !canAdd && !isKit
                       ? t("catalog.outOfStock")
@@ -833,7 +839,7 @@ const ProductDetail = () => {
                   <p className="mt-2 text-xs text-secondary">
                     {t("product.availability.checking")}
                   </p>
-                ) : availabilityError ? (
+                ) : disponibilidadDesconocida ? (
                   <p className="mt-2 text-xs text-secondary">
                     {t("product.availability.checkFailed")}
                   </p>
