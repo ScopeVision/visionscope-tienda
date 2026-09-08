@@ -200,7 +200,9 @@
       "unavailableRange": "Indisponible du {{inicio}} au {{fin}}",
       "available": "Disponible",
       "lastUnits": "Dernières unités",
-      "unavailableDates": "Indisponible à ces dates"
+      "unavailableDates": "Indisponible à ces dates",
+      "checkFailed": "Nous n'avons pas pu vérifier la disponibilité. Rechargez la page ou contactez-nous.",
+      "checkFailedShort": "Vérification impossible"
     },
     "kit": {
       "fullKit": "Kit complet",
