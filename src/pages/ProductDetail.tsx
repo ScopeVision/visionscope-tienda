@@ -742,11 +742,13 @@ const ProductDetail = () => {
                       ? t("product.availability.selectDates")
                       : availabilityLoading
                         ? t("product.availability.checking")
-                        : (disponibilidadEfectiva ?? 0) >= 2
-                          ? t("product.availability.available")
-                          : disponibilidadEfectiva === 1
-                            ? t("product.availability.lastUnits")
-                            : t("product.availability.unavailableDates")}
+                        : availabilityError
+                          ? t("product.availability.checkFailedShort")
+                          : (disponibilidadEfectiva ?? 0) >= 2
+                            ? t("product.availability.available")
+                            : disponibilidadEfectiva === 1
+                              ? t("product.availability.lastUnits")
+                              : t("product.availability.unavailableDates")}
                   </span>
                 </div>
               </>
