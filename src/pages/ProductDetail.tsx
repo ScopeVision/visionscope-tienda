@@ -806,7 +806,7 @@ const ProductDetail = () => {
               onClick={handleAdd}
               disabled={!canAdd || (!!start && !!end && currentCalc.contactRequired)}
             >
-              {!isKit && !start || !end
+              {!isKit && (!start || !end)
                 ? t("product.addToCart")
                 : !isKit && availabilityLoading
                   ? t("product.availability.checking")
