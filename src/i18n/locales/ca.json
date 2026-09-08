@@ -193,6 +193,15 @@
     "weeklyDiscount": "Tarifa setmanal aplicada",
     "addToCart": "Afegir a la reserva",
     "added": "Afegit a la reserva",
+    "availability": {
+      "label": "Disponibilitat",
+      "selectDates": "Selecciona dates per veure la disponibilitat",
+      "checking": "Comprovant la disponibilitat…",
+      "unavailableRange": "No disponible del {{inicio}} al {{fin}}",
+      "available": "Disponible",
+      "lastUnits": "Darreres unitats",
+      "unavailableDates": "No disponible en aquestes dates"
+    },
     "kit": {
       "fullKit": "Kit complet",
       "individualSelection": "Selecció individual",

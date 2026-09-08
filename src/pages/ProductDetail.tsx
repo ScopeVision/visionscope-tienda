@@ -171,7 +171,7 @@ const ProductDetail = () => {
 
   // Availability check per date range — fetches available_stock for visible items.
   const availabilityKey = visibleComponents.map((c: any) => c.child_product_id).join(",");
-  const { data: availability = {} } = useQuery({
+  const { data: availability = {}, isFetching: availabilityLoading } = useQuery({
     queryKey: ["availability", availabilityKey, start?.toISOString(), end?.toISOString(), product?.id],
     enabled: !!start && !!end && (visibleComponents.length > 0 || (!!product && !isKit)),
     queryFn: async () => {

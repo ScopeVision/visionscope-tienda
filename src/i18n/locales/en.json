@@ -193,6 +193,15 @@
     "weeklyDiscount": "Weekly rate applied",
     "addToCart": "Add to booking",
     "added": "Added to booking",
+    "availability": {
+      "label": "Availability",
+      "selectDates": "Select dates to see availability",
+      "checking": "Checking availability…",
+      "unavailableRange": "Not available from {{inicio}} to {{fin}}",
+      "available": "Available",
+      "lastUnits": "Last units",
+      "unavailableDates": "Not available on those dates"
+    },
     "kit": {
       "fullKit": "Full Kit",
       "individualSelection": "Individual Selection",
