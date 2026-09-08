@@ -829,6 +829,10 @@ const ProductDetail = () => {
                   <p className="mt-2 text-xs text-secondary">
                     {t("product.availability.checking")}
                   </p>
+                ) : availabilityError ? (
+                  <p className="mt-2 text-xs text-secondary">
+                    {t("product.availability.checkFailed")}
+                  </p>
                 ) : (disponibilidadEfectiva ?? 0) <= 0 ? (
                   <p className="mt-2 text-xs text-secondary">
                     {t("product.availability.unavailableRange", {
