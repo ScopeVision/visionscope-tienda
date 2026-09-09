@@ -99,7 +99,7 @@ export function useRentalCatalog() {
 
   // Products matching category + text search only (base for price range + facet universe)
   const categoryFiltered = useMemo(() => {
-    return (products as any[]).filter((p: any) => {
+    return visibleProducts.filter((p: any) => {
       if (selectedCategory && p.category?.slug !== selectedCategory) return false;
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
