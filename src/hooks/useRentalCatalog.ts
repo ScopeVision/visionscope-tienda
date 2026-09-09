@@ -162,14 +162,14 @@ export function useRentalCatalog() {
   // Count of published products per category slug
   const categoryCounts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of products as any[]) {
+    for (const p of visibleProducts) {
       const slug = p.category?.slug;
       if (slug) m.set(slug, (m.get(slug) ?? 0) + 1);
     }
     return m;
-  }, [products]);
+  }, [visibleProducts]);
 
-  const totalPublished = (products as any[]).length;
+  const totalPublished = visibleProducts.length;
 
   // Dynamic facets with cross-filtering counts
   const facets = useMemo((): FacetGroup[] => {
