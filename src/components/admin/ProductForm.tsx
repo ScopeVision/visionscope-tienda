@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImageUploader } from "./ImageUploader";
 import { slugify } from "@/lib/slugify";
 import { toast } from "sonner";
-import { Loader2, Plus, X, Lock, LockOpen } from "lucide-react";
+import { Loader2, Plus, X, Lock, LockOpen, ChevronDown, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -101,6 +101,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [pricingAdvancedOpen, setPricingAdvancedOpen] = useState(false);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["form-categories"],
@@ -461,7 +462,62 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
               </p>
             </Field>
 
-
+            {/* Pricing model — Advanced (collapsed by default) */}
+            <div className="rounded-md border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPricingAdvancedOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider text-secondary hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <span>Configuración avanzada de precios</span>
+                <span className="text-[10px] text-secondary ml-2 normal-case tracking-normal">
+                  Modelo actual: {form.watch("pricing_model")?.replace("_", " ")}
+                </span>
+                {pricingAdvancedOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 ml-2" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 ml-2" />
+                )}
+              </button>
+              {pricingAdvancedOpen && (
+                <div className="p-3 space-y-3 border-t border-border">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {(["premium", "aggressive", "weekly_flat", "custom"] as const).map((m) => {
+                      const active = form.watch("pricing_model") === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => form.setValue("pricing_model", m, { shouldDirty: true })}
+                          className={cn(
+                            "px-3 py-2 rounded-md border text-xs uppercase tracking-wider transition-colors",
+                            active
+                              ? "bg-accent text-accent-foreground border-accent"
+                              : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
+                          )}
+                        >
+                          {m.replace("_", " ")}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {form.watch("pricing_model") === "custom" && (
+                    <div>
+                      <Label className="text-xs text-secondary mb-1.5 block">
+                        Multiplicadores día 1..7 (CSV)
+                      </Label>
+                      <Input
+                        {...form.register("pricing_multipliers_csv")}
+                        placeholder="1, 1.6, 2.25, 2.8, 3.3, 3.7, 4"
+                      />
+                    </div>
+                  )}
+                  <p className="text-[11px] text-secondary">
+                    Premium: 1·1.6·2.25·2.8·3.3·3.7·4 · Aggressive: 1·1.5·2·2.4·2.8·3.2·3.5 · Weekly flat: lineal hasta día 6, semana plana día 7.
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div id="product-inventory-units">
               <ProductInventoryUnits productId={product?.id} />
