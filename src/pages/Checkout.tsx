@@ -74,6 +74,8 @@ const Checkout = () => {
   const [success, setSuccess] = useState<SuccessSnapshot | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [consentTerms, setConsentTerms] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupResult, setLookupResult] = useState<"found" | "not_found" | null>(null);
@@ -215,6 +217,10 @@ const Checkout = () => {
       toast.error(t("checkout.errors.addressConfirm"));
       return;
     }
+    if (!consentTerms) {
+      toast.error("Debes aceptar los términos y la política de privacidad para continuar.");
+      return;
+    }
     setSubmitting(true);
     try {
       // Check which items are still published
@@ -273,6 +279,9 @@ const Checkout = () => {
             start_date: cart.startDate!,
             end_date: cart.endDate!,
             items: cart.items.map((it) => ({ product_id: it.productId, variant_id: it.variantId ?? null, quantity: it.quantity })),
+            consent_terms: consentTerms,
+            consent_privacy: consentTerms,
+            consent_marketing: consentMarketing,
             language: i18n.language,
           },
         },
@@ -525,6 +534,41 @@ const Checkout = () => {
                 </span>
               </label>
 
+              {/* GDPR — términos obligatorio */}
+              <label className="flex items-start gap-3 cursor-pointer mt-3">
+                <input
+                  type="checkbox"
+                  checked={consentTerms}
+                  onChange={e => setConsentTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-accent shrink-0"
+                />
+                <span className="text-sm text-secondary leading-snug">
+                  He leído y acepto los{" "}
+                  <a href="/legal/condiciones" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
+                    Términos y condiciones
+                  </a>{" "}
+                  y la{" "}
+                  <a href="/legal/privacidad" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
+                    Política de privacidad
+                  </a>
+                  . <span className="text-destructive">*</span>
+                </span>
+              </label>
+
+              {/* GDPR — marketing opcional */}
+              <label className="flex items-start gap-3 cursor-pointer mt-3">
+                <input
+                  type="checkbox"
+                  checked={consentMarketing}
+                  onChange={e => setConsentMarketing(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-accent shrink-0"
+                />
+                <span className="text-sm text-secondary leading-snug">
+                  Acepto recibir comunicaciones comerciales y novedades de The Vision Scope.{" "}
+                  <span className="text-secondary/60">(Opcional)</span>
+                </span>
+              </label>
+
               {v.notes && (
                 <ReviewBlock title="Notas">
                   <p className="text-sm text-foreground whitespace-pre-wrap">{v.notes}</p>
@@ -563,7 +607,7 @@ const Checkout = () => {
               <Button
                 type="submit"
                 size="lg"
-                disabled={submitting || !addressConfirmed}
+                disabled={submitting || !addressConfirmed || !consentTerms}
                 className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 uppercase tracking-[0.2em] text-xs h-12 rounded-sm"
               >
                 {submitting ? t("common.loading") : t("checkout.submit")}

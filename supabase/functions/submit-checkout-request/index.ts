@@ -81,6 +81,19 @@ Deno.serve(async (req) => {
       } catch (logErr) {
         console.error("Failed to log auto communication", logErr);
       }
+
+      // Guardar consentimientos GDPR
+      try {
+        await admin.from("customer_consents" as any).insert({
+          booking_id: result.booking_id,
+          consent_terms: payload.consent_terms === true,
+          consent_privacy: payload.consent_privacy === true,
+          consent_marketing: payload.consent_marketing === true,
+          source: "checkout",
+        });
+      } catch (consentErr) {
+        console.error("Failed to log GDPR consent", consentErr);
+      }
     }
 
     return json({ ok: true, reference: result?.reference ?? "", booking_id: result?.booking_id ?? null });
