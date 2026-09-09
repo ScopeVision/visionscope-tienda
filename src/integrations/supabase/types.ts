@@ -374,6 +374,7 @@ export type Database = {
         Row: {
           created_at: string
           default_pricing_model: Database["public"]["Enums"]["pricing_model"]
+          hidden: boolean
           id: string
           image_url: string | null
           link_url: string | null
@@ -388,6 +389,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_pricing_model?: Database["public"]["Enums"]["pricing_model"]
+          hidden?: boolean
           id?: string
           image_url?: string | null
           link_url?: string | null
@@ -402,6 +404,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_pricing_model?: Database["public"]["Enums"]["pricing_model"]
+          hidden?: boolean
           id?: string
           image_url?: string | null
           link_url?: string | null

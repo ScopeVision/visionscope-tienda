@@ -52,6 +52,12 @@ export function useRentalCatalog() {
     },
   });
 
+  // Excluir productos de categorías marcadas como hidden
+  const visibleProducts = useMemo(
+    () => (products as any[]).filter((p: any) => p.category?.hidden !== true),
+    [products],
+  );
+
   const { data: popularity = [] } = useQuery({
     queryKey: ["product-popularity"],
     queryFn: async () => {
@@ -93,7 +99,7 @@ export function useRentalCatalog() {
 
   // Products matching category + text search only (base for price range + facet universe)
   const categoryFiltered = useMemo(() => {
-    return (products as any[]).filter((p: any) => {
+    return visibleProducts.filter((p: any) => {
       if (selectedCategory && p.category?.slug !== selectedCategory) return false;
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
@@ -156,14 +162,14 @@ export function useRentalCatalog() {
   // Count of published products per category slug
   const categoryCounts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of products as any[]) {
+    for (const p of visibleProducts) {
       const slug = p.category?.slug;
       if (slug) m.set(slug, (m.get(slug) ?? 0) + 1);
     }
     return m;
-  }, [products]);
+  }, [visibleProducts]);
 
-  const totalPublished = (products as any[]).length;
+  const totalPublished = visibleProducts.length;
 
   // Dynamic facets with cross-filtering counts
   const facets = useMemo((): FacetGroup[] => {
