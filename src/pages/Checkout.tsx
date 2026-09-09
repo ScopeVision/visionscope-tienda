@@ -194,14 +194,6 @@ const Checkout = () => {
     } else if (step === 2) {
       const ok = await form.trigger(["tax_id", "address_line1", "city", "postal_code", "country", "region"]);
       if (!ok) return;
-      const countryVal = form.getValues("country").toLowerCase();
-      const regionVal = (form.getValues("region") ?? "").toLowerCase();
-      if (countryVal && !["españa", "spain", "espanya", "es"].some(v => countryVal.includes(v))) {
-        toast.warning(t("checkout.errors.countryWarning"), { duration: 6000 });
-      }
-      if (regionVal && !["cataluña", "catalonia", "catalunya", "cat"].some(v => regionVal.includes(v))) {
-        toast.warning(t("checkout.errors.regionWarning"), { duration: 6000 });
-      }
       setStep(3);
     }
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -473,13 +465,110 @@ const Checkout = () => {
                   <Input autoComplete="address-level2" {...form.register("city")} />
                 </Field>
                 <Field label="Provincia *" error={form.formState.errors.region?.message}>
-                  <Input {...form.register("region")} placeholder="Ej: Cataluña" />
+                  {form.watch("country") === "España" ? (
+                    <select
+                      {...form.register("region")}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Seleccionar provincia…</option>
+                      <option value="Álava">Álava</option>
+                      <option value="Albacete">Albacete</option>
+                      <option value="Alicante">Alicante</option>
+                      <option value="Almería">Almería</option>
+                      <option value="Asturias">Asturias</option>
+                      <option value="Ávila">Ávila</option>
+                      <option value="Badajoz">Badajoz</option>
+                      <option value="Baleares">Baleares</option>
+                      <option value="Barcelona">Barcelona</option>
+                      <option value="Burgos">Burgos</option>
+                      <option value="Cáceres">Cáceres</option>
+                      <option value="Cádiz">Cádiz</option>
+                      <option value="Cantabria">Cantabria</option>
+                      <option value="Castellón">Castellón</option>
+                      <option value="Ciudad Real">Ciudad Real</option>
+                      <option value="Córdoba">Córdoba</option>
+                      <option value="Cuenca">Cuenca</option>
+                      <option value="Girona">Girona</option>
+                      <option value="Granada">Granada</option>
+                      <option value="Guadalajara">Guadalajara</option>
+                      <option value="Guipúzcoa">Guipúzcoa</option>
+                      <option value="Huelva">Huelva</option>
+                      <option value="Huesca">Huesca</option>
+                      <option value="Jaén">Jaén</option>
+                      <option value="La Coruña">La Coruña</option>
+                      <option value="La Rioja">La Rioja</option>
+                      <option value="Las Palmas">Las Palmas</option>
+                      <option value="León">León</option>
+                      <option value="Lleida">Lleida</option>
+                      <option value="Lugo">Lugo</option>
+                      <option value="Madrid">Madrid</option>
+                      <option value="Málaga">Málaga</option>
+                      <option value="Melilla">Melilla</option>
+                      <option value="Ceuta">Ceuta</option>
+                      <option value="Murcia">Murcia</option>
+                      <option value="Navarra">Navarra</option>
+                      <option value="Ourense">Ourense</option>
+                      <option value="Palencia">Palencia</option>
+                      <option value="Pontevedra">Pontevedra</option>
+                      <option value="Salamanca">Salamanca</option>
+                      <option value="Santa Cruz de Tenerife">Santa Cruz de Tenerife</option>
+                      <option value="Segovia">Segovia</option>
+                      <option value="Sevilla">Sevilla</option>
+                      <option value="Soria">Soria</option>
+                      <option value="Tarragona">Tarragona</option>
+                      <option value="Teruel">Teruel</option>
+                      <option value="Toledo">Toledo</option>
+                      <option value="Valencia">Valencia</option>
+                      <option value="Valladolid">Valladolid</option>
+                      <option value="Vizcaya">Vizcaya</option>
+                      <option value="Zamora">Zamora</option>
+                      <option value="Zaragoza">Zaragoza</option>
+                    </select>
+                  ) : (
+                    <Input {...form.register("region")} placeholder="Región / Provincia" />
+                  )}
                 </Field>
                 <Field label="CP *" error={form.formState.errors.postal_code?.message}>
                   <Input autoComplete="postal-code" {...form.register("postal_code")} />
                 </Field>
                 <Field label="País *" error={form.formState.errors.country?.message}>
-                  <Input autoComplete="country-name" {...form.register("country")} />
+                  <select
+                    {...form.register("country")}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Seleccionar país…</option>
+                    <option value="España">España</option>
+                    <option value="Andorra">Andorra</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Francia">Francia</option>
+                    <option value="Italia">Italia</option>
+                    <option value="Alemania">Alemania</option>
+                    <option value="Países Bajos">Países Bajos</option>
+                    <option value="Bélgica">Bélgica</option>
+                    <option value="Suiza">Suiza</option>
+                    <option value="Austria">Austria</option>
+                    <option value="Polonia">Polonia</option>
+                    <option value="República Checa">República Checa</option>
+                    <option value="Hungría">Hungría</option>
+                    <option value="Dinamarca">Dinamarca</option>
+                    <option value="Suecia">Suecia</option>
+                    <option value="Noruega">Noruega</option>
+                    <option value="Finlandia">Finlandia</option>
+                    <option value="Irlanda">Irlanda</option>
+                    <option value="Reino Unido">Reino Unido</option>
+                    <option value="Grecia">Grecia</option>
+                    <option value="Rumanía">Rumanía</option>
+                    <option value="Bulgaria">Bulgaria</option>
+                    <option value="Croacia">Croacia</option>
+                    <option value="Eslovenia">Eslovenia</option>
+                    <option value="Eslovaquia">Eslovaquia</option>
+                    <option value="México">México</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Chile">Chile</option>
+                    <option value="Estados Unidos">Estados Unidos</option>
+                    <option value="Otro">Otro</option>
+                  </select>
                 </Field>
               </div>
               <div className="mt-5">
