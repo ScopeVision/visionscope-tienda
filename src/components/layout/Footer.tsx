@@ -34,6 +34,11 @@ export const Footer = () => {
           </ul>
         </div>
       </div>
+      <div className="mt-6 pt-4 border-t border-border/40 flex flex-wrap justify-center gap-x-6 gap-y-1 text-[11px] text-secondary/60">
+        <a href="/legal/privacidad" className="hover:text-secondary transition-colors">Privacidad</a>
+        <a href="/legal/condiciones" className="hover:text-secondary transition-colors">Términos y condiciones</a>
+        <a href="/legal/cookies" className="hover:text-secondary transition-colors">Cookies</a>
+      </div>
       <div className="border-t border-border">
         <div className="container-page py-5 text-[11px] uppercase tracking-[0.22em] text-secondary flex flex-col md:flex-row justify-between gap-2">
           <span>© {year} The Vision Scope — All rights reserved.</span>
