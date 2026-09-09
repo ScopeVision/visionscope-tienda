@@ -52,6 +52,12 @@ export function useRentalCatalog() {
     },
   });
 
+  // Excluir productos de categorías marcadas como hidden
+  const visibleProducts = useMemo(
+    () => (products as any[]).filter((p: any) => p.category?.hidden !== true),
+    [products],
+  );
+
   const { data: popularity = [] } = useQuery({
     queryKey: ["product-popularity"],
     queryFn: async () => {
