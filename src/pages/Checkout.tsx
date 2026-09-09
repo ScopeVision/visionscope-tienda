@@ -522,7 +522,23 @@ const Checkout = () => {
                 </ReviewBlock>
               )}
 
-              <label className="flex items-start gap-3 cursor-pointer mt-4 pt-4 border-t border-border">
+              {/* Botón aceptar todo */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                <span className="text-xs text-secondary">Acepta las condiciones para continuar</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressConfirmed(true);
+                    setConsentTerms(true);
+                    setConsentMarketing(true);
+                  }}
+                  className="text-xs px-4 py-2 rounded-sm border border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-colors uppercase tracking-[0.18em]"
+                >
+                  Aceptar todo
+                </button>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer mt-3">
                 <input
                   type="checkbox"
                   checked={addressConfirmed}
