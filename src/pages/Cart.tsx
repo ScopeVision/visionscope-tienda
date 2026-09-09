@@ -122,6 +122,12 @@ const Cart = () => {
               </span>
               <span className="font-medium">{formatCurrency(cart.subtotal, i18n.language)}</span>
             </div>
+            {cart.subtotal !== cart.total && (
+              <div className="flex justify-between text-green-500">
+                <span>Descuento</span>
+                <span className="font-medium">-{formatCurrency(cart.subtotal - cart.total, i18n.language)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-secondary">{t("cart.deposit")}</span>
               <span className="font-medium">{formatCurrency(cart.depositTotal, i18n.language)}</span>
