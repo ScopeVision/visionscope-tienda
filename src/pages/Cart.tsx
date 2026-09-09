@@ -10,7 +10,6 @@ import { useCart } from "@/contexts/CartContext";
 import { calcCartLinePrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
 import { toDateOnly } from "@/lib/dates";
 import { useSiteContact } from "@/hooks/useSiteContact";
-import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
 import { cn } from "@/lib/utils";
 
 const Cart = () => {
@@ -88,8 +87,7 @@ const Cart = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">{formatCurrency(calc.subtotal, i18n.language)}</div>
-                  <WeeklyDiscountBadge priceDay={item.priceDay} variant="pill" className="mt-1" />
+                <div className="font-medium">{formatCurrency(calc.subtotal, i18n.language)}</div>
                   <button
                     onClick={() => cart.remove(item.productId, item.variantId)}
                     className="mt-2 text-secondary hover:text-destructive"
