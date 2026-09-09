@@ -201,7 +201,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
       accessory_type: product?.accessory_type ?? "",
       kit_type: product?.kit_type ?? "",
       kit_mode: (product?.kit_mode as any) ?? "individual",
-      pricing_model: (product?.pricing_model as any) ?? "premium",
+      pricing_model: (product?.pricing_model as any) ?? "aggressive",
       pricing_multipliers_csv: Array.isArray(product?.pricing_multipliers)
         ? product.pricing_multipliers.join(",")
         : "",
@@ -341,7 +341,7 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
         accessory_type: values.accessory_type || null,
         kit_type: values.kit_type || null,
         kit_mode: values.kit_mode ?? "individual",
-        pricing_model: values.pricing_model ?? "premium",
+        pricing_model: "aggressive",
         pricing_multipliers:
           values.pricing_model === "custom" && values.pricing_multipliers_csv
             ? values.pricing_multipliers_csv
@@ -462,46 +462,6 @@ export const ProductForm = ({ product, onSaved, onCancel }: Props) => {
             </Field>
 
 
-            {/* Pricing model selector */}
-            <div className="rounded-md border border-border p-3 space-y-3">
-              <Label className="text-xs uppercase tracking-wider text-secondary block">
-                Pricing model
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {(["premium", "aggressive", "weekly_flat", "custom"] as const).map((m) => {
-                  const active = form.watch("pricing_model") === m;
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => form.setValue("pricing_model", m, { shouldDirty: true })}
-                      className={cn(
-                        "px-3 py-2 rounded-md border text-xs uppercase tracking-wider transition-colors",
-                        active
-                          ? "bg-accent text-accent-foreground border-accent"
-                          : "bg-background text-secondary border-border hover:border-accent hover:text-foreground"
-                      )}
-                    >
-                      {m.replace("_", " ")}
-                    </button>
-                  );
-                })}
-              </div>
-              {form.watch("pricing_model") === "custom" && (
-                <div>
-                  <Label className="text-xs text-secondary mb-1.5 block">
-                    Multiplicadores día 1..7 (CSV)
-                  </Label>
-                  <Input
-                    {...form.register("pricing_multipliers_csv")}
-                    placeholder="1, 1.6, 2.25, 2.8, 3.3, 3.7, 4"
-                  />
-                </div>
-              )}
-              <p className="text-[11px] text-secondary">
-                Premium: 1·1.6·2.25·2.8·3.3·3.7·4 · Aggressive: 1·1.5·2·2.4·2.8·3.2·3.5 · Weekly flat: lineal hasta día 6, semana plana día 7.
-              </p>
-            </div>
 
             <div id="product-inventory-units">
               <ProductInventoryUnits productId={product?.id} />
