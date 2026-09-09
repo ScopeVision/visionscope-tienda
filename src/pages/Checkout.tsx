@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useCart, type CartItem } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { calcCartLinePrice, formatCurrency, MAX_AUTO_DAYS } from "@/lib/rental";
-import { WeeklyDiscountBadge } from "@/components/catalog/WeeklyDiscountBadge";
+
 import { useSiteContact } from "@/hooks/useSiteContact";
 import { toast } from "sonner";
 import {
@@ -692,7 +692,6 @@ const Checkout = () => {
                     )}
                   </span>
                 </div>
-                <WeeklyDiscountBadge priceDay={it.priceDay} variant="pill" />
               </div>
             ))}
           </div>
@@ -704,6 +703,12 @@ const Checkout = () => {
                 {formatCurrency(cart.subtotal, i18n.language)}
               </span>
             </div>
+            {cart.subtotal !== cart.total && (
+              <div className="flex justify-between text-green-500">
+                <span>Descuento</span>
+                <span className="font-medium tabular-nums">-{formatCurrency(cart.subtotal - cart.total, i18n.language)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-secondary">{t("cart.deposit")}</span>
               <span className="font-medium tabular-nums">
